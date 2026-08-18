@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ game.name }} | {{ site_name }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/games.css' %}">{% endblock %}
+
+{% block content %}
+<main class="games-page">
+  <section class="container games-page__play-shell" data-game-root data-game-type="{{ game.game_type }}" data-save-url="{% url 'games:save_attempt' game.slug %}">
+    <script type="application/json" id="game-data">{{ challenges_json|safe }}</script>
+    <div class="games-page__play-card">
+      <header class="games-page__play-header">
+        <a class="games-page__back-link" href="{% url 'games:index' %}">← Volver a Juegos</a>
+        <div class="games-page__title-row">
+          <span class="games-page__icon">{{ game.icon }}</span>
+          <div>
+            <h1>{% block game_title %}{{ game.name }}{% endblock %}</h1>
+            <p>{{ game.skill }}</p>
+          </div>
+        </div>
+        <div class="games-page__progress-wrap" aria-live="polite">
+          <span data-game-counter>Reto 1 de {{ challenges|length }}</span>
+          <div class="games-page__progress" aria-hidden="true"><span data-game-progress></span></div>
+        </div>
+      </header>
+
+      <div class="games-page__feedback" data-game-feedback aria-live="polite"></div>
+
+      {% block game_board %}{% endblock %}
+
+      <section class="games-page__finish" data-game-finish hidden>
+        <div class="games-page__stars" data-game-stars>⭐</div>
+        <h2>¡Buen trabajo!</h2>
+        <p>Completaste tu práctica.</p>
+        <div class="games-page__summary">
+          <span data-game-summary>Retos completados: {{ challenges|length }}</span>
+          <span>Habilidad: {{ game.skill }}</span>
+        </div>
+        <div class="games-page__actions">
+          <button class="games-page__button" type="button" data-game-restart>Jugar otra vez</button>
+          <a class="games-page__button games-page__button--soft" href="{% url 'games:index' %}">Elegir otro juego</a>
+          <a class="games-page__button games-page__button--soft" href="{% url 'games:index' %}">Volver a Juegos</a>
+        </div>
+      </section>
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/games/common.js' %}"></script>{% endblock %}

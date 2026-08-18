@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Entrar | Lectura sin Límites{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/login.css' %}">{% endblock %}
+
+{% block content %}
+<main class="login-page">
+  <div class="container">
+    <div class="login-page__shell mx-auto">
+      <aside class="login-page__visual" aria-label="Bienvenida">
+        <div class="login-page__visual-content">
+          <span class="login-page__brand">Lectura sin Límites</span>
+          <h1>Bienvenido de nuevo</h1>
+          <p>Continúa aprendiendo, practicando y avanzando a tu propio ritmo.</p>
+
+          <div class="login-page__illustration" aria-hidden="true">
+            <div class="login-page__book login-page__book--main"></div>
+            <div class="login-page__book login-page__book--small"></div>
+            <div class="login-page__letter login-page__letter--a">A</div>
+            <div class="login-page__letter login-page__letter--m">M</div>
+            <div class="login-page__line login-page__line--one"></div>
+            <div class="login-page__line login-page__line--two"></div>
+          </div>
+
+          <ul class="login-page__benefits" aria-label="Beneficios">
+            <li><span aria-hidden="true">✓</span> Aprende a tu ritmo</li>
+            <li><span aria-hidden="true">✓</span> Continúa tu progreso</li>
+            <li><span aria-hidden="true">✓</span> Descubre nuevas actividades</li>
+          </ul>
+        </div>
+      </aside>
+
+      <section class="login-page__panel" aria-labelledby="login-title">
+        <div class="login-page__heading">
+          <span class="login-page__eyebrow">Acceso seguro</span>
+          <h2 id="login-title">Entrar</h2>
+          <p>Continúa tu camino en Lectura sin Límites</p>
+        </div>
+
+        <form method="post" class="login-page__form">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="login-page__alert" role="alert">
+              No pudimos iniciar sesión con esos datos. Revisa tu usuario y contraseña e inténtalo nuevamente.
+            </div>
+          {% endif %}
+
+          <div class="login-page__field">
+            <label for="{{ form.username.id_for_label }}" class="login-page__label">{{ form.username.label }}</label>
+            {{ form.username }}
+            {% for error in form.username.errors %}<div class="login-page__error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <div class="login-page__field">
+            <label for="{{ form.password.id_for_label }}" class="login-page__label">{{ form.password.label }}</label>
+            <div class="login-page__password-wrap">
+              {{ form.password }}
+              <button class="login-page__password-toggle" type="button" data-login-password-toggle="{{ form.password.id_for_label }}" aria-label="Mostrar contraseña" aria-pressed="false">
+                <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" focusable="false">
+                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </button>
+            </div>
+            {% for error in form.password.errors %}<div class="login-page__error">{{ error }}</div>{% endfor %}
+          </div>
+
+          <button class="login-page__submit" type="submit">Entrar</button>
+
+          <p class="login-page__register-link">¿Todavía no tienes una cuenta? <a href="{% url 'accounts:register' %}">Crear cuenta</a></p>
+        </form>
+      </section>
+    </div>
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}<script src="{% static 'js/login.js' %}"></script>{% endblock %}

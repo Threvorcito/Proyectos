@@ -1,0 +1,12 @@
+{% extends 'games/game_base.html' %}
+{% block game_title %}🔎 Cazador de letras{% endblock %}
+{% block game_board %}
+<section class="games-page__board" data-letter-hunter>
+  <div class="games-page__instruction">
+    <div><span>Encuentra todas las letras</span><strong data-target-letter></strong></div>
+    <button class="games-page__audio-button" type="button" data-speak-target>🔊 Escuchar letra</button>
+  </div>
+  <div class="games-page__letter-grid" data-letter-grid></div>
+  <button class="games-page__button" type="button" data-check-letters>Revisar reto</button>
+</section>
+{% endblock %}

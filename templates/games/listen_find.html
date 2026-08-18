@@ -1,0 +1,9 @@
+{% extends 'games/game_base.html' %}
+{% block game_title %}🎧 Escucha y encuentra{% endblock %}
+{% block game_board %}
+<section class="games-page__board" data-listen-find>
+  <button class="games-page__listen-main" type="button" data-listen-word>🔊 Escuchar palabra</button>
+  <p>Elige la palabra que escuchaste.</p>
+  <div class="games-page__option-grid" data-listen-options></div>
+</section>
+{% endblock %}

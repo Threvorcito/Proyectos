@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <h1>Niveles</h1>
+  <div class="row g-4 mt-1">
+    {% for level in levels %}
+      <div class="col-md-4"><div class="feature-card level-blue"><h3>Nivel {{ level.number }}</h3><p>{{ level.name }}</p><p>{{ level.description }}</p></div></div>
+    {% empty %}
+      <p>No hay niveles todavía.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

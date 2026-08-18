@@ -1,0 +1,206 @@
+{% extends 'base.html' %}
+{% block title %}Crear cuenta | {{ site_name }}{% endblock %}
+
+{% block content %}
+<section class="register-page py-4 py-lg-5">
+  <div class="container">
+    <div class="register-shell mx-auto">
+      <aside class="register-welcome" aria-label="Bienvenida">
+        <div class="welcome-content">
+          <span class="welcome-kicker">Lectura sin Límites</span>
+          <h1>Crea tu espacio para aprender</h1>
+          <p>Aprende a tu ritmo, practica cada día y descubre nuevas formas de disfrutar la lectura.</p>
+
+          <div class="reading-illustration" aria-hidden="true">
+            <div class="illustration-book book-main"></div>
+            <div class="illustration-book book-left"></div>
+            <div class="illustration-card letter-a">A</div>
+            <div class="illustration-card letter-b">B</div>
+            <div class="illustration-line line-one"></div>
+            <div class="illustration-line line-two"></div>
+          </div>
+
+          <ul class="welcome-benefits list-unstyled mb-0">
+            <li><span aria-hidden="true">✓</span> Actividades a tu ritmo</li>
+            <li><span aria-hidden="true">✓</span> Lecturas interactivas</li>
+            <li><span aria-hidden="true">✓</span> Seguimiento de tu progreso</li>
+          </ul>
+        </div>
+      </aside>
+
+      <div class="register-form-panel">
+        <div class="register-heading">
+          <p class="eyebrow mb-2">Nuevo comienzo</p>
+          <h2>Crear cuenta</h2>
+          <p>Comienza tu camino en Lectura sin Límites</p>
+        </div>
+
+        <form method="post" class="register-form">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+              {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+            </div>
+          {% endif %}
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="{{ form.first_name.id_for_label }}" class="form-label">{{ form.first_name.label }}</label>
+              {{ form.first_name }}
+              {% for error in form.first_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-field">
+              <label for="{{ form.last_name.id_for_label }}" class="form-label">{{ form.last_name.label }}</label>
+              {{ form.last_name }}
+              {% for error in form.last_name.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-field">
+              <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label }}</label>
+              {{ form.username }}
+              {% for error in form.username.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-field">
+              <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+              {{ form.email }}
+              {% for error in form.email.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-field">
+              <label for="{{ form.role.id_for_label }}" class="form-label">{{ form.role.label }}</label>
+              {{ form.role }}
+              {% for error in form.role.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-field student-only" data-student-field>
+              <label for="{{ form.grade.id_for_label }}" class="form-label">{{ form.grade.label }}</label>
+              {{ form.grade }}
+              {% for error in form.grade.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-field student-only full-width" data-student-field>
+              <label for="{{ form.reading_level.id_for_label }}" class="form-label">{{ form.reading_level.label }}</label>
+              {{ form.reading_level }}
+              {% for error in form.reading_level.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-field full-width">
+              <label for="{{ form.password1.id_for_label }}" class="form-label">{{ form.password1.label }}</label>
+              <div class="password-control">
+                {{ form.password1 }}
+                <button type="button" class="password-toggle" data-password-toggle="{{ form.password1.id_for_label }}" aria-label="Mostrar contraseña" aria-pressed="false">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" focusable="false">
+                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="password-help">Tu contraseña debe tener al menos 8 caracteres.</div>
+              <button class="requirements-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#passwordRequirements" aria-expanded="false" aria-controls="passwordRequirements">Ver requisitos</button>
+              <div class="collapse" id="passwordRequirements">
+                <ul class="password-requirements list-unstyled" data-password-requirements>
+                  <li data-rule="length"><span>✓</span> Mínimo 8 caracteres</li>
+                  <li data-rule="numeric"><span>✓</span> No puede ser completamente numérica</li>
+                  <li data-rule="common"><span>✓</span> No debe ser demasiado común</li>
+                  <li data-rule="personal"><span>✓</span> No debe parecerse demasiado a tus datos personales</li>
+                </ul>
+              </div>
+              {% for error in form.password1.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+
+            <div class="form-field full-width">
+              <label for="{{ form.password2.id_for_label }}" class="form-label">{{ form.password2.label }}</label>
+              <div class="password-control">
+                {{ form.password2 }}
+                <button type="button" class="password-toggle" data-password-toggle="{{ form.password2.id_for_label }}" aria-label="Mostrar contraseña" aria-pressed="false">
+                  <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" focusable="false">
+                    <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" stroke="currentColor" stroke-width="1.8"/>
+                  </svg>
+                </button>
+              </div>
+              {% for error in form.password2.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
+            </div>
+          </div>
+
+          <button class="btn btn-primary register-submit" type="submit">Crear mi cuenta</button>
+
+          <p class="login-link mb-0">¿Ya tienes una cuenta? <a href="{% url 'accounts:login' %}">Iniciar sesión</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var roleField = document.getElementById('{{ form.role.id_for_label }}');
+    var studentFields = document.querySelectorAll('[data-student-field]');
+    var passwordInput = document.getElementById('{{ form.password1.id_for_label }}');
+    var nameInputs = [
+      document.getElementById('{{ form.first_name.id_for_label }}'),
+      document.getElementById('{{ form.last_name.id_for_label }}'),
+      document.getElementById('{{ form.username.id_for_label }}'),
+      document.getElementById('{{ form.email.id_for_label }}')
+    ];
+
+    function updateStudentFields() {
+      if (!roleField) return;
+      var isStudent = roleField.value === 'STUDENT';
+      studentFields.forEach(function (field) {
+        field.classList.toggle('d-none', !isStudent);
+        field.querySelectorAll('select, input').forEach(function (input) {
+          input.disabled = !isStudent;
+        });
+      });
+    }
+
+    function updatePasswordRules() {
+      if (!passwordInput) return;
+      var value = passwordInput.value;
+      var lowered = value.toLowerCase();
+      var personalText = nameInputs.map(function (input) { return input ? input.value.toLowerCase() : ''; }).filter(Boolean);
+      var rules = {
+        length: value.length >= 8,
+        numeric: value.length > 0 && !/^\d+$/.test(value),
+        common: value.length > 0 && !['password', 'contraseña', 'contrasena', '12345678', 'qwerty123'].includes(lowered),
+        personal: value.length > 0 && !personalText.some(function (text) { return text.length >= 3 && lowered.includes(text); })
+      };
+
+      Object.keys(rules).forEach(function (rule) {
+        var item = document.querySelector('[data-rule="' + rule + '"]');
+        if (item) item.classList.toggle('is-complete', rules[rule]);
+      });
+    }
+
+    document.querySelectorAll('[data-password-toggle]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var input = document.getElementById(button.getAttribute('data-password-toggle'));
+        if (!input) return;
+        var show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        button.setAttribute('aria-pressed', show ? 'true' : 'false');
+        button.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+      });
+    });
+
+    if (roleField) {
+      roleField.addEventListener('change', updateStudentFields);
+      updateStudentFields();
+    }
+
+    if (passwordInput) {
+      passwordInput.addEventListener('input', updatePasswordRules);
+      nameInputs.forEach(function (input) {
+        if (input) input.addEventListener('input', updatePasswordRules);
+      });
+      updatePasswordRules();
+    }
+  });
+</script>
+{% endblock %}

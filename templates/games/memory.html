@@ -1,0 +1,8 @@
+{% extends 'games/game_base.html' %}
+{% block game_title %}🧠 Memoria de palabras{% endblock %}
+{% block game_board %}
+<section class="games-page__board" data-memory-game>
+  <p>Encuentra la imagen y su palabra. Elige dos tarjetas por turno.</p>
+  <div class="games-page__memory-grid" data-memory-grid></div>
+</section>
+{% endblock %}

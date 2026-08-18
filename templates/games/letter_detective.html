@@ -1,0 +1,9 @@
+{% extends 'games/game_base.html' %}
+{% block game_title %}🕵️ Detective de letras{% endblock %}
+{% block game_board %}
+<section class="games-page__board" data-letter-detective>
+  <button class="games-page__listen-main" type="button" data-detective-speak>🔊 Escuchar palabra</button>
+  <p>Observa con calma y elige la palabra correcta.</p>
+  <div class="games-page__option-grid" data-detective-options></div>
+</section>
+{% endblock %}

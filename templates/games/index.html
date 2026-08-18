@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Juegos | {{ site_name }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/games.css' %}">{% endblock %}
+
+{% block content %}
+<main class="games-page">
+  <section class="games-page__hero">
+    <div class="container">
+      <div class="games-page__hero-card">
+        <div>
+          <span class="games-page__eyebrow">Practica con retos cortos</span>
+          <h1>Aprende jugando</h1>
+          <p>Practica letras, sonidos, sílabas y palabras mientras superas pequeños retos.</p>
+        </div>
+        <div class="games-page__hero-visual" aria-hidden="true">
+          <span>🔎</span><span>🧩</span><span>🎧</span><span>📖</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="container games-page__section">
+    <div class="games-page__section-heading">
+      <h2>🎯 Recomendado para ti</h2>
+      <p>Retos pensados para tu nivel actual y tus próximas prácticas.</p>
+    </div>
+    <div class="games-page__grid games-page__grid--featured">
+      {% for game in recommended_games %}
+        <article class="games-page__recommendation">
+          <div class="games-page__icon">{{ game.icon }}</div>
+          <div>
+            <h3>{{ game.name }}</h3>
+            <p>{{ game.description }}</p>
+            <a class="games-page__button" href="{% url 'games:detail' game.slug %}">Jugar ahora</a>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if started_games %}
+    <section class="container games-page__section">
+      <div class="games-page__section-heading">
+        <h2>Continúa jugando</h2>
+        <p>Retoma tus prácticas iniciadas.</p>
+      </div>
+      <div class="games-page__grid">
+        {% for game in started_games %}
+          <article class="games-page__mini-card">
+            <span>{{ game.icon }}</span>
+            <strong>{{ game.name }}</strong>
+            <a href="{% url 'games:detail' game.slug %}">Continuar</a>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="container games-page__section">
+    <div class="games-page__section-heading">
+      <h2>Todos los juegos</h2>
+      <p>Elige una práctica breve y avanza a tu ritmo.</p>
+    </div>
+    <div class="games-page__cards">
+      {% for item in game_cards %}
+        <article class="games-page__game-card">
+          <div class="games-page__game-top">
+            <span class="games-page__icon">{{ item.game.icon }}</span>
+            <span class="games-page__level">Nivel {{ item.game.level.number|default:'1' }}</span>
+          </div>
+          <h3>{{ item.game.name }}</h3>
+          <p>{{ item.game.description }}</p>
+          <dl class="games-page__meta">
+            <div><dt>Habilidad</dt><dd>{{ item.game.skill }}</dd></div>
+            <div><dt>Progreso</dt><dd>{% if item.progress %}Mejor resultado: {{ item.progress.best_score }}%{% else %}Listo para iniciar{% endif %}</dd></div>
+          </dl>
+          <a class="games-page__button games-page__button--full" href="{% url 'games:detail' item.game.slug %}">Jugar</a>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+</main>
+{% endblock %}

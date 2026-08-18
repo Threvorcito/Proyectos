@@ -1,0 +1,11 @@
+{% extends 'games/game_base.html' %}
+{% block game_title %}📖 Camino de lectura{% endblock %}
+{% block game_board %}
+<section class="games-page__board" data-reading-path>
+  <div class="games-page__path-station">Estación <span data-path-station>1</span></div>
+  <h2 data-path-prompt></h2>
+  <div class="games-page__path-target" data-path-target></div>
+  <button class="games-page__audio-button" type="button" data-path-speak>🔊 Escuchar</button>
+  <div class="games-page__option-grid" data-path-options></div>
+</section>
+{% endblock %}

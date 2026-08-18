@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <h1>Lecturas</h1>
+  <div class="row g-4 mt-2">
+    {% for reading in readings %}
+      <div class="col-md-6 col-lg-4"><a class="card-link" href="{% url 'readings:detail' reading.pk %}"><div class="feature-card level-purple"><h3>{{ reading.title }}</h3><p>{{ reading.description }}</p></div></a></div>
+    {% empty %}
+      <p>No hay lecturas.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <h1>Panel docente</h1>
+  <div class="table-responsive mt-4">
+    <table class="table align-middle">
+      <thead><tr><th>Estudiante</th><th>Nivel</th><th>Progreso</th><th>Puntos</th><th>Última actividad</th></tr></thead>
+      <tbody>
+        {% for student in students %}
+          <tr><td>{{ student.display_name }}</td><td>{% if student.current_level %}Nivel {{ student.current_level.number }}{% endif %}</td><td>{{ student.points }}</td><td>{{ student.stars }}</td><td>{{ student.last_activity_at|default:'Sin actividad' }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

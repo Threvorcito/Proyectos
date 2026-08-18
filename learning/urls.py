@@ -1,0 +1,11 @@
+from django.urls import path
+
+from . import views
+from .views_accessibility import accessibility_settings
+
+app_name = 'learning'
+
+urlpatterns = [
+    path('', views.level_list, name='levels'),
+    path('mi-forma-de-leer/', accessibility_settings, name='accessibility'),
+]

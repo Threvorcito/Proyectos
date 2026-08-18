@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5 reading-page">
+  <div class="reading-card">
+    <h1>{{ reading.title }}</h1>
+    <p>{{ reading.description }}</p>
+    <button class="btn btn-outline-primary mb-3" type="button" data-speak-text="{{ reading.content|escapejs }}">Escuchar lectura</button>
+    <article class="reading-content" data-reading-text>
+      {{ reading.content|linebreaksbr }}
+    </article>
+    <hr>
+    <h2>Comprensión</h2>
+    {% for question in reading.questions.all %}
+      <div class="question-box">
+        <h3>{{ question.question }}</h3>
+        <div class="d-flex flex-wrap gap-2">
+          {% for answer in question.answers.all %}
+            <button class="btn btn-soft" type="button" data-answer="{{ answer.answer }}" data-correct="{{ answer.is_correct|yesno:'1,0' }}">{{ answer.answer }}</button>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

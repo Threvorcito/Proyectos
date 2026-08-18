@@ -1,0 +1,14 @@
+{% extends 'games/game_base.html' %}
+{% block game_title %}🧩 Construye la palabra{% endblock %}
+{% block game_board %}
+<section class="games-page__board" data-build-word>
+  <div class="games-page__image-prompt" data-build-image></div>
+  <h2 data-build-prompt></h2>
+  <div class="games-page__answer-slots" data-build-answer></div>
+  <div class="games-page__option-grid" data-build-options></div>
+  <div class="games-page__actions">
+    <button class="games-page__button games-page__button--soft" type="button" data-build-clear>Borrar</button>
+    <button class="games-page__button" type="button" data-build-check>Revisar palabra</button>
+  </div>
+</section>
+{% endblock %}

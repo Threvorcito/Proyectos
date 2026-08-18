@@ -1,0 +1,872 @@
+{% extends 'base.html' %}
+{% block title %}{{ site_name }}{% endblock %}
+{% block extra_css %}
+<style>
+  .home-hero {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .home-hero::before,
+  .home-hero::after {
+    border-radius: 999px;
+    content: "";
+    filter: blur(2px);
+    opacity: .45;
+    position: absolute;
+    z-index: 0;
+  }
+
+  .home-hero::before {
+    background: rgba(43, 142, 168, .12);
+    height: 210px;
+    left: -90px;
+    top: 28px;
+    width: 210px;
+  }
+
+  .home-hero::after {
+    background: rgba(91, 191, 140, .1);
+    bottom: -90px;
+    height: 240px;
+    right: -80px;
+    width: 240px;
+  }
+
+  .home-hero .home-hero__inner {
+    position: relative;
+    z-index: 1;
+  }
+
+  .home-hero .home-hero__kicker {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-bottom: 1rem;
+  }
+
+  .home-hero .home-hero__kicker .eyebrow {
+    margin-bottom: 0;
+  }
+
+  .home-hero .home-hero__tag {
+    background: #fff;
+    border: 1px solid rgba(43, 142, 168, .18);
+    border-radius: 999px;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, .055);
+    color: var(--primary);
+    font-size: .82rem;
+    font-weight: 700;
+    padding: .42rem .7rem;
+  }
+
+  .home-hero .home-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .9rem;
+  }
+
+  .home-hero .home-hero__button {
+    align-items: center;
+    display: inline-flex;
+    gap: .45rem;
+  }
+
+  .home-hero .home-hero__visual {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .home-hero .learning-demo {
+    background:
+      radial-gradient(circle at 15% 12%, rgba(43, 142, 168, .12), transparent 25%),
+      radial-gradient(circle at 88% 18%, rgba(91, 191, 140, .13), transparent 24%),
+      linear-gradient(180deg, #ffffff 0%, #f8fcfd 100%);
+    border: 1px solid rgba(226, 232, 240, .95);
+    border-radius: 30px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, .12);
+    max-width: 480px;
+    min-height: 380px;
+    overflow: hidden;
+    padding: 1.35rem;
+    position: relative;
+    width: 100%;
+  }
+
+  .home-hero .learning-demo::before {
+    background: rgba(242, 193, 78, .15);
+    border-radius: 999px;
+    bottom: -64px;
+    content: "";
+    height: 160px;
+    left: -52px;
+    position: absolute;
+    width: 160px;
+  }
+
+  .home-hero .learning-demo__book {
+    align-items: center;
+    background: #eef9fc;
+    border: 1px solid rgba(43, 142, 168, .12);
+    border-radius: 22px;
+    color: var(--primary);
+    display: inline-flex;
+    height: 62px;
+    justify-content: center;
+    left: 50%;
+    position: relative;
+    transform: translateX(-50%);
+    width: 78px;
+    z-index: 1;
+  }
+
+  .home-hero .learning-demo__stack {
+    display: grid;
+    gap: .9rem;
+    margin-top: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .home-hero .word-builder {
+    background: rgba(255, 255, 255, .88);
+    border: 1px solid #e2e8f0;
+    border-radius: 22px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, .075);
+    padding: 1rem;
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+
+  .home-hero .word-builder:hover {
+    box-shadow: 0 18px 40px rgba(15, 23, 42, .1);
+    transform: translateY(-3px);
+  }
+
+  .home-hero .word-builder__syllables {
+    align-items: center;
+    display: flex;
+    gap: .45rem;
+    justify-content: center;
+    margin-bottom: .55rem;
+  }
+
+  .home-hero .syllable-chip {
+    background: #eef8fb;
+    border: 1px solid rgba(43, 142, 168, .14);
+    border-radius: 14px;
+    color: var(--primary);
+    font-weight: 800;
+    min-width: 58px;
+    padding: .55rem .7rem;
+    text-align: center;
+  }
+
+  .home-hero .word-builder--green .syllable-chip {
+    background: #effbf6;
+    border-color: rgba(91, 191, 140, .2);
+    color: #27815f;
+  }
+
+  .home-hero .word-builder__plus,
+  .home-hero .word-builder__arrow {
+    color: #94a3b8;
+    font-weight: 800;
+  }
+
+  .home-hero .word-builder__arrow {
+    text-align: center;
+  }
+
+  .home-hero .word-builder__word {
+    align-items: center;
+    display: flex;
+    gap: .65rem;
+    justify-content: center;
+    margin-top: .35rem;
+  }
+
+  .home-hero .word-builder__word strong {
+    color: #0f172a;
+    font-size: 1.45rem;
+    letter-spacing: .05em;
+  }
+
+  .home-hero .word-audio {
+    align-items: center;
+    background: #fff8e7;
+    border: 1px solid rgba(213, 155, 40, .18);
+    border-radius: 999px;
+    color: #a66f13;
+    display: inline-flex;
+    height: 38px;
+    justify-content: center;
+    width: 38px;
+  }
+
+  .home-hero .progress-badge {
+    align-items: center;
+    animation: homeHeroFloat 4s ease-in-out infinite;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    bottom: 1.1rem;
+    box-shadow: 0 16px 34px rgba(15, 23, 42, .12);
+    display: inline-flex;
+    gap: .45rem;
+    padding: .65rem .85rem;
+    position: absolute;
+    right: 1.1rem;
+    z-index: 2;
+  }
+
+  .home-hero .progress-badge__star {
+    color: #d59b28;
+    font-size: 1.2rem;
+  }
+
+  .home-hero .progress-badge__text {
+    color: #334155;
+    font-size: .9rem;
+    font-weight: 800;
+  }
+
+  .home-hero .learning-demo__dot {
+    border-radius: 50%;
+    position: absolute;
+    z-index: 0;
+  }
+
+  .home-hero .learning-demo__dot--one {
+    background: rgba(43, 142, 168, .16);
+    height: 42px;
+    left: 1.2rem;
+    top: 5rem;
+    width: 42px;
+  }
+
+  .home-hero .learning-demo__dot--two {
+    background: rgba(91, 191, 140, .16);
+    height: 34px;
+    right: 1.4rem;
+    top: 5.8rem;
+    width: 34px;
+  }
+
+  @keyframes homeHeroFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+
+  @media (max-width: 991.98px) {
+    .home-hero .learning-demo {
+      max-width: 430px;
+      min-height: 360px;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .home-hero .home-hero__visual {
+      margin-top: 1.5rem;
+    }
+
+    .home-hero .learning-demo {
+      min-height: 350px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-hero .progress-badge {
+      animation: none;
+    }
+
+    .home-hero .word-builder,
+    .home-hero .home-hero__button,
+    .home-hero .learning-demo__book,
+    .home-hero .syllable-chip {
+      transition: none;
+    }
+  }
+
+  .home-levels {
+    --level-one: #2b8ea8;
+    --level-two: #35a982;
+    --level-three: #d59b28;
+  }
+
+  .home-levels .levels-header {
+    margin: 0 auto 1.75rem;
+    max-width: 680px;
+    text-align: center;
+  }
+
+  .home-levels .levels-header h2 {
+    font-size: clamp(1.8rem, 3vw, 2.45rem);
+    font-weight: 700;
+    margin-bottom: .45rem;
+  }
+
+  .home-levels .levels-header p {
+    font-size: 1.05rem;
+    margin-bottom: .3rem;
+  }
+
+  .home-levels .levels-header span {
+    color: #64748b;
+    display: inline-block;
+  }
+
+  .home-levels .levels-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 auto;
+    max-width: 1080px;
+  }
+
+  .home-levels .level-card {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #dbe6ef;
+    border-radius: 24px;
+    box-shadow: 0 14px 36px rgba(15, 23, 42, .08);
+    display: flex;
+    flex-direction: column;
+    min-height: 340px;
+    overflow: hidden;
+    padding: 28px 24px;
+    position: relative;
+    text-align: center;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+
+  .home-levels .level-card::before {
+    border-radius: 999px;
+    content: "";
+    height: 150px;
+    opacity: .16;
+    position: absolute;
+    right: -64px;
+    top: -72px;
+    width: 150px;
+  }
+
+  .home-levels .level-card:hover,
+  .home-levels .level-card:focus-visible {
+    box-shadow: 0 20px 46px rgba(15, 23, 42, .12);
+    outline: none;
+    transform: translateY(-5px);
+  }
+
+  .home-levels .level-card--one {
+    background: linear-gradient(180deg, #eef9fc 0%, #ffffff 82%);
+    border-top: 5px solid var(--level-one);
+  }
+
+  .home-levels .level-card--two {
+    background: linear-gradient(180deg, #effbf6 0%, #ffffff 82%);
+    border-top: 5px solid var(--level-two);
+  }
+
+  .home-levels .level-card--three {
+    background: linear-gradient(180deg, #fff8e7 0%, #ffffff 82%);
+    border-top: 5px solid var(--level-three);
+  }
+
+  .home-levels .level-card--one::before { background: var(--level-one); }
+  .home-levels .level-card--two::before { background: var(--level-two); }
+  .home-levels .level-card--three::before { background: var(--level-three); }
+
+  .home-levels .level-icon {
+    align-items: center;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, .1);
+    display: inline-flex;
+    font-size: 1.05rem;
+    font-weight: 800;
+    height: 76px;
+    justify-content: center;
+    letter-spacing: .04em;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: transform .25s ease;
+    width: 76px;
+    z-index: 1;
+  }
+
+  .home-levels .level-card:hover .level-icon,
+  .home-levels .level-card:focus-visible .level-icon {
+    transform: scale(1.05);
+  }
+
+  .home-levels .level-card--one .level-icon { color: var(--level-one); }
+  .home-levels .level-card--two .level-icon { color: var(--level-two); }
+  .home-levels .level-card--three .level-icon { color: var(--level-three); }
+
+  .home-levels .level-number {
+    color: #64748b;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    margin-bottom: .45rem;
+    text-transform: uppercase;
+  }
+
+  .home-levels .level-title {
+    color: #0f172a;
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin-bottom: .75rem;
+  }
+
+  .home-levels .level-description {
+    color: #475569;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+  }
+
+  .home-levels .level-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    justify-content: center;
+    margin: auto 0 1rem;
+  }
+
+  .home-levels .level-tags span {
+    background: rgba(255, 255, 255, .86);
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 600;
+    padding: .35rem .65rem;
+  }
+
+  .home-levels .level-link {
+    color: var(--primary);
+    font-weight: 800;
+  }
+
+  .home-levels .level-card--two .level-link { color: var(--level-two); }
+  .home-levels .level-card--three .level-link { color: #a66f13; }
+
+  @media (max-width: 991.98px) {
+    .home-levels .levels-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-levels .level-card--three {
+      grid-column: 1 / -1;
+      justify-self: center;
+      max-width: calc(50% - 12px);
+      width: 100%;
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .home-levels .levels-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .home-levels .level-card--three {
+      grid-column: auto;
+      max-width: none;
+    }
+  }
+
+  .home-learning-path {
+    --learn-color: #2b8ea8;
+    --practice-color: #35a982;
+    --advance-color: #8b6ef2;
+  }
+
+  .home-learning-path .learning-grid {
+    display: grid;
+    gap: 24px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-learning-path .learning-card {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .07);
+    display: flex;
+    flex-direction: column;
+    min-height: 275px;
+    overflow: hidden;
+    padding: 26px 22px;
+    position: relative;
+    text-align: center;
+    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  }
+
+  .home-learning-path .learning-card::before {
+    border-radius: 999px;
+    content: "";
+    height: 120px;
+    opacity: .13;
+    position: absolute;
+    right: -54px;
+    top: -58px;
+    width: 120px;
+  }
+
+  .home-learning-path .learning-card:hover,
+  .home-learning-path .learning-card:focus-visible {
+    box-shadow: 0 18px 40px rgba(15, 23, 42, .11);
+    outline: none;
+    transform: translateY(-4px);
+  }
+
+  .home-learning-path .learning-card--learn {
+    background: linear-gradient(180deg, #eef9fc 0%, #ffffff 84%);
+    border-top: 5px solid var(--learn-color);
+  }
+
+  .home-learning-path .learning-card--practice {
+    background: linear-gradient(180deg, #effbf6 0%, #ffffff 84%);
+    border-top: 5px solid var(--practice-color);
+  }
+
+  .home-learning-path .learning-card--advance {
+    background: linear-gradient(180deg, #f5f1ff 0%, #ffffff 84%);
+    border-top: 5px solid var(--advance-color);
+  }
+
+  .home-learning-path .learning-card--learn::before { background: var(--learn-color); }
+  .home-learning-path .learning-card--practice::before { background: var(--practice-color); }
+  .home-learning-path .learning-card--advance::before { background: var(--advance-color); }
+
+  .home-learning-path .learning-icon {
+    align-items: center;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .09);
+    display: inline-flex;
+    font-size: 1.35rem;
+    font-weight: 800;
+    height: 68px;
+    justify-content: center;
+    margin-bottom: 1rem;
+    position: relative;
+    transition: transform .25s ease;
+    width: 68px;
+    z-index: 1;
+  }
+
+  .home-learning-path .learning-card:hover .learning-icon,
+  .home-learning-path .learning-card:focus-visible .learning-icon {
+    transform: scale(1.05);
+  }
+
+  .home-learning-path .learning-card--learn .learning-icon { color: var(--learn-color); }
+  .home-learning-path .learning-card--practice .learning-icon { color: var(--practice-color); }
+  .home-learning-path .learning-card--advance .learning-icon { color: var(--advance-color); }
+
+  .home-learning-path .learning-title {
+    color: #0f172a;
+    font-size: 1.45rem;
+    font-weight: 700;
+    margin-bottom: .75rem;
+  }
+
+  .home-learning-path .learning-description {
+    color: #475569;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+  }
+
+  .home-learning-path .learning-tags {
+    color: #64748b;
+    font-size: .9rem;
+    font-weight: 700;
+    margin-top: auto;
+  }
+
+  .home-benefits .benefits-header {
+    margin-bottom: 1.25rem;
+  }
+
+  .home-benefits .benefits-header h2 {
+    font-size: clamp(1.65rem, 2.5vw, 2.2rem);
+    font-weight: 700;
+    margin-bottom: 0;
+  }
+
+  .home-benefits .benefits-grid {
+    display: grid;
+    gap: 18px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .home-benefits .benefit-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-left: 5px solid var(--benefit-color, var(--primary));
+    border-radius: 20px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .055);
+    min-height: 180px;
+    padding: 20px 18px;
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+
+  .home-benefits .benefit-card:hover,
+  .home-benefits .benefit-card:focus-visible {
+    box-shadow: 0 14px 30px rgba(15, 23, 42, .09);
+    outline: none;
+    transform: translateY(-3px);
+  }
+
+  .home-benefits .benefit-card--reading { --benefit-color: #2b8ea8; background: linear-gradient(180deg, #f0faff 0%, #fff 90%); }
+  .home-benefits .benefit-card--progress { --benefit-color: #5bbf8c; background: linear-gradient(180deg, #f2fbf6 0%, #fff 90%); }
+  .home-benefits .benefit-card--access { --benefit-color: #8b6ef2; background: linear-gradient(180deg, #f6f3ff 0%, #fff 90%); }
+  .home-benefits .benefit-card--audio { --benefit-color: #d59b28; background: linear-gradient(180deg, #fff8e8 0%, #fff 90%); }
+
+  .home-benefits .benefit-icon {
+    align-items: center;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 8px 18px rgba(15, 23, 42, .08);
+    color: var(--benefit-color, var(--primary));
+    display: inline-flex;
+    font-size: 1.2rem;
+    font-weight: 800;
+    height: 48px;
+    justify-content: center;
+    margin-bottom: .9rem;
+    width: 48px;
+  }
+
+  .home-benefits .benefit-title {
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: .45rem;
+  }
+
+  .home-benefits .benefit-description {
+    color: #475569;
+    font-size: .95rem;
+    line-height: 1.55;
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 991.98px) {
+    .home-learning-path .learning-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .home-learning-path .learning-card--advance {
+      grid-column: 1 / -1;
+      justify-self: center;
+      max-width: calc(50% - 12px);
+      width: 100%;
+    }
+
+    .home-benefits .benefits-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    .home-learning-path .learning-grid,
+    .home-benefits .benefits-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .home-learning-path .learning-card--advance {
+      grid-column: auto;
+      max-width: none;
+    }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<section class="hero-section home-hero">
+  <div class="container py-5 home-hero__inner">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-6">
+        <div class="home-hero__kicker">
+          <span class="eyebrow">{{ site_tagline }}</span>
+          <span class="home-hero__tag">Aprende a tu ritmo</span>
+        </div>
+        <h1>Leer puede ser una aventura diferente para cada niño</h1>
+        <p class="lead">Lectura sin Límites acompaña a los estudiantes paso a paso mediante sonidos, sílabas, palabras, juegos y lecturas interactivas.</p>
+        <div class="home-hero__actions">
+          <a class="btn btn-primary btn-lg home-hero__button" href="{% url 'accounts:register' %}">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" focusable="false">
+              <path d="M8 5.5 17 12l-9 6.5v-13Z" fill="currentColor"/>
+            </svg>
+            Comenzar a aprender
+          </a>
+          <a class="btn btn-outline-primary btn-lg home-hero__button" href="{% url 'activities:list' %}">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" focusable="false">
+              <path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.8L12 18l-1.8-5.4-5.7-1.8L10.2 9 12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            Explorar actividades
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-6 home-hero__visual">
+        <div class="learning-demo" aria-label="Ejemplo visual de sílabas, palabras, audio y progreso">
+          <span class="learning-demo__dot learning-demo__dot--one" aria-hidden="true"></span>
+          <span class="learning-demo__dot learning-demo__dot--two" aria-hidden="true"></span>
+
+          <div class="learning-demo__book" aria-hidden="true">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" focusable="false">
+              <path d="M5 5.5c2.5 0 4.3.55 7 2.05 2.7-1.5 4.5-2.05 7-2.05v12.2c-2.4 0-4.25.5-7 2-2.75-1.5-4.6-2-7-2V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M12 7.55v12.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <div class="learning-demo__stack">
+            <div class="word-builder">
+              <div class="word-builder__syllables" aria-hidden="true">
+                <span class="syllable-chip">CA</span>
+                <span class="word-builder__plus">+</span>
+                <span class="syllable-chip">SA</span>
+              </div>
+              <div class="word-builder__arrow" aria-hidden="true">↓</div>
+              <div class="word-builder__word">
+                <strong>CASA</strong>
+                <span class="word-audio" aria-hidden="true">🔊</span>
+              </div>
+            </div>
+
+            <div class="word-builder word-builder--green">
+              <div class="word-builder__syllables" aria-hidden="true">
+                <span class="syllable-chip">LU</span>
+                <span class="word-builder__plus">+</span>
+                <span class="syllable-chip">NA</span>
+              </div>
+              <div class="word-builder__arrow" aria-hidden="true">↓</div>
+              <div class="word-builder__word">
+                <strong>LUNA</strong>
+                <span class="word-audio" aria-hidden="true">🔊</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="progress-badge" aria-hidden="true">
+            <span class="progress-badge__star">★</span>
+            <span class="progress-badge__text">+1 palabra</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container py-4 home-levels" aria-labelledby="home-levels-title">
+  <div class="levels-header">
+    <h2 id="home-levels-title">Niveles</h2>
+    <p>Un recorrido claro, progresivo y amigable.</p>
+    <span>Elige dónde quieres comenzar tu aventura de lectura.</span>
+  </div>
+  <div class="levels-grid">
+    <article class="level-card level-card--one" tabindex="0">
+      <div class="level-icon" aria-hidden="true">ABC</div>
+      <span class="level-number">Nivel 1</span>
+      <h3 class="level-title">Primeros pasos</h3>
+      <p class="level-description">Descubre letras, sonidos y sílabas mientras formas tus primeras palabras.</p>
+      <div class="level-tags" aria-label="Habilidades del nivel 1">
+        <span>Letras</span>
+        <span>Sonidos</span>
+        <span>Sílabas</span>
+      </div>
+      <span class="level-link">Explorar nivel →</span>
+    </article>
+
+    <article class="level-card level-card--two" tabindex="0">
+      <div class="level-icon" aria-hidden="true">A Z</div>
+      <span class="level-number">Nivel 2</span>
+      <h3 class="level-title">Construyo palabras</h3>
+      <p class="level-description">Combina sílabas, reconoce sonidos y practica palabras de forma divertida.</p>
+      <div class="level-tags" aria-label="Habilidades del nivel 2">
+        <span>Sílabas</span>
+        <span>Palabras</span>
+        <span>Sonidos</span>
+      </div>
+      <span class="level-link">Explorar nivel →</span>
+    </article>
+
+    <article class="level-card level-card--three" tabindex="0">
+      <div class="level-icon" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" focusable="false">
+          <path d="M5 5.5c2.5 0 4.3.55 7 2.05 2.7-1.5 4.5-2.05 7-2.05v12.2c-2.4 0-4.25.5-7 2-2.75-1.5-4.6-2-7-2V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M12 7.55v12.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="level-number">Nivel 3</span>
+      <h3 class="level-title">Leo y comprendo</h3>
+      <p class="level-description">Lee pequeños textos, descubre nuevas palabras y fortalece tu comprensión.</p>
+      <div class="level-tags" aria-label="Habilidades del nivel 3">
+        <span>Lectura</span>
+        <span>Historias</span>
+        <span>Comprensión</span>
+      </div>
+      <span class="level-link">Explorar nivel →</span>
+    </article>
+  </div>
+</section>
+
+<section class="container py-4 home-learning-path" aria-label="Aprendo, practico y avanzo">
+  <div class="learning-grid">
+    <article class="learning-card learning-card--learn" tabindex="0">
+      <div class="learning-icon" aria-hidden="true">ABC</div>
+      <h3 class="learning-title">Aprendo</h3>
+      <p class="learning-description">Descubro letras, sonidos y sílabas paso a paso.</p>
+      <span class="learning-tags">Letras · Sonidos · Sílabas</span>
+    </article>
+    <article class="learning-card learning-card--practice" tabindex="0">
+      <div class="learning-icon" aria-hidden="true">✎</div>
+      <h3 class="learning-title">Practico</h3>
+      <p class="learning-description">Refuerzo lo aprendido con actividades y pequeños retos interactivos.</p>
+      <span class="learning-tags">Actividades · Palabras · Retos</span>
+    </article>
+    <article class="learning-card learning-card--advance" tabindex="0">
+      <div class="learning-icon" aria-hidden="true">★</div>
+      <h3 class="learning-title">Avanzo</h3>
+      <p class="learning-description">Celebro mis logros y continúo avanzando a mi propio ritmo.</p>
+      <span class="learning-tags">Progreso · Logros · Estrellas</span>
+    </article>
+  </div>
+</section>
+
+<section class="container py-4 home-benefits" aria-labelledby="home-benefits-title">
+  <div class="benefits-header"><h2 id="home-benefits-title">Beneficios</h2></div>
+  <div class="benefits-grid">
+    <article class="benefit-card benefit-card--reading" tabindex="0">
+      <div class="benefit-icon" aria-hidden="true">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" focusable="false">
+          <path d="M5 5.5c2.5 0 4.3.55 7 2.05 2.7-1.5 4.5-2.05 7-2.05v12.2c-2.4 0-4.25.5-7 2-2.75-1.5-4.6-2-7-2V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M12 7.55v12.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <h3 class="benefit-title">Lectura guiada</h3>
+      <p class="benefit-description">Lee paso a paso con apoyo visual y auditivo.</p>
+    </article>
+    <article class="benefit-card benefit-card--progress" tabindex="0">
+      <div class="benefit-icon" aria-hidden="true">↗</div>
+      <h3 class="benefit-title">Progreso individual</h3>
+      <p class="benefit-description">Cada estudiante avanza a su propio ritmo.</p>
+    </article>
+    <article class="benefit-card benefit-card--access" tabindex="0">
+      <div class="benefit-icon" aria-hidden="true">Aa</div>
+      <h3 class="benefit-title">Accesibilidad</h3>
+      <p class="benefit-description">Ajusta la lectura según tus necesidades.</p>
+    </article>
+    <article class="benefit-card benefit-card--audio" tabindex="0">
+      <div class="benefit-icon" aria-hidden="true">🔊</div>
+      <h3 class="benefit-title">Audio en navegador</h3>
+      <p class="benefit-description">Escucha letras, palabras y pequeñas lecturas.</p>
+    </article>
+  </div>
+</section>
+{% endblock %}

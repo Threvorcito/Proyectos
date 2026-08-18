@@ -1,0 +1,16 @@
+<footer class="site-footer mt-5">
+  <div class="container py-4">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <h5>{{ site_name }}</h5>
+        <p>{{ site_tagline }}</p>
+      </div>
+      <div class="col-md-8 footer-links">
+        <a href="{% url 'learning:levels' %}">Aprender</a>
+        <a href="{% url 'activities:list' %}">Actividades</a>
+        <a href="{% url 'readings:list' %}">Lecturas</a>
+        <a href="{% url 'core:privacy' %}">Privacidad</a>
+      </div>
+    </div>
+  </div>
+</footer>
