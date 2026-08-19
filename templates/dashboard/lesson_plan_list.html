@@ -97,7 +97,10 @@
                       {% endif %}
                     </td>
                     <td class="text-end">
-                      <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>
+                      <div class="lesson-report__row-actions">
+                        <a class="btn btn-sm btn-primary" href="{% url 'dashboard:lesson_plan_implementation' plan.pk %}">Implementar</a>
+                        <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>
+                      </div>
                     </td>
                   </tr>
                 {% empty %}
@@ -145,9 +148,12 @@
             </div>
             <div class="admin-dialog__grid">
               <p>{{ create_form.subject.label_tag }}{{ create_form.subject }}{{ create_form.subject.errors }}</p>
+              <p>{{ create_form.competency.label_tag }}{{ create_form.competency }}{{ create_form.competency.errors }}</p>
               <p>{{ create_form.level.label_tag }}{{ create_form.level }}{{ create_form.level.errors }}</p>
               <p>{{ create_form.grade.label_tag }}{{ create_form.grade }}{{ create_form.grade.errors }}</p>
               <p>{{ create_form.planned_date.label_tag }}{{ create_form.planned_date }}{{ create_form.planned_date.errors }}</p>
+              <p>{{ create_form.period.label_tag }}{{ create_form.period }}{{ create_form.period.errors }}</p>
+              <p>{{ create_form.unit.label_tag }}{{ create_form.unit }}{{ create_form.unit.errors }}</p>
               <p>{{ create_form.title.label_tag }}{{ create_form.title }}{{ create_form.title.errors }}</p>
               <p>{{ create_form.topic.label_tag }}{{ create_form.topic }}{{ create_form.topic.errors }}</p>
             </div>
@@ -155,11 +161,26 @@
 
           <div class="lesson-plan-dialog__section">
             <div class="lesson-plan-dialog__section-title">
-              <strong>Desarrollo didáctico</strong>
-              <span>Objetivo, metodología y observaciones</span>
+              <strong>Indicador MINED y contenido</strong>
+              <span>Logro, criterios y contenido de la clase</span>
             </div>
             <div class="admin-dialog__grid admin-dialog__grid--resource">
+              <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.achievement_indicator.label_tag }}{{ create_form.achievement_indicator }}{{ create_form.achievement_indicator.errors }}</p>
+              <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.evaluation_criteria.label_tag }}{{ create_form.evaluation_criteria }}{{ create_form.evaluation_criteria.errors }}</p>
+              <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.content.label_tag }}{{ create_form.content }}{{ create_form.content.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.objective.label_tag }}{{ create_form.objective }}{{ create_form.objective.errors }}</p>
+            </div>
+          </div>
+
+          <div class="lesson-plan-dialog__section">
+            <div class="lesson-plan-dialog__section-title">
+              <strong>Secuencia didáctica</strong>
+              <span>Inicio, lectura docente, comprensión y ortografía</span>
+            </div>
+            <div class="admin-dialog__grid admin-dialog__grid--resource">
+              <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.initial_activities.label_tag }}{{ create_form.initial_activities }}{{ create_form.initial_activities.errors }}</p>
+              <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.teacher_reading.label_tag }}{{ create_form.teacher_reading }}{{ create_form.teacher_reading.errors }}</p>
+              <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.comprehension_orthography_activities.label_tag }}{{ create_form.comprehension_orthography_activities }}{{ create_form.comprehension_orthography_activities.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.methodology.label_tag }}{{ create_form.methodology }}{{ create_form.methodology.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.notes.label_tag }}{{ create_form.notes }}{{ create_form.notes.errors }}</p>
             </div>
@@ -171,6 +192,11 @@
               <span>Materiales opcionales para la clase</span>
             </div>
             <div class="admin-dialog__resource-picks">
+              <div>
+                {{ create_form.assigned_students.label_tag }}
+                <div class="admin-dialog__checklist">{{ create_form.assigned_students }}</div>
+                {{ create_form.assigned_students.errors }}
+              </div>
               <div>
                 {{ create_form.activities.label_tag }}
                 <div class="admin-dialog__checklist">{{ create_form.activities }}</div>

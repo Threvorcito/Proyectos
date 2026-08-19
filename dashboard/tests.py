@@ -3,7 +3,9 @@ from django.urls import reverse
 
 from accounts.models import CustomUser
 from dashboard.forms import QuickStudentCreationForm
-from learning.models import Level, TeacherProfile
+from activities.models import Activity
+from games.models import Game
+from learning.models import LessonPlan, LessonPlanAssignment, Level, StudentProfile, Subject, TeacherProfile
 
 
 class DashboardProfileGuardTests(TestCase):
@@ -51,6 +53,58 @@ class QuickStudentCreationFormTests(TestCase):
         self.assertEqual(user.student_profile.school, 'public')
         self.assertEqual(len(password), 8)
         self.assertTrue(user.check_password(password))
+
+
+class LessonPlanImplementationTests(TestCase):
+    def test_teacher_can_open_own_plan_implementation(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        subject = Subject.objects.create(name='Lengua y Literatura')
+        user = CustomUser.objects.create_user(
+            username='docenteimplementa',
+            email='docenteimplementa@example.com',
+            password='Docente123!',
+            role=CustomUser.Role.TEACHER,
+        )
+        teacher = TeacherProfile.objects.create(user=user, name='Docente Implementa')
+        plan = LessonPlan.objects.create(
+            teacher=teacher,
+            subject=subject,
+            level=level,
+            grade='1',
+            title='Uso de y',
+            topic='Ortografía',
+            objective='Reconocer el uso de la y.',
+            achievement_indicator='Reconoce reglas ortográficas en textos breves.',
+        )
+        Activity.objects.create(level=level, subject=subject, grade='1', title='Selecciona palabras con y', activity_type=Activity.ActivityType.SYLLABLES)
+        Game.objects.create(level=level, subject=subject, grade='1', name='Detective de letras', slug='detective-letras', description='Juego de apoyo', skill='Discriminación visual')
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('dashboard:lesson_plan_implementation', args=[plan.pk]))
+
+        self.assertContains(response, 'Implementación del plan')
+        self.assertContains(response, 'Reconoce reglas ortográficas en textos breves.')
+        self.assertContains(response, 'Selecciona palabras con y')
+        self.assertContains(response, 'Detective de letras')
+
+    def test_assigned_plan_appears_in_student_dashboard(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        subject = Subject.objects.create(name='Lengua y Literatura')
+        teacher_user = CustomUser.objects.create_user(username='docenteplan', email='docenteplan@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Plan')
+        student_user = CustomUser.objects.create_user(username='sofia', email='sofia@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Sofia Perez', grade='1', reading_level=level, current_level=level)
+        plan = LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Lectura con apoyo', topic='Comprensión', objective='Comprender textos breves.')
+        LessonPlanAssignment.objects.create(plan=plan, student=student)
+        self.client.force_login(student_user)
+
+        dashboard_response = self.client.get(reverse('dashboard:student'))
+        plan_response = self.client.get(reverse('dashboard:student_lesson_plan', args=[plan.pk]))
+
+        self.assertContains(dashboard_response, 'Mi clase de hoy')
+        self.assertContains(dashboard_response, 'Lectura con apoyo')
+        self.assertContains(plan_response, 'Mi clase con apoyo')
+        self.assertContains(plan_response, 'Vamos paso a paso')
 
 
 class AdminResourceDeleteTests(TestCase):

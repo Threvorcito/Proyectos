@@ -4,10 +4,19 @@
 <div class="teacher-dashboard">
   <div class="container py-5">
     <section class="teacher-hero">
-      <div>
+      <div class="teacher-hero__identity">
+        <div class="teacher-hero__photo">
+          {% if request.user.profile_photo %}
+            <img src="{{ request.user.profile_photo.url }}" alt="Foto de perfil de {{ request.user.get_full_name|default:request.user.username }}">
+          {% else %}
+            <span>{{ request.user.first_name|default:request.user.username|slice:':1' }}</span>
+          {% endif %}
+        </div>
+        <div>
         <span class="eyebrow">Panel docente</span>
         <h1>Bienvenido, {{ request.user.first_name|default:request.user.username }}</h1>
         <p>Gestiona alumnos, planes de clase y recursos de aprendizaje desde un tablero de seguimiento.</p>
+        </div>
       </div>
       <div class="teacher-hero__actions">
         <a class="btn btn-primary" href="{% url 'dashboard:quick_student_create' %}">Crear alumno</a>
@@ -50,7 +59,7 @@
                   <td>{{ plan.subject }}</td>
                   <td>{{ plan.level }}</td>
                   <td>{{ plan.activities.count }} act. · {{ plan.readings.count }} lect.</td>
-                  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a></td>
+                  <td class="text-end"><a class="btn btn-sm btn-primary" href="{% url 'dashboard:lesson_plan_implementation' plan.pk %}">Implementar</a></td>
                 </tr>
               {% empty %}
                 <tr><td colspan="5" class="teacher-table__empty">No tienes planes recientes. Crea tu primera planificación.</td></tr>

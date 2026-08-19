@@ -6,7 +6,7 @@ from django.utils.text import slugify
 
 from accounts.models import CustomUser
 from activities.models import Activity
-from learning.models import LessonPlan, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
+from learning.models import CurriculumCompetency, LessonPlan, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
 from readings.models import Reading
 
 
@@ -221,9 +221,21 @@ class QuickStudentCreationForm(forms.Form):
 
 
 class LessonPlanForm(forms.ModelForm):
+    assigned_students = forms.ModelMultipleChoiceField(
+        label='Asignar a estudiantes',
+        queryset=StudentProfile.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
     class Meta:
         model = LessonPlan
-        fields = ('subject', 'level', 'grade', 'title', 'topic', 'objective', 'methodology', 'planned_date', 'activities', 'readings', 'notes', 'is_active')
+        fields = (
+            'subject', 'competency', 'level', 'grade', 'planned_date', 'period', 'unit', 'title', 'topic',
+            'achievement_indicator', 'evaluation_criteria', 'content', 'objective',
+            'initial_activities', 'teacher_reading', 'comprehension_orthography_activities',
+            'methodology', 'activities', 'readings', 'notes', 'is_active',
+        )
         widgets = {
             'planned_date': forms.DateInput(attrs={'type': 'date'}),
             'activities': forms.CheckboxSelectMultiple(),
@@ -233,12 +245,23 @@ class LessonPlanForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         level = self.data.get('level') or getattr(self.instance, 'level_id', None)
+        subject = self.data.get('subject') or getattr(self.instance, 'subject_id', None)
+        grade = self.data.get('grade') or getattr(self.instance, 'grade', None)
         self.fields['subject'].label = 'Materia'
+        self.fields['competency'].label = 'Indicador MINED / competencia'
         self.fields['level'].label = 'Nivel lector'
         self.fields['grade'].label = 'Grado'
+        self.fields['period'].label = 'Período'
+        self.fields['unit'].label = 'Unidad'
         self.fields['title'].label = 'Título del plan'
         self.fields['topic'].label = 'Tema'
+        self.fields['achievement_indicator'].label = 'Indicador de logro'
+        self.fields['evaluation_criteria'].label = 'Criterios de evaluación'
+        self.fields['content'].label = 'Contenido'
         self.fields['objective'].label = 'Objetivo de aprendizaje'
+        self.fields['initial_activities'].label = 'Actividades iniciales'
+        self.fields['teacher_reading'].label = 'Lectura por el docente'
+        self.fields['comprehension_orthography_activities'].label = 'Actividades de comprensión y ortografía'
         self.fields['methodology'].label = 'Metodología de aplicación'
         self.fields['planned_date'].label = 'Fecha planificada'
         self.fields['activities'].label = 'Actividades sugeridas'
@@ -246,12 +269,39 @@ class LessonPlanForm(forms.ModelForm):
         self.fields['notes'].label = 'Notas internas'
         self.fields['is_active'].label = 'Plan activo'
         self.fields['subject'].queryset = Subject.objects.filter(is_active=True).order_by('name')
+        self.fields['competency'].queryset = CurriculumCompetency.objects.filter(is_active=True).select_related('subject').order_by('grade', 'subject__name', 'title')
+        if subject:
+            self.fields['competency'].queryset = self.fields['competency'].queryset.filter(subject_id=subject)
+        if grade:
+            self.fields['competency'].queryset = self.fields['competency'].queryset.filter(grade=grade)
+        self.fields['assigned_students'].queryset = StudentProfile.objects.select_related('current_level').order_by('name')
+        if grade:
+            self.fields['assigned_students'].queryset = self.fields['assigned_students'].queryset.filter(grade=grade)
+        if self.instance and self.instance.pk:
+            self.fields['assigned_students'].initial = self.instance.assignments.values_list('student_id', flat=True)
         self.fields['activities'].queryset = Activity.objects.filter(is_active=True).select_related('level', 'subject')
         self.fields['readings'].queryset = Reading.objects.filter(is_active=True).select_related('level', 'subject')
         if level:
             self.fields['activities'].queryset = self.fields['activities'].queryset.filter(level_id=level)
             self.fields['readings'].queryset = self.fields['readings'].queryset.filter(level_id=level)
         style_admin_form(self)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        competency = cleaned_data.get('competency')
+        if competency:
+            cleaned_data['achievement_indicator'] = cleaned_data.get('achievement_indicator') or competency.achievement_indicator
+            cleaned_data['content'] = cleaned_data.get('content') or competency.competency
+            cleaned_data['methodology'] = cleaned_data.get('methodology') or competency.dyslexia_adaptation
+        return cleaned_data
+
+    def save_assignments(self, plan):
+        selected_students = self.cleaned_data.get('assigned_students')
+        if selected_students is None:
+            return
+        plan.assignments.exclude(student__in=selected_students).delete()
+        for student in selected_students:
+            plan.assignments.get_or_create(student=student)
 
 
 def build_admin_model_form(model, fields):

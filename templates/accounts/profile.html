@@ -24,13 +24,20 @@
 {% endif %}
       <div class="profile-shell">
         <aside class="profile-summary-card">
-          <div class="profile-avatar">{{ request.user.first_name|default:request.user.username|slice:':1' }}</div>
+          <div class="profile-avatar profile-avatar--large">
+            {% if request.user.profile_photo %}
+              <img src="{{ request.user.profile_photo.url }}" alt="Foto de perfil de {{ request.user.get_full_name|default:request.user.username }}">
+            {% else %}
+              <span>{{ request.user.first_name|default:request.user.username|slice:':1' }}</span>
+            {% endif %}
+          </div>
           <span class="profile-role">{{ request.user.get_role_display }}</span>
           <h1>{{ request.user.get_full_name|default:request.user.username }}</h1>
           <p>Actualiza tus datos principales para mantener identificada tu cuenta dentro del sistema.</p>
           <dl>
             <div><dt>Usuario</dt><dd>{{ request.user.username }}</dd></div>
             <div><dt>Correo actual</dt><dd>{{ request.user.email }}</dd></div>
+            <div><dt>Sexo</dt><dd>{{ request.user.get_gender_display }}</dd></div>
           </dl>
         </aside>
 
@@ -43,11 +50,22 @@
             <a class="btn btn-outline-primary" href="{% url 'dashboard:redirect' %}">Volver al panel</a>
           </div>
 
-          <form method="post" class="profile-form-grid">
+          <form method="post" enctype="multipart/form-data" class="profile-form-grid">
             {% csrf_token %}
+            <div class="profile-photo-field profile-form-grid__full">
+              <div class="profile-photo-field__preview">
+                {% if request.user.profile_photo %}
+                  <img src="{{ request.user.profile_photo.url }}" alt="Foto actual">
+                {% else %}
+                  <span>{{ request.user.first_name|default:request.user.username|slice:':1' }}</span>
+                {% endif %}
+              </div>
+              <p>{{ form.profile_photo.label_tag }}{{ form.profile_photo }}{{ form.profile_photo.errors }}<small>Formatos recomendados: JPG o PNG. Usa una foto clara para identificar la cuenta.</small></p>
+            </div>
             <p>{{ form.first_name.label_tag }}{{ form.first_name }}{{ form.first_name.errors }}</p>
             <p>{{ form.last_name.label_tag }}{{ form.last_name }}{{ form.last_name.errors }}</p>
             <p class="profile-form-grid__full">{{ form.email.label_tag }}{{ form.email }}{{ form.email.errors }}</p>
+            <p class="profile-form-grid__full">{{ form.gender.label_tag }}{{ form.gender }}{{ form.gender.errors }}</p>
             <div class="profile-security-note profile-form-grid__full">
               <strong>Seguridad</strong>
               <span>Tu contraseña se gestiona desde el administrador avanzado o mediante recuperación cuando esté habilitada.</span>

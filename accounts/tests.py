@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from .forms import ProfileUpdateForm
 from learning.models import TeacherProfile
 
 from .models import CustomUser
@@ -22,6 +23,16 @@ class LoginTests(TestCase):
         })
 
         self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+
+
+class ProfileUpdateFormTests(TestCase):
+    def test_profile_form_includes_professional_fields(self):
+        form = ProfileUpdateForm()
+
+        self.assertIn('gender', form.fields)
+        self.assertIn('profile_photo', form.fields)
+        self.assertEqual(form.fields['gender'].label, 'Sexo')
+        self.assertEqual(form.fields['profile_photo'].label, 'Foto de perfil')
 
     def test_teacher_profile_can_login_with_email(self):
         teacher = TeacherProfile.objects.create(

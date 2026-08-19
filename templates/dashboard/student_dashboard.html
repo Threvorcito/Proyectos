@@ -15,6 +15,16 @@
     <a class="btn btn-outline-primary" href="{% url 'dashboard:student_report' student.pk %}">Ver mi reporte</a>
     <a class="btn btn-primary" href="{% url 'activities:list' %}">Practicar</a>
   </div>
+  {% if today_plan %}
+    <section class="student-today-card mt-5">
+      <div>
+        <span class="eyebrow">Mi clase de hoy</span>
+        <h2>{{ today_plan.plan.title }}</h2>
+        <p>{{ today_plan.plan.subject }} · {{ today_plan.plan.level }} · {{ today_plan.plan.period|default:'45 minutos' }}</p>
+      </div>
+      <a class="btn btn-primary" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">Empezar con ayuda</a>
+    </section>
+  {% endif %}
   <section class="mt-5">
     <h2>Recomendado para ti</h2>
     <div class="row g-4 mt-2">

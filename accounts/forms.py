@@ -83,16 +83,20 @@ class RegistrationForm(UserCreationForm):
 class ProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = CustomUser
-        fields = ('first_name', 'last_name', 'email')
+        fields = ('first_name', 'last_name', 'email', 'gender', 'profile_photo')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['first_name'].label = 'Nombres'
         self.fields['last_name'].label = 'Apellidos'
         self.fields['email'].label = 'Correo electrónico'
+        self.fields['gender'].label = 'Sexo'
+        self.fields['profile_photo'].label = 'Foto de perfil'
         self.fields['first_name'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Ej. Administrador'})
         self.fields['last_name'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Ej. Sistema'})
         self.fields['email'].widget.attrs.update({'class': 'form-control', 'placeholder': 'correo@ejemplo.com', 'autocomplete': 'email'})
+        self.fields['gender'].widget.attrs.update({'class': 'form-select'})
+        self.fields['profile_photo'].widget.attrs.update({'class': 'form-control', 'accept': 'image/*'})
 
 
 class StudentProfileForm(forms.Form):

@@ -230,11 +230,20 @@ class MinedReference(models.Model):
 class LessonPlan(models.Model):
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, related_name='lesson_plans')
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT, related_name='lesson_plans')
+    competency = models.ForeignKey(CurriculumCompetency, on_delete=models.SET_NULL, blank=True, null=True, related_name='lesson_plans')
     level = models.ForeignKey(Level, on_delete=models.PROTECT, related_name='lesson_plans')
     grade = models.CharField(max_length=1, choices=StudentProfile.Grade.choices, default=StudentProfile.Grade.FIRST)
+    period = models.CharField(max_length=80, blank=True, default='45 minutos')
+    unit = models.CharField(max_length=40, blank=True)
     title = models.CharField(max_length=160)
     topic = models.CharField(max_length=180)
+    achievement_indicator = models.TextField(blank=True, verbose_name='Indicador de logro')
+    evaluation_criteria = models.TextField(blank=True, verbose_name='Criterios de evaluación')
+    content = models.TextField(blank=True, verbose_name='Contenido')
     objective = models.TextField()
+    initial_activities = models.TextField(blank=True, verbose_name='Actividades iniciales')
+    teacher_reading = models.TextField(blank=True, verbose_name='Lectura por el docente')
+    comprehension_orthography_activities = models.TextField(blank=True, verbose_name='Actividades de comprensión y ortografía')
     methodology = models.TextField(blank=True, verbose_name='Metodología de aplicación')
     planned_date = models.DateField(blank=True, null=True)
     activities = models.ManyToManyField('activities.Activity', blank=True, related_name='lesson_plans')
@@ -248,6 +257,29 @@ class LessonPlan(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class LessonPlanAssignment(models.Model):
+    class Status(models.TextChoices):
+        ASSIGNED = 'assigned', 'Asignado'
+        IN_PROGRESS = 'in_progress', 'En progreso'
+        COMPLETED = 'completed', 'Completado'
+
+    plan = models.ForeignKey(LessonPlan, on_delete=models.CASCADE, related_name='assignments')
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='lesson_plan_assignments')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ASSIGNED)
+    assigned_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+    teacher_notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-assigned_at']
+        constraints = [
+            models.UniqueConstraint(fields=['plan', 'student'], name='unique_lesson_plan_assignment'),
+        ]
+
+    def __str__(self):
+        return f'{self.plan} - {self.student}'
 
 
 class ParentProfile(models.Model):

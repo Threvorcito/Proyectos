@@ -36,17 +36,31 @@
             <div class="lesson-plan-dialog__section-title"><strong>Datos generales</strong><span>Materia, nivel y alcance</span></div>
             <div class="admin-dialog__grid">
               <p>{{ form.subject.label_tag }}{{ form.subject }}{{ form.subject.errors }}</p>
+              <p>{{ form.competency.label_tag }}{{ form.competency }}{{ form.competency.errors }}</p>
               <p>{{ form.level.label_tag }}{{ form.level }}{{ form.level.errors }}</p>
               <p>{{ form.grade.label_tag }}{{ form.grade }}{{ form.grade.errors }}</p>
               <p>{{ form.planned_date.label_tag }}{{ form.planned_date }}{{ form.planned_date.errors }}</p>
+              <p>{{ form.period.label_tag }}{{ form.period }}{{ form.period.errors }}</p>
+              <p>{{ form.unit.label_tag }}{{ form.unit }}{{ form.unit.errors }}</p>
               <p>{{ form.title.label_tag }}{{ form.title }}{{ form.title.errors }}</p>
               <p>{{ form.topic.label_tag }}{{ form.topic }}{{ form.topic.errors }}</p>
             </div>
           </div>
           <div class="lesson-plan-dialog__section">
-            <div class="lesson-plan-dialog__section-title"><strong>Desarrollo didáctico</strong><span>Objetivo, metodología y notas</span></div>
+            <div class="lesson-plan-dialog__section-title"><strong>Indicador MINED y contenido</strong><span>Logro, criterios y contenido de la clase</span></div>
             <div class="admin-dialog__grid admin-dialog__grid--resource">
+              <p class="admin-dialog__span-2">{{ form.achievement_indicator.label_tag }}{{ form.achievement_indicator }}{{ form.achievement_indicator.errors }}</p>
+              <p class="admin-dialog__span-2">{{ form.evaluation_criteria.label_tag }}{{ form.evaluation_criteria }}{{ form.evaluation_criteria.errors }}</p>
+              <p class="admin-dialog__span-2">{{ form.content.label_tag }}{{ form.content }}{{ form.content.errors }}</p>
               <p class="admin-dialog__span-2">{{ form.objective.label_tag }}{{ form.objective }}{{ form.objective.errors }}</p>
+            </div>
+          </div>
+          <div class="lesson-plan-dialog__section">
+            <div class="lesson-plan-dialog__section-title"><strong>Secuencia didáctica</strong><span>Inicio, lectura docente, comprensión y ortografía</span></div>
+            <div class="admin-dialog__grid admin-dialog__grid--resource">
+              <p class="admin-dialog__span-2">{{ form.initial_activities.label_tag }}{{ form.initial_activities }}{{ form.initial_activities.errors }}</p>
+              <p class="admin-dialog__span-2">{{ form.teacher_reading.label_tag }}{{ form.teacher_reading }}{{ form.teacher_reading.errors }}</p>
+              <p class="admin-dialog__span-2">{{ form.comprehension_orthography_activities.label_tag }}{{ form.comprehension_orthography_activities }}{{ form.comprehension_orthography_activities.errors }}</p>
               <p class="admin-dialog__span-2">{{ form.methodology.label_tag }}{{ form.methodology }}{{ form.methodology.errors }}</p>
               <p class="admin-dialog__span-2">{{ form.notes.label_tag }}{{ form.notes }}{{ form.notes.errors }}</p>
             </div>
@@ -54,6 +68,7 @@
           <div class="lesson-plan-dialog__section">
             <div class="lesson-plan-dialog__section-title"><strong>Recursos vinculados</strong><span>Actividades y lecturas opcionales</span></div>
             <div class="admin-dialog__resource-picks">
+              <div>{{ form.assigned_students.label_tag }}<div class="admin-dialog__checklist">{{ form.assigned_students }}</div>{{ form.assigned_students.errors }}</div>
               <div>{{ form.activities.label_tag }}<div class="admin-dialog__checklist">{{ form.activities }}</div>{{ form.activities.errors }}</div>
               <div>{{ form.readings.label_tag }}<div class="admin-dialog__checklist">{{ form.readings }}</div>{{ form.readings.errors }}</div>
             </div>

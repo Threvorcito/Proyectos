@@ -10,7 +10,7 @@ from activities.models import Activity
 from activities.services import get_recommended_activities
 from gamification.services import evaluate_achievements
 from games.models import Game
-from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
+from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, LessonPlanAssignment, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading
 
@@ -270,6 +270,7 @@ def lesson_plan_create(request):
             plan.teacher = teacher
         plan.save()
         form.save_m2m()
+        form.save_assignments(plan)
         messages.success(request, 'Plan de clase creado correctamente.')
         return redirect('dashboard:lesson_plans')
     if request.method == 'POST':
@@ -294,10 +295,50 @@ def lesson_plan_update(request, pk):
         return redirect('dashboard:lesson_plans')
     form = LessonPlanForm(request.POST or None, instance=plan)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        plan = form.save()
+        form.save_assignments(plan)
         messages.success(request, 'Plan de clase actualizado correctamente.')
         return redirect('dashboard:lesson_plans')
     return render(request, 'dashboard/lesson_plan_form.html', {'form': form, 'is_edit': True, 'plan': plan})
+
+
+@login_required
+@user_passes_test(is_teacher_or_admin)
+def lesson_plan_implementation(request, pk):
+    plan = get_object_or_404(
+        LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings'),
+        pk=pk,
+    )
+    teacher = getattr(request.user, 'teacher_profile', None)
+    if not is_admin_user(request.user) and plan.teacher != teacher:
+        messages.error(request, 'No tienes permiso para implementar este plan de clase.')
+        return redirect('dashboard:lesson_plans')
+
+    activity_ids = plan.activities.values_list('id', flat=True)
+    reading_ids = plan.readings.values_list('id', flat=True)
+    suggested_activities = Activity.objects.filter(
+        is_active=True,
+        level=plan.level,
+        grade=plan.grade,
+    ).exclude(id__in=activity_ids).select_related('subject', 'level')[:6]
+    suggested_readings = Reading.objects.filter(
+        is_active=True,
+        level=plan.level,
+        grade=plan.grade,
+    ).exclude(id__in=reading_ids).select_related('subject', 'level')[:6]
+    suggested_games = Game.objects.filter(
+        is_active=True,
+        level=plan.level,
+        grade=plan.grade,
+    ).select_related('subject', 'level')[:6]
+
+    return render(request, 'dashboard/lesson_plan_implementation.html', {
+        'plan': plan,
+        'assigned_students': plan.assignments.select_related('student', 'student__current_level'),
+        'suggested_activities': suggested_activities,
+        'suggested_readings': suggested_readings,
+        'suggested_games': suggested_games,
+    })
 
 
 @login_required
@@ -344,7 +385,25 @@ def student_dashboard(request):
         return redirect('accounts:profile')
     evaluate_achievements(student)
     recommended = get_recommended_activities(student)
-    return render(request, 'dashboard/student_dashboard.html', {'student': student, 'recommended': recommended})
+    assigned_plans = LessonPlanAssignment.objects.filter(student=student).select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings')[:3]
+    today_plan = assigned_plans[0] if assigned_plans else None
+    return render(request, 'dashboard/student_dashboard.html', {'student': student, 'recommended': recommended, 'assigned_plans': assigned_plans, 'today_plan': today_plan})
+
+
+@login_required
+def student_lesson_plan(request, pk):
+    student = getattr(request.user, 'student_profile', None)
+    if student is None:
+        messages.error(request, 'Tu cuenta no tiene un perfil de estudiante asignado.')
+        return redirect('accounts:profile')
+    assignment = get_object_or_404(
+        LessonPlanAssignment.objects.select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings'),
+        plan_id=pk,
+        student=student,
+    )
+    plan = assignment.plan
+    suggested_games = Game.objects.filter(is_active=True, level=plan.level, grade=plan.grade).select_related('subject', 'level')[:4]
+    return render(request, 'dashboard/student_lesson_plan.html', {'assignment': assignment, 'plan': plan, 'suggested_games': suggested_games})
 
 
 @login_required

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Mi clase | {{ plan.title }}{% endblock %}
+{% block content %}
+<div class="student-plan-page">
+  <div class="container py-5">
+    <section class="student-plan-hero">
+      <span class="eyebrow">Mi clase con apoyo</span>
+      <h1>{{ plan.title }}</h1>
+      <p>Vamos paso a paso. Lee con calma, escucha, mira las palabras y practica sin prisa.</p>
+      <a class="btn btn-outline-primary" href="{% url 'dashboard:student' %}">Volver a mi panel</a>
+    </section>
+
+    <section class="student-plan-steps mt-4">
+      <article><span>1</span><h2>Escucho</h2><p>{{ plan.teacher_reading|default:'Pide a tu docente o tutor que lea primero en voz alta.'|linebreaksbr }}</p></article>
+      <article><span>2</span><h2>Comprendo</h2><p>{{ plan.comprehension_orthography_activities|default:'Responde una pregunta a la vez. Puedes señalar dibujos o decir la respuesta en voz alta.'|linebreaksbr }}</p></article>
+      <article><span>3</span><h2>Practico palabras</h2><p>{{ plan.content|default:'Busca palabras importantes, sepáralas en sílabas y repítelas despacio.'|linebreaksbr }}</p></article>
+      <article><span>4</span><h2>Juego y refuerzo</h2><p>Usa una actividad o juego para practicar sonidos, letras y comprensión.</p></article>
+    </section>
+
+    <section class="student-resource-card mt-4">
+      <div class="student-resource-card__header"><h2>Actividades de mi clase</h2><span>Elige una para continuar</span></div>
+      <div class="student-resource-grid">
+        {% for activity in plan.activities.all %}
+          <a href="{% url 'activities:detail' activity.pk %}"><strong>{{ activity.title }}</strong><span>{{ activity.get_activity_type_display }}</span></a>
+        {% empty %}<p>No hay actividades vinculadas todavía.</p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="student-resource-card mt-4">
+      <div class="student-resource-card__header"><h2>Lecturas y juegos</h2><span>Apoyo visual y lúdico</span></div>
+      <div class="student-resource-grid">
+        {% for reading in plan.readings.all %}
+          <a href="{% url 'readings:detail' reading.pk %}"><strong>{{ reading.title }}</strong><span>Lectura · {{ reading.estimated_time }} min</span></a>
+        {% endfor %}
+        {% for game in suggested_games %}
+          <a href="{% url 'games:detail' game.slug %}"><strong>{{ game.name }}</strong><span>Juego · {{ game.skill }}</span></a>
+        {% empty %}
+          {% if not plan.readings.all %}<p>No hay lecturas o juegos sugeridos todavía.</p>{% endif %}
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}
