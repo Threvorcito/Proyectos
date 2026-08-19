@@ -21,7 +21,11 @@
           <h1>{{ config.title }}</h1>
         </div>
         <div class="d-flex gap-2">
-          <a class="btn btn-primary" href="{% url 'dashboard:admin_resource_create' resource %}">Agregar {{ config.singular }}</a>
+          {% if create_form %}
+            <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createResourceModal">Agregar {{ config.singular }}</button>
+          {% else %}
+            <a class="btn btn-primary" href="{% url 'dashboard:admin_resource_create' resource %}">Agregar {{ config.singular }}</a>
+          {% endif %}
           <a class="btn btn-outline-primary" href="{% url 'dashboard:redirect' %}">Volver</a>
         </div>
       </div>
@@ -47,4 +51,31 @@
     </div>
   </section>
 </div>
+
+{% if create_form %}
+  <div class="modal fade admin-dialog" id="createResourceModal" tabindex="-1" aria-labelledby="createResourceModalTitle" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <form method="post" action="{% url 'dashboard:admin_resource_create' resource %}" enctype="multipart/form-data">
+          {% csrf_token %}
+          <input type="hidden" name="_from_modal" value="1">
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title" id="createResourceModalTitle">Crear {{ config.singular }}</h2>
+              <p>Completa los datos para registrar este recurso. Haz clic en guardar cuando termines.</p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body admin-dialog__body">
+            {{ create_form.as_p }}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Crear {{ config.singular }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
 {% endblock %}

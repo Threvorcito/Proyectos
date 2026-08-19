@@ -65,6 +65,23 @@ class AdminResourceDeleteTests(TestCase):
         self.assertContains(response, regular_user.username)
         self.assertNotContains(response, superuser.username)
 
+    def test_admin_create_dialogs_are_rendered(self):
+        admin = CustomUser.objects.create_user(
+            username='admindialogos',
+            email='admindialogos@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        self.client.force_login(admin)
+
+        for resource in ('usuarios', 'profesores', 'alumnos'):
+            response = self.client.get(reverse('dashboard:admin_resource', args=[resource]))
+            self.assertContains(response, 'createResourceModal')
+
+        plans_response = self.client.get(reverse('dashboard:lesson_plans'))
+        self.assertContains(plans_response, 'createLessonPlanModal')
+
     def test_admin_can_delete_teacher_profile_and_user(self):
         admin = CustomUser.objects.create_user(
             username='adminborrar',

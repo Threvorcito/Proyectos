@@ -26,7 +26,11 @@
           <span class="eyebrow">Planificación</span>
           <h1>Planes de clase</h1>
         </div>
-        <a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_create' %}">Crear plan</a>
+        {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+          <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createLessonPlanModal">Crear plan</button>
+        {% else %}
+          <a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_create' %}">Crear plan</a>
+        {% endif %}
       </div>
 
       <div class="row g-3">
@@ -50,5 +54,31 @@
 </div>
 {% else %}
 </div>
+{% endif %}
+
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+  <div class="modal fade admin-dialog" id="createLessonPlanModal" tabindex="-1" aria-labelledby="createLessonPlanModalTitle" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content">
+        <form method="post" action="{% url 'dashboard:lesson_plan_create' %}">
+          {% csrf_token %}
+          <div class="modal-header">
+            <div>
+              <h2 class="modal-title" id="createLessonPlanModalTitle">Crear plan de clase</h2>
+              <p>Completa la planificación para registrar un nuevo plan. Haz clic en guardar cuando termines.</p>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body admin-dialog__body">
+            {{ create_form.as_p }}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Crear plan</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 {% endif %}
 {% endblock %}

@@ -148,6 +148,7 @@ class QuickStudentCreationForm(forms.Form):
             reading_level=level,
             current_level=level,
         )
+        self.created_credentials = {'username': user.username, 'password': password}
         return user, password
 
 

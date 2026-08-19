@@ -1194,6 +1194,70 @@ a { text-decoration: none; }
   display: block;
   height: 100%;
 }
+.modal-backdrop.show {
+  backdrop-filter: blur(8px);
+  background-color: rgba(16, 24, 40, .38);
+  opacity: 1;
+}
+.admin-dialog .modal-content {
+  border: 1px solid #d9dde7;
+  border-radius: 18px;
+  box-shadow: 0 28px 90px rgba(16, 24, 40, .28);
+  overflow: hidden;
+}
+.admin-dialog .modal-header {
+  align-items: flex-start;
+  border-bottom: 0;
+  padding: 1.35rem 1.35rem .6rem;
+}
+.admin-dialog .modal-title {
+  color: #293241;
+  font-size: 1.35rem;
+  font-weight: 900;
+  margin-bottom: .7rem;
+}
+.admin-dialog .modal-header p {
+  color: #667085;
+  line-height: 1.6;
+  margin: 0;
+}
+.admin-dialog__body {
+  display: grid;
+  gap: 1rem;
+  padding: 1rem 1.35rem 1.4rem;
+}
+.admin-dialog__body p { margin: 0; }
+.admin-dialog__body label {
+  color: #344054;
+  display: block;
+  font-size: .92rem;
+  font-weight: 800;
+  margin-bottom: .45rem;
+}
+.admin-dialog__body .form-control,
+.admin-dialog__body .form-select {
+  border-color: #d9dde7;
+  border-radius: 12px;
+  min-height: 44px;
+}
+.admin-dialog__body .helptext {
+  color: #667085;
+  display: block;
+  font-size: .82rem;
+  margin-top: .35rem;
+}
+.admin-dialog__body ul.errorlist {
+  color: #b42318;
+  font-size: .85rem;
+  margin: 0 0 .35rem;
+  padding-left: 1rem;
+}
+.admin-dialog .modal-footer {
+  background: #f8fafc;
+  border-top: 1px solid #edf0f5;
+  padding: 1rem 1.35rem;
+}
+.admin-dialog .btn { border-radius: 10px; font-weight: 800; }
 
 @media (max-width: 1100px) {
   .admin-console { grid-template-columns: 250px minmax(0, 1fr); }

@@ -20,7 +20,7 @@ from .forms import AdminUserCreationForm, LessonPlanForm, QuickStudentCreationFo
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'fields': None},
     'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'fields': ('user', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
-    'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'reading_level', 'current_level', 'points', 'stars')},
+    'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},
     'materias': {'title': 'Materias', 'singular': 'materia', 'model': Subject, 'fields': ('name', 'description', 'is_active')},
@@ -108,7 +108,16 @@ def admin_resource_landing(request, resource):
     if resource == 'usuarios':
         objects = objects.filter(is_superuser=False)
     objects = objects.order_by('-pk')[:20]
-    return render(request, 'dashboard/admin_resource_landing.html', {'resource': resource, 'config': config, 'objects': objects})
+    create_form = None
+    if resource in ('usuarios', 'profesores', 'alumnos'):
+        form_class = config.get('create_form') or config.get('form') or build_admin_model_form(config['model'], config['fields'])
+        create_form = style_admin_form(form_class())
+    return render(request, 'dashboard/admin_resource_landing.html', {
+        'resource': resource,
+        'config': config,
+        'objects': objects,
+        'create_form': create_form,
+    })
 
 
 @login_required
@@ -127,6 +136,10 @@ def admin_resource_create(request, resource):
         form.save()
         credentials = getattr(form, 'created_credentials', None)
         messages.success(request, f"Se agregó correctamente el {config['singular']}.")
+        if request.POST.get('_from_modal'):
+            if credentials:
+                messages.success(request, f"Credenciales creadas - Usuario: {credentials['username']} / Contraseña: {credentials['password']}")
+            return redirect('dashboard:admin_resource', resource=resource)
         if credentials is None:
             return redirect('dashboard:admin_resource', resource=resource)
         form = form_class()
@@ -198,7 +211,7 @@ def lesson_plan_list(request):
             messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
             return redirect('dashboard:teacher')
         plans = plans.filter(teacher=teacher)
-    return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans})
+    return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans, 'create_form': LessonPlanForm()})
 
 
 @login_required
