@@ -104,7 +104,10 @@ def admin_resource_landing(request, resource):
     if not can_manage_resource(request.user, resource):
         messages.error(request, 'No tienes permiso para gestionar este recurso.')
         return redirect('dashboard:redirect')
-    objects = config['model'].objects.all().order_by('-pk')[:20]
+    objects = config['model'].objects.all()
+    if resource == 'usuarios':
+        objects = objects.filter(is_superuser=False)
+    objects = objects.order_by('-pk')[:20]
     return render(request, 'dashboard/admin_resource_landing.html', {'resource': resource, 'config': config, 'objects': objects})
 
 

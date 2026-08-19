@@ -39,6 +39,32 @@ class AdminResourceDeleteTests(TestCase):
         self.assertContains(create_response, 'Panel de control')
         self.assertContains(create_response, 'Docentes y permisos')
 
+    def test_superusers_are_hidden_from_user_resource_list(self):
+        admin = CustomUser.objects.create_user(
+            username='adminlista',
+            email='adminlista@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        superuser = CustomUser.objects.create_superuser(
+            username='superoculto',
+            email='superoculto@example.com',
+            password='Admin12345!',
+        )
+        regular_user = CustomUser.objects.create_user(
+            username='usuariovisible',
+            email='usuariovisible@example.com',
+            password='Demo12345!',
+            role=CustomUser.Role.PARENT,
+        )
+        self.client.force_login(admin)
+
+        response = self.client.get(reverse('dashboard:admin_resource', args=['usuarios']))
+
+        self.assertContains(response, regular_user.username)
+        self.assertNotContains(response, superuser.username)
+
     def test_admin_can_delete_teacher_profile_and_user(self):
         admin = CustomUser.objects.create_user(
             username='adminborrar',
