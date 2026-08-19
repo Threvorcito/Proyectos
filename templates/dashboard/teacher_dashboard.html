@@ -1,42 +1,93 @@
 {% extends 'base.html' %}
+{% block title %}Panel docente | {{ site_name }}{% endblock %}
 {% block content %}
-<div class="container py-5">
-  <h1>Panel docente</h1>
-  <div class="d-flex flex-wrap gap-2 mt-3">
-    <a class="btn btn-primary" href="{% url 'dashboard:quick_student_create' %}">Crear alumno</a>
-    <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plan_create' %}">Crear plan</a>
-    <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Ver planes</a>
-    {% if teacher_profile.can_manage_activities %}<a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' 'actividades' %}">Gestionar actividades</a>{% endif %}
-    {% if teacher_profile.can_manage_lessons %}<a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' 'clases' %}">Gestionar clases</a>{% endif %}
-    {% if teacher_profile.can_manage_readings %}<a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' 'lecturas' %}">Gestionar lecturas</a>{% endif %}
-  </div>
+<div class="teacher-dashboard">
+  <div class="container py-5">
+    <section class="teacher-hero">
+      <div>
+        <span class="eyebrow">Panel docente</span>
+        <h1>Bienvenido, {{ request.user.first_name|default:request.user.username }}</h1>
+        <p>Gestiona alumnos, planes de clase y recursos de aprendizaje desde un tablero de seguimiento.</p>
+      </div>
+      <div class="teacher-hero__actions">
+        <a class="btn btn-primary" href="{% url 'dashboard:quick_student_create' %}">Crear alumno</a>
+        <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Agregar plan</a>
+        <a class="btn btn-outline-secondary" href="{% url 'accounts:profile' %}">Ver perfil</a>
+      </div>
+    </section>
 
-  <div class="row g-3 mt-3">
-    <div class="col-md-3"><div class="stat-card"><span>Alumnos</span><strong>{{ summary.students }}</strong></div></div>
-    <div class="col-md-3"><div class="stat-card"><span>Completadas</span><strong>{{ summary.completed_activities }}</strong></div></div>
-    <div class="col-md-3"><div class="stat-card"><span>Intentos</span><strong>{{ summary.attempts }}</strong></div></div>
-    <div class="col-md-3"><div class="stat-card"><span>Dificultades</span><strong>{{ summary.difficulties }}</strong></div></div>
-  </div>
+    <section class="teacher-action-panel" aria-label="Accesos de gestión">
+      <a href="{% url 'dashboard:lesson_plans' %}"><strong>Planes</strong><span>Ver reportes y crear planificación</span></a>
+      {% if teacher_profile.can_manage_activities %}<a href="{% url 'dashboard:admin_resource' 'actividades' %}"><strong>Actividades</strong><span>Gestionar práctica guiada</span></a>{% endif %}
+      {% if teacher_profile.can_manage_lessons %}<a href="{% url 'dashboard:admin_resource' 'clases' %}"><strong>Clases</strong><span>Administrar secuencia didáctica</span></a>{% endif %}
+      {% if teacher_profile.can_manage_readings %}<a href="{% url 'dashboard:admin_resource' 'lecturas' %}"><strong>Lecturas</strong><span>Actualizar biblioteca de apoyo</span></a>{% endif %}
+    </section>
 
-  <section class="mt-4">
-    <h2 class="h4">Planes recientes</h2>
-    <div class="row g-3">
-      {% for plan in lesson_plans %}
-        <div class="col-md-6"><div class="feature-card"><h3 class="h5">{{ plan.title }}</h3><p>{{ plan.subject }} · {{ plan.level }}</p><a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a></div></div>
-      {% empty %}
-        <p>No tienes planes recientes.</p>
-      {% endfor %}
+    <section class="teacher-metric-grid" aria-label="Resumen del aula">
+      <article><span>Alumnos</span><strong>{{ summary.students }}</strong><small>Registrados en el sistema</small></article>
+      <article><span>Planes</span><strong>{{ summary.lesson_plans }}</strong><small>Planificaciones creadas</small></article>
+      <article><span>Completadas</span><strong>{{ summary.completed_activities }}</strong><small>Actividades finalizadas</small></article>
+      <article><span>Intentos</span><strong>{{ summary.attempts }}</strong><small>Prácticas realizadas</small></article>
+      <article><span>Dificultades</span><strong>{{ summary.difficulties }}</strong><small>Alertas detectadas</small></article>
+    </section>
+
+    <div class="teacher-dashboard-grid">
+      <section class="teacher-report-card">
+        <div class="teacher-report-card__header">
+          <div>
+            <h2>Planes recientes</h2>
+            <p>Últimas planificaciones registradas por el docente.</p>
+          </div>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Ver todos</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table teacher-table align-middle">
+            <thead><tr><th>Plan</th><th>Materia</th><th>Nivel</th><th>Recursos</th><th></th></tr></thead>
+            <tbody>
+              {% for plan in lesson_plans %}
+                <tr>
+                  <td><strong>{{ plan.title }}</strong><small>{{ plan.topic|default:'Sin tema definido' }}</small></td>
+                  <td>{{ plan.subject }}</td>
+                  <td>{{ plan.level }}</td>
+                  <td>{{ plan.activities.count }} act. · {{ plan.readings.count }} lect.</td>
+                  <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a></td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="teacher-table__empty">No tienes planes recientes. Crea tu primera planificación.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="teacher-report-card">
+        <div class="teacher-report-card__header">
+          <div>
+            <h2>Seguimiento de estudiantes</h2>
+            <p>Resumen de progreso y actividad reciente.</p>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table teacher-table align-middle">
+            <thead><tr><th>Estudiante</th><th>Colegio</th><th>Nivel</th><th>Progreso</th><th>Puntos</th><th>Última actividad</th></tr></thead>
+            <tbody>
+              {% for student in students %}
+                <tr>
+                  <td><a href="{% url 'dashboard:student_report' student.pk %}"><strong>{{ student.display_name }}</strong></a></td>
+                  <td>{{ student.get_school_display }}</td>
+                  <td>{% if student.current_level %}Nivel {{ student.current_level.number }}{% else %}Sin nivel{% endif %}</td>
+                  <td><span class="teacher-badge">{{ student.completed_activities }} completadas</span></td>
+                  <td>{{ student.points }}</td>
+                  <td>{{ student.last_activity_at|date:'d/m/Y H:i'|default:'Sin actividad' }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="teacher-table__empty">Todavía no hay alumnos registrados.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
-  </section>
-  <div class="table-responsive mt-4">
-    <table class="table align-middle">
-      <thead><tr><th>Estudiante</th><th>Nivel</th><th>Progreso</th><th>Puntos</th><th>Última actividad</th></tr></thead>
-      <tbody>
-        {% for student in students %}
-          <tr><td><a href="{% url 'dashboard:student_report' student.pk %}">{{ student.display_name }}</a></td><td>{% if student.current_level %}Nivel {{ student.current_level.number }}{% endif %}</td><td>{{ student.points }}</td><td>{{ student.stars }}</td><td>{{ student.last_activity_at|default:'Sin actividad' }}</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
   </div>
 </div>
 {% endblock %}

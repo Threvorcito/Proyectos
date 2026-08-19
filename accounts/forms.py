@@ -1,7 +1,30 @@
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
 from .models import CustomUser
+
+
+class EmailAuthenticationForm(AuthenticationForm):
+    error_messages = {
+        'invalid_login': 'No pudimos iniciar sesión con ese correo y contraseña.',
+        'inactive': 'Esta cuenta está inactiva.',
+    }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].label = 'Correo electrónico'
+        self.fields['username'].widget.attrs.update({
+            'class': 'login-page__input',
+            'placeholder': 'correo@ejemplo.com',
+            'autocomplete': 'email',
+            'inputmode': 'email',
+        })
+        self.fields['password'].label = 'Contraseña'
+        self.fields['password'].widget.attrs.update({
+            'class': 'login-page__input',
+            'placeholder': 'Escribe tu contraseña',
+            'autocomplete': 'current-password',
+        })
 
 
 class RegistrationForm(UserCreationForm):

@@ -20,7 +20,7 @@ from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, Q
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'update_form': AdminUserUpdateForm, 'fields': None},
     'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'update_form': TeacherUpdateForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
-    'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
+    'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'school', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},
     'materias': {'title': 'Materias', 'singular': 'materia', 'model': Subject, 'fields': ('name', 'description', 'is_active')},
@@ -240,7 +240,7 @@ def teacher_permissions_update(request, pk):
 @login_required
 @user_passes_test(is_teacher_or_admin)
 def lesson_plan_list(request):
-    plans = LessonPlan.objects.select_related('teacher', 'subject', 'level')
+    plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings')
     if not is_admin_user(request.user):
         teacher = getattr(request.user, 'teacher_profile', None)
         if teacher is None:
@@ -272,6 +272,15 @@ def lesson_plan_create(request):
         form.save_m2m()
         messages.success(request, 'Plan de clase creado correctamente.')
         return redirect('dashboard:lesson_plans')
+    if request.method == 'POST':
+        plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings')
+        if not is_admin_user(request.user):
+            teacher = getattr(request.user, 'teacher_profile', None)
+            if teacher is None:
+                messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
+                return redirect('dashboard:teacher')
+            plans = plans.filter(teacher=teacher)
+        return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans, 'create_form': form, 'open_create_modal': True})
     return render(request, 'dashboard/lesson_plan_form.html', {'form': form, 'is_edit': False})
 
 
@@ -353,7 +362,9 @@ def teacher_dashboard(request):
         'difficulties': sum(student.detected_difficulties for student in students),
     }
     teacher_profile = getattr(request.user, 'teacher_profile', None)
-    lesson_plans = LessonPlan.objects.filter(teacher=teacher_profile).select_related('subject', 'level')[:4] if teacher_profile else []
+    lesson_plan_queryset = LessonPlan.objects.filter(teacher=teacher_profile).select_related('subject', 'level').prefetch_related('activities', 'readings') if teacher_profile else LessonPlan.objects.none()
+    summary['lesson_plans'] = lesson_plan_queryset.count()
+    lesson_plans = lesson_plan_queryset[:5]
     return render(request, 'dashboard/teacher_dashboard.html', {
         'students': students,
         'summary': summary,

@@ -66,12 +66,22 @@ class StudentProfile(models.Model):
         URBAN = 'urban', 'Urbana'
         RURAL = 'rural', 'Rural'
 
+    class School(models.TextChoices):
+        TO_DEFINE = 'to_define', 'Por definir'
+        PUBLIC = 'public', 'Escuela pública'
+        PRIVATE = 'private', 'Colegio privado'
+        SUBSIDIZED = 'subsidized', 'Centro subvencionado'
+        RURAL_MULTIGRADE = 'rural_multigrade', 'Escuela rural o multigrado'
+        COMMUNITY = 'community', 'Centro comunitario'
+        OTHER = 'other', 'Otro'
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
     name = models.CharField(max_length=150)
     alias = models.CharField(max_length=80, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     grade = models.CharField(max_length=1, choices=Grade.choices, default=Grade.FIRST)
+    school = models.CharField(max_length=30, choices=School.choices, default=School.TO_DEFINE)
     modality = models.CharField(max_length=20, choices=Modality.choices, default=Modality.REGULAR)
     zone = models.CharField(max_length=10, choices=Zone.choices, default=Zone.URBAN)
     reading_level = models.ForeignKey(Level, on_delete=models.SET_NULL, null=True, related_name='students')

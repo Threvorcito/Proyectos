@@ -171,11 +171,10 @@ class QuickStudentCreationForm(forms.Form):
     name = forms.CharField(label='Nombre completo', max_length=150)
     alias = forms.CharField(label='Nombre corto o alias', max_length=80, required=False)
     grade = forms.ChoiceField(label='Grado', choices=StudentProfile.Grade.choices)
+    school = forms.ChoiceField(label='Colegio / centro educativo', choices=StudentProfile.School.choices, initial=StudentProfile.School.TO_DEFINE)
     modality = forms.ChoiceField(label='Modalidad educativa', choices=StudentProfile.Modality.choices, initial=StudentProfile.Modality.REGULAR)
     zone = forms.ChoiceField(label='Zona', choices=StudentProfile.Zone.choices, initial=StudentProfile.Zone.URBAN)
     reading_level = forms.ModelChoiceField(label='Nivel lector inicial', queryset=Level.objects.none())
-    username = forms.CharField(label='Usuario', max_length=150, required=False, help_text='Opcional. Si se deja vacío, el sistema lo genera automáticamente.')
-    password = forms.CharField(label='Contraseña o PIN', max_length=32, required=False, help_text='Opcional. Si se deja vacío, el sistema genera un PIN seguro.')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -183,8 +182,7 @@ class QuickStudentCreationForm(forms.Form):
         style_admin_form(self)
 
     def _build_username(self):
-        username = self.cleaned_data.get('username')
-        base_source = username or self.cleaned_data['name']
+        base_source = self.cleaned_data['name']
         base = slugify(base_source).replace('-', '_') or 'estudiante'
         candidate = base[:140]
         counter = 1
@@ -195,7 +193,7 @@ class QuickStudentCreationForm(forms.Form):
 
     def save(self):
         username = self._build_username()
-        password = self.cleaned_data.get('password') or get_random_string(8, allowed_chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZ')
+        password = get_random_string(8, allowed_chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZ')
         name_parts = self.cleaned_data['name'].split(' ', 1)
         user = CustomUser.objects.create(
             username=username,
@@ -212,6 +210,7 @@ class QuickStudentCreationForm(forms.Form):
             name=self.cleaned_data['name'],
             alias=self.cleaned_data.get('alias', ''),
             grade=self.cleaned_data['grade'],
+            school=self.cleaned_data['school'],
             modality=self.cleaned_data['modality'],
             zone=self.cleaned_data['zone'],
             reading_level=level,
@@ -234,6 +233,18 @@ class LessonPlanForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         level = self.data.get('level') or getattr(self.instance, 'level_id', None)
+        self.fields['subject'].label = 'Materia'
+        self.fields['level'].label = 'Nivel lector'
+        self.fields['grade'].label = 'Grado'
+        self.fields['title'].label = 'Título del plan'
+        self.fields['topic'].label = 'Tema'
+        self.fields['objective'].label = 'Objetivo de aprendizaje'
+        self.fields['methodology'].label = 'Metodología de aplicación'
+        self.fields['planned_date'].label = 'Fecha planificada'
+        self.fields['activities'].label = 'Actividades sugeridas'
+        self.fields['readings'].label = 'Lecturas sugeridas'
+        self.fields['notes'].label = 'Notas internas'
+        self.fields['is_active'].label = 'Plan activo'
         self.fields['subject'].queryset = Subject.objects.filter(is_active=True).order_by('name')
         self.fields['activities'].queryset = Activity.objects.filter(is_active=True).select_related('level', 'subject')
         self.fields['readings'].queryset = Reading.objects.filter(is_active=True).select_related('level', 'subject')

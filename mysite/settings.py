@@ -109,6 +109,10 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
+AUTHENTICATION_BACKENDS = [
+    'accounts.authentication.EmailOrTeacherBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 LOGIN_URL = 'accounts:login'
 LOGIN_REDIRECT_URL = 'dashboard:redirect'

@@ -21,33 +21,100 @@
 {% else %}
 <div class="container py-5">
 {% endif %}
-      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-4">
-        <div>
-          <span class="eyebrow">Planificación</span>
-          <h1>Planes de clase</h1>
+      <section class="lesson-report">
+        <div class="lesson-report__hero">
+          <div>
+            <span class="eyebrow">Planificación docente</span>
+            <h1>Planes de clase</h1>
+            <p>Organiza, consulta y actualiza tus planificaciones desde una vista tipo reporte.</p>
+          </div>
+          <div class="lesson-report__actions">
+            {% if not request.user.role == 'ADMIN' and not request.user.is_staff and not request.user.is_superuser %}
+              <a class="btn btn-outline-primary lesson-report__back" href="{% url 'dashboard:teacher' %}">Volver al panel docente</a>
+            {% endif %}
+            <button class="btn btn-primary lesson-report__add" type="button" data-bs-toggle="modal" data-bs-target="#createLessonPlanModal">
+              <span>+</span> Agregar plan
+            </button>
+          </div>
         </div>
-        {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
-          <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createLessonPlanModal">Crear plan</button>
-        {% else %}
-          <a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_create' %}">Crear plan</a>
-        {% endif %}
-      </div>
 
-      <div class="row g-3">
-        {% for plan in plans %}
-          <div class="col-md-6">
-            <div class="feature-card h-100">
-              <h2 class="h5">{{ plan.title }}</h2>
-              <p class="mb-1"><strong>Materia:</strong> {{ plan.subject }}</p>
-              <p class="mb-1"><strong>Nivel:</strong> {{ plan.level }}</p>
-              <p class="text-muted">{{ plan.objective|truncatewords:24 }}</p>
-              <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>
+        <div class="lesson-report__metrics" aria-label="Resumen de planes">
+          <article>
+            <span>Total de planes</span>
+            <strong>{{ plans.count }}</strong>
+          </article>
+          <article>
+            <span>Vista</span>
+            <strong>Reporte</strong>
+          </article>
+          <article>
+            <span>Gestión</span>
+            <strong>MINED</strong>
+          </article>
+        </div>
+
+        <div class="lesson-report__table-card">
+          <div class="lesson-report__table-head">
+            <div>
+              <h2>Reporte de planificaciones</h2>
+              <p>Revisa materia, nivel, grado, fecha y recursos vinculados.</p>
             </div>
           </div>
-        {% empty %}
-          <p>No hay planes creados todavía.</p>
-        {% endfor %}
-      </div>
+          <div class="table-responsive">
+            <table class="table lesson-report__table align-middle">
+              <thead>
+                <tr>
+                  <th>Plan</th>
+                  <th>Materia</th>
+                  <th>Nivel</th>
+                  <th>Grado</th>
+                  <th>Fecha</th>
+                  <th>Recursos</th>
+                  <th>Estado</th>
+                  <th class="text-end">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for plan in plans %}
+                  <tr>
+                    <td>
+                      <strong>{{ plan.title }}</strong>
+                      <small>{{ plan.topic|default:'Sin tema definido' }}</small>
+                    </td>
+                    <td>{{ plan.subject }}</td>
+                    <td>{{ plan.level }}</td>
+                    <td>{{ plan.get_grade_display }}</td>
+                    <td>{{ plan.planned_date|date:'d/m/Y'|default:'Sin fecha' }}</td>
+                    <td>
+                      <span class="lesson-report__pill">{{ plan.activities.count }} actividades</span>
+                      <span class="lesson-report__pill">{{ plan.readings.count }} lecturas</span>
+                    </td>
+                    <td>
+                      {% if plan.is_active %}
+                        <span class="lesson-report__status lesson-report__status--active">Activo</span>
+                      {% else %}
+                        <span class="lesson-report__status">Inactivo</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="8">
+                      <div class="lesson-report__empty">
+                        <strong>No hay planes creados todavía.</strong>
+                        <span>Usa el botón Agregar plan para registrar tu primera planificación.</span>
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
     </div>
   </section>
@@ -56,20 +123,26 @@
 </div>
 {% endif %}
 
-{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
-  <div class="modal fade admin-dialog" id="createLessonPlanModal" tabindex="-1" aria-labelledby="createLessonPlanModalTitle" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content">
-        <form method="post" action="{% url 'dashboard:lesson_plan_create' %}">
-          {% csrf_token %}
-          <div class="modal-header">
-            <div>
-              <h2 class="modal-title" id="createLessonPlanModalTitle">Crear plan de clase</h2>
-              <p>Completa la planificación para registrar un nuevo plan. Haz clic en guardar cuando termines.</p>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+<div class="modal fade admin-dialog lesson-plan-dialog" id="createLessonPlanModal" tabindex="-1" aria-labelledby="createLessonPlanModalTitle" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <form method="post" action="{% url 'dashboard:lesson_plan_create' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <div>
+            <span class="lesson-plan-dialog__eyebrow">Nuevo registro</span>
+            <h2 class="modal-title" id="createLessonPlanModalTitle">Agregar plan de clase</h2>
+            <p>Completa la información pedagógica, selecciona recursos y guarda la planificación.</p>
           </div>
-          <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
+          {{ create_form.non_field_errors }}
+          <div class="lesson-plan-dialog__section">
+            <div class="lesson-plan-dialog__section-title">
+              <strong>Datos generales</strong>
+              <span>Materia, nivel y alcance</span>
+            </div>
             <div class="admin-dialog__grid">
               <p>{{ create_form.subject.label_tag }}{{ create_form.subject }}{{ create_form.subject.errors }}</p>
               <p>{{ create_form.level.label_tag }}{{ create_form.level }}{{ create_form.level.errors }}</p>
@@ -78,10 +151,24 @@
               <p>{{ create_form.title.label_tag }}{{ create_form.title }}{{ create_form.title.errors }}</p>
               <p>{{ create_form.topic.label_tag }}{{ create_form.topic }}{{ create_form.topic.errors }}</p>
             </div>
+          </div>
+
+          <div class="lesson-plan-dialog__section">
+            <div class="lesson-plan-dialog__section-title">
+              <strong>Desarrollo didáctico</strong>
+              <span>Objetivo, metodología y observaciones</span>
+            </div>
             <div class="admin-dialog__grid admin-dialog__grid--resource">
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.objective.label_tag }}{{ create_form.objective }}{{ create_form.objective.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.methodology.label_tag }}{{ create_form.methodology }}{{ create_form.methodology.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.notes.label_tag }}{{ create_form.notes }}{{ create_form.notes.errors }}</p>
+            </div>
+          </div>
+
+          <div class="lesson-plan-dialog__section">
+            <div class="lesson-plan-dialog__section-title">
+              <strong>Recursos vinculados</strong>
+              <span>Materiales opcionales para la clase</span>
             </div>
             <div class="admin-dialog__resource-picks">
               <div>
@@ -95,17 +182,29 @@
                 {{ create_form.readings.errors }}
               </div>
             </div>
-            <div class="admin-dialog__switch-row">
-              <label>{{ create_form.is_active }}<span><strong>Plan activo</strong><small>Mostrar este plan en la gestión docente.</small></span></label>
-            </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Crear plan</button>
+
+          <div class="admin-dialog__switch-row">
+            <label>{{ create_form.is_active }}<span><strong>Plan activo</strong><small>Mostrar este plan en la gestión docente.</small></span></label>
           </div>
-        </form>
-      </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Guardar plan</button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if open_create_modal %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('createLessonPlanModal');
+    if (modal) bootstrap.Modal.getOrCreateInstance(modal).show();
+  });
+</script>
 {% endif %}
 {% endblock %}

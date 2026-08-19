@@ -2,7 +2,8 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import CustomUser
-from learning.models import TeacherProfile
+from dashboard.forms import QuickStudentCreationForm
+from learning.models import Level, TeacherProfile
 
 
 class DashboardProfileGuardTests(TestCase):
@@ -18,6 +19,38 @@ class DashboardProfileGuardTests(TestCase):
         response = self.client.get(reverse('dashboard:student'))
 
         self.assertRedirects(response, reverse('accounts:profile'))
+
+
+class QuickStudentCreationFormTests(TestCase):
+    def test_teacher_form_does_not_ask_for_login_credentials(self):
+        Level.objects.create(number=1, name='Inicial', order=1)
+
+        form = QuickStudentCreationForm()
+
+        self.assertNotIn('username', form.fields)
+        self.assertNotIn('password', form.fields)
+
+    def test_teacher_form_generates_student_credentials(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        form = QuickStudentCreationForm(data={
+            'name': 'Sofia Perez',
+            'alias': 'Sofi',
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': level.pk,
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)
+        user, password = form.save()
+
+        self.assertEqual(user.username, 'sofia_perez')
+        self.assertEqual(user.email, 'sofia_perez@estudiante.local')
+        self.assertEqual(user.role, CustomUser.Role.STUDENT)
+        self.assertEqual(user.student_profile.school, 'public')
+        self.assertEqual(len(password), 8)
+        self.assertTrue(user.check_password(password))
 
 
 class AdminResourceDeleteTests(TestCase):

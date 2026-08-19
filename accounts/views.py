@@ -5,36 +5,24 @@ from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.views.generic import FormView, UpdateView
 
+from activities.models import Activity
+from games.models import Game
+from readings.models import Reading
 from learning.models import Level, ParentProfile, StudentProfile, TeacherProfile
+from learning.models import Lesson, LessonPlan
 
-from .forms import ProfileUpdateForm, RegistrationForm, StudentProfileForm
+from .forms import EmailAuthenticationForm, ProfileUpdateForm, RegistrationForm, StudentProfileForm
 from .models import CustomUser
 
 
 class UserLoginView(LoginView):
     template_name = 'accounts/login.html'
+    authentication_form = EmailAuthenticationForm
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['site_name'] = 'Lectura sin Límites'
         return context
-
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        form.fields['username'].label = 'Nombre de usuario'
-        form.fields['username'].widget.attrs.update({
-            'class': 'login-page__input',
-            'placeholder': 'Escribe tu usuario',
-            'autocomplete': 'username',
-        })
-        form.fields['password'].label = 'Contraseña'
-        form.fields['password'].widget.attrs.update({
-            'class': 'login-page__input',
-            'placeholder': 'Escribe tu contraseña',
-            'autocomplete': 'current-password',
-        })
-        return form
-
 
 class UserLogoutView(LogoutView):
     next_page = reverse_lazy('core:home')
@@ -80,3 +68,29 @@ class ProfileView(UpdateView):
 
     def get_object(self, queryset=None):
         return self.request.user
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        teacher = getattr(self.request.user, 'teacher_profile', None)
+        if teacher is not None:
+            lesson_plans = LessonPlan.objects.filter(teacher=teacher).select_related('subject', 'level').prefetch_related('activities', 'readings')[:6]
+            lessons = Lesson.objects.filter(is_active=True).select_related('level').order_by('level__order', 'order')[:6]
+            activities = Activity.objects.filter(is_active=True).select_related('subject', 'level').order_by('-created_at')[:6]
+            games = Game.objects.filter(is_active=True).select_related('subject', 'level').order_by('grade', 'name')[:6]
+            readings = Reading.objects.filter(is_active=True).select_related('subject', 'level').order_by('grade', 'title')[:6]
+            context.update({
+                'teacher_profile': teacher,
+                'teacher_lesson_plans': lesson_plans,
+                'teacher_lessons': lessons,
+                'teacher_activities': activities,
+                'teacher_games': games,
+                'teacher_readings': readings,
+                'teacher_report_stats': {
+                    'plans': LessonPlan.objects.filter(teacher=teacher).count(),
+                    'lessons': Lesson.objects.filter(is_active=True).count(),
+                    'activities': Activity.objects.filter(is_active=True).count(),
+                    'games': Game.objects.filter(is_active=True).count(),
+                    'readings': Reading.objects.filter(is_active=True).count(),
+                },
+            })
+        return context

@@ -21,12 +21,46 @@
 {% else %}
 <div class="container py-5">
 {% endif %}
-      <div class="mx-auto" style="max-width: 900px;">
-        <span class="eyebrow">Plan de clase</span>
-        <h1>{% if is_edit %}Editar plan{% else %}Crear plan{% endif %}</h1>
-        <form method="post" class="feature-card mt-4">
+      <div class="lesson-report">
+        <div class="lesson-report__hero">
+          <div>
+            <span class="eyebrow">Plan de clase</span>
+            <h1>{% if is_edit %}Editar plan{% else %}Crear plan{% endif %}</h1>
+            <p>Actualiza la información pedagógica del plan y sus recursos vinculados.</p>
+          </div>
+          <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Volver al reporte</a>
+        </div>
+        <form method="post" class="lesson-plan-edit-card admin-dialog__body">
           {% csrf_token %}
-          {{ form.as_p }}
+          <div class="lesson-plan-dialog__section">
+            <div class="lesson-plan-dialog__section-title"><strong>Datos generales</strong><span>Materia, nivel y alcance</span></div>
+            <div class="admin-dialog__grid">
+              <p>{{ form.subject.label_tag }}{{ form.subject }}{{ form.subject.errors }}</p>
+              <p>{{ form.level.label_tag }}{{ form.level }}{{ form.level.errors }}</p>
+              <p>{{ form.grade.label_tag }}{{ form.grade }}{{ form.grade.errors }}</p>
+              <p>{{ form.planned_date.label_tag }}{{ form.planned_date }}{{ form.planned_date.errors }}</p>
+              <p>{{ form.title.label_tag }}{{ form.title }}{{ form.title.errors }}</p>
+              <p>{{ form.topic.label_tag }}{{ form.topic }}{{ form.topic.errors }}</p>
+            </div>
+          </div>
+          <div class="lesson-plan-dialog__section">
+            <div class="lesson-plan-dialog__section-title"><strong>Desarrollo didáctico</strong><span>Objetivo, metodología y notas</span></div>
+            <div class="admin-dialog__grid admin-dialog__grid--resource">
+              <p class="admin-dialog__span-2">{{ form.objective.label_tag }}{{ form.objective }}{{ form.objective.errors }}</p>
+              <p class="admin-dialog__span-2">{{ form.methodology.label_tag }}{{ form.methodology }}{{ form.methodology.errors }}</p>
+              <p class="admin-dialog__span-2">{{ form.notes.label_tag }}{{ form.notes }}{{ form.notes.errors }}</p>
+            </div>
+          </div>
+          <div class="lesson-plan-dialog__section">
+            <div class="lesson-plan-dialog__section-title"><strong>Recursos vinculados</strong><span>Actividades y lecturas opcionales</span></div>
+            <div class="admin-dialog__resource-picks">
+              <div>{{ form.activities.label_tag }}<div class="admin-dialog__checklist">{{ form.activities }}</div>{{ form.activities.errors }}</div>
+              <div>{{ form.readings.label_tag }}<div class="admin-dialog__checklist">{{ form.readings }}</div>{{ form.readings.errors }}</div>
+            </div>
+          </div>
+          <div class="admin-dialog__switch-row">
+            <label>{{ form.is_active }}<span><strong>Plan activo</strong><small>Mostrar este plan en la gestión docente.</small></span></label>
+          </div>
           <div class="d-flex flex-wrap gap-2 mt-3">
             <button class="btn btn-primary" type="submit">Guardar</button>
             <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Cancelar</a>

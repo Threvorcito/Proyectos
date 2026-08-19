@@ -59,6 +59,119 @@
           </form>
         </section>
       </div>
+
+      {% if teacher_profile %}
+        <section class="profile-report-card">
+          <div class="profile-report-card__header">
+            <div>
+              <span class="eyebrow">Reporte docente</span>
+              <h2>Resumen de gestión académica</h2>
+              <p>Consulta tus planes creados y los recursos activos disponibles para preparar clases.</p>
+            </div>
+            <a class="btn btn-primary" href="{% url 'dashboard:lesson_plans' %}">Agregar plan</a>
+          </div>
+
+          <div class="profile-report-metrics">
+            <article><span>Planes creados</span><strong>{{ teacher_report_stats.plans }}</strong></article>
+            <article><span>Clases activas</span><strong>{{ teacher_report_stats.lessons }}</strong></article>
+            <article><span>Actividades</span><strong>{{ teacher_report_stats.activities }}</strong></article>
+            <article><span>Juegos</span><strong>{{ teacher_report_stats.games }}</strong></article>
+            <article><span>Lecturas</span><strong>{{ teacher_report_stats.readings }}</strong></article>
+          </div>
+
+          <div class="profile-report-grid">
+            <article class="profile-report-table profile-report-table--wide">
+              <div class="profile-report-table__title">
+                <h3>Planes que has creado</h3>
+                <span>Últimos registros</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead><tr><th>Plan</th><th>Materia</th><th>Nivel</th><th>Fecha</th><th>Recursos</th><th></th></tr></thead>
+                  <tbody>
+                    {% for plan in teacher_lesson_plans %}
+                      <tr>
+                        <td><strong>{{ plan.title }}</strong><small>{{ plan.topic|default:'Sin tema' }}</small></td>
+                        <td>{{ plan.subject }}</td>
+                        <td>{{ plan.level }}</td>
+                        <td>{{ plan.planned_date|date:'d/m/Y'|default:'Sin fecha' }}</td>
+                        <td>{{ plan.activities.count }} act. · {{ plan.readings.count }} lect.</td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a></td>
+                      </tr>
+                    {% empty %}
+                      <tr><td colspan="6" class="profile-report-empty">Todavía no has creado planes.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="profile-report-table">
+              <div class="profile-report-table__title"><h3>Clases disponibles</h3><span>Contenido activo</span></div>
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead><tr><th>Clase</th><th>Nivel</th><th>Etapa</th></tr></thead>
+                  <tbody>
+                    {% for lesson in teacher_lessons %}
+                      <tr><td><strong>{{ lesson.title }}</strong></td><td>{{ lesson.level }}</td><td>{{ lesson.get_stage_display }}</td></tr>
+                    {% empty %}
+                      <tr><td colspan="3" class="profile-report-empty">No hay clases activas.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="profile-report-table">
+              <div class="profile-report-table__title"><h3>Juegos activos</h3><span>Recursos lúdicos</span></div>
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead><tr><th>Juego</th><th>Grado</th><th>Habilidad</th></tr></thead>
+                  <tbody>
+                    {% for game in teacher_games %}
+                      <tr><td><strong>{{ game.name }}</strong></td><td>{{ game.get_grade_display }}</td><td>{{ game.skill }}</td></tr>
+                    {% empty %}
+                      <tr><td colspan="3" class="profile-report-empty">No hay juegos activos.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="profile-report-table">
+              <div class="profile-report-table__title"><h3>Actividades recientes</h3><span>Práctica guiada</span></div>
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead><tr><th>Actividad</th><th>Materia</th><th>Puntos</th></tr></thead>
+                  <tbody>
+                    {% for activity in teacher_activities %}
+                      <tr><td><strong>{{ activity.title }}</strong><small>{{ activity.get_activity_type_display }}</small></td><td>{{ activity.subject|default:'Sin materia' }}</td><td>{{ activity.points }}</td></tr>
+                    {% empty %}
+                      <tr><td colspan="3" class="profile-report-empty">No hay actividades activas.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+
+            <article class="profile-report-table">
+              <div class="profile-report-table__title"><h3>Lecturas activas</h3><span>Biblioteca de apoyo</span></div>
+              <div class="table-responsive">
+                <table class="table align-middle">
+                  <thead><tr><th>Lectura</th><th>Grado</th><th>Tiempo</th></tr></thead>
+                  <tbody>
+                    {% for reading in teacher_readings %}
+                      <tr><td><strong>{{ reading.title }}</strong></td><td>{{ reading.get_grade_display }}</td><td>{{ reading.estimated_time }} min</td></tr>
+                    {% empty %}
+                      <tr><td colspan="3" class="profile-report-empty">No hay lecturas activas.</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+      {% endif %}
 {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
     </div>
   </section>
