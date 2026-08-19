@@ -1205,6 +1205,10 @@ a { text-decoration: none; }
   box-shadow: 0 28px 90px rgba(16, 24, 40, .28);
   overflow: hidden;
 }
+.admin-dialog .modal-dialog {
+  margin-bottom: .75rem;
+  margin-top: .75rem;
+}
 .admin-dialog .modal-header {
   align-items: flex-start;
   border-bottom: 0;
@@ -1223,8 +1227,13 @@ a { text-decoration: none; }
 }
 .admin-dialog__body {
   display: grid;
-  gap: 1rem;
-  padding: 1rem 1.35rem 1.4rem;
+  gap: .85rem;
+  padding: .85rem 1.35rem 1.1rem;
+}
+.admin-dialog__grid {
+  display: grid;
+  gap: .85rem 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .admin-dialog__body p { margin: 0; }
 .admin-dialog__body label {
@@ -1255,13 +1264,33 @@ a { text-decoration: none; }
 .admin-dialog .modal-footer {
   background: #f8fafc;
   border-top: 1px solid #edf0f5;
-  padding: 1rem 1.35rem;
+  padding: .8rem 1.35rem;
 }
 .admin-dialog .btn { border-radius: 10px; font-weight: 800; }
+.admin-dialog__permission-trigger {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #edf0f5;
+  border-radius: 14px;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: .8rem .95rem;
+}
+.admin-dialog__permission-trigger strong {
+  color: #344054;
+  display: block;
+  font-weight: 900;
+}
+.admin-dialog__permission-trigger span {
+  color: #667085;
+  display: block;
+  font-size: .84rem;
+}
 .permissions-dialog__body {
   display: grid;
-  gap: 1.35rem;
-  padding: 1rem 1.35rem 1.4rem;
+  gap: .95rem;
+  padding: .8rem 1.35rem 1.05rem;
 }
 .permissions-dialog__user {
   align-items: center;
@@ -1271,7 +1300,7 @@ a { text-decoration: none; }
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1rem;
+  padding: .75rem .9rem;
 }
 .permissions-dialog__user strong {
   color: #344054;
@@ -1296,14 +1325,14 @@ a { text-decoration: none; }
 }
 .permissions-dialog__grid {
   display: grid;
-  gap: 1rem;
+  gap: .75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .permissions-dialog__card {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
-  padding: 1rem;
+  padding: .8rem .95rem;
 }
 .permissions-dialog__card--wide { grid-column: 1 / -1; }
 .permissions-dialog__card h3 {
@@ -1311,8 +1340,8 @@ a { text-decoration: none; }
   color: #344054;
   font-size: .95rem;
   font-weight: 900;
-  margin-bottom: .85rem;
-  padding-bottom: .7rem;
+  margin-bottom: .65rem;
+  padding-bottom: .55rem;
 }
 .permissions-dialog__card label,
 .permissions-dialog__inline label {
@@ -1321,7 +1350,7 @@ a { text-decoration: none; }
   cursor: pointer;
   display: flex;
   gap: .55rem;
-  margin: .7rem 0 0;
+  margin: .5rem 0 0;
 }
 .permissions-dialog__inline {
   display: grid;
@@ -1338,6 +1367,8 @@ a { text-decoration: none; }
   background-color: #5b5ee6;
   border-color: #5b5ee6;
 }
+.permissions-dialog--compact .modal-header { padding-bottom: .35rem; }
+.permissions-dialog--compact .modal-footer { padding-bottom: .7rem; padding-top: .7rem; }
 
 @media (max-width: 1100px) {
   .admin-console { grid-template-columns: 250px minmax(0, 1fr); }
@@ -1355,9 +1386,11 @@ a { text-decoration: none; }
   .admin-content { padding: 1.5rem 1rem; }
   .admin-metric-grid,
   .admin-insight-grid { grid-template-columns: 1fr; }
+  .admin-dialog__grid,
   .permissions-dialog__grid,
   .permissions-dialog__inline { grid-template-columns: 1fr; }
   .permissions-dialog__user { align-items: flex-start; flex-direction: column; }
+  .admin-dialog__permission-trigger { align-items: flex-start; flex-direction: column; }
 }
 
 .register-page {
