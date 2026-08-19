@@ -19,7 +19,7 @@ from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, Q
 
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'update_form': AdminUserUpdateForm, 'fields': None},
-    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'fields': ('user', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
+    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
     'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},
@@ -204,12 +204,14 @@ def admin_resource_delete(request, resource, pk):
 
     label = str(instance)
     try:
-        if isinstance(instance, (TeacherProfile, StudentProfile, ParentProfile)):
+        if isinstance(instance, (StudentProfile, ParentProfile)):
             user = instance.user
             if user == request.user:
                 messages.error(request, 'No puedes eliminar tu propia cuenta desde aquí.')
                 return redirect('dashboard:admin_resource', resource=resource)
             user.delete()
+        elif isinstance(instance, TeacherProfile):
+            instance.delete()
         else:
             instance.delete()
     except ProtectedError:

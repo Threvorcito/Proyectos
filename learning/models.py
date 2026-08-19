@@ -89,7 +89,10 @@ class StudentProfile(models.Model):
 
 
 class TeacherProfile(models.Model):
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_profile')
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='teacher_profile')
+    first_name = models.CharField(max_length=80, blank=True)
+    last_name = models.CharField(max_length=100, blank=True)
+    email = models.EmailField(blank=True)
     name = models.CharField(max_length=150)
     bio = models.TextField(blank=True)
     can_manage_lessons = models.BooleanField(default=False, verbose_name='Puede gestionar clases')
@@ -98,6 +101,12 @@ class TeacherProfile(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        full_name = f'{self.first_name} {self.last_name}'.strip()
+        if full_name:
+            self.name = full_name
+        super().save(*args, **kwargs)
 
 
 class Subject(models.Model):

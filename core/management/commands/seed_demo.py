@@ -124,10 +124,14 @@ class Command(BaseCommand):
         teacher_user.set_password('Demo12345!')
         teacher_user.save()
         teacher_profile, _ = TeacherProfile.objects.get_or_create(user=teacher_user, defaults={'name': 'Laura Martínez'})
+        teacher_profile.first_name = 'Laura'
+        teacher_profile.last_name = 'Martínez'
+        teacher_profile.email = 'docente_demo@example.com'
+        teacher_profile.name = 'Laura Martínez'
         teacher_profile.can_manage_lessons = True
         teacher_profile.can_manage_activities = True
         teacher_profile.can_manage_readings = True
-        teacher_profile.save(update_fields=['can_manage_lessons', 'can_manage_activities', 'can_manage_readings'])
+        teacher_profile.save(update_fields=['first_name', 'last_name', 'email', 'name', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings'])
 
         parent_user, _ = User.objects.get_or_create(username='padre_demo', defaults={
             'first_name': 'Carlos', 'last_name': 'Pérez', 'email': 'padre_demo@example.com', 'role': 'PARENT',

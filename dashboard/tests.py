@@ -162,7 +162,7 @@ class AdminResourceDeleteTests(TestCase):
         self.assertFalse(teacher.can_manage_activities)
         self.assertTrue(teacher.can_manage_readings)
 
-    def test_admin_can_delete_teacher_profile_and_user(self):
+    def test_admin_can_delete_teacher_profile_without_user(self):
         admin = CustomUser.objects.create_user(
             username='adminborrar',
             email='adminborrar@example.com',
@@ -170,19 +170,12 @@ class AdminResourceDeleteTests(TestCase):
             role=CustomUser.Role.ADMIN,
             is_staff=True,
         )
-        teacher_user = CustomUser.objects.create_user(
-            username='docenteborrar',
-            email='docenteborrar@example.com',
-            password='Docente123!',
-            role=CustomUser.Role.TEACHER,
-        )
-        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Borrar')
+        teacher = TeacherProfile.objects.create(first_name='Docente', last_name='Borrar', email='docenteborrar@example.com', name='Docente Borrar')
         self.client.force_login(admin)
 
         response = self.client.post(reverse('dashboard:admin_resource_delete', args=['profesores', teacher.pk]))
 
         self.assertRedirects(response, reverse('dashboard:admin_resource', args=['profesores']))
-        self.assertFalse(CustomUser.objects.filter(pk=teacher_user.pk).exists())
         self.assertFalse(TeacherProfile.objects.filter(pk=teacher.pk).exists())
 
     def test_admin_cannot_delete_self(self):

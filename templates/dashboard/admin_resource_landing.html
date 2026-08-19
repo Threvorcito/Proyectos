@@ -62,8 +62,8 @@
                     <div class="modal-body permissions-dialog__body">
                       <div class="permissions-dialog__user">
                         <div>
-                          <strong>{{ item.name|default:'Usuario seleccionado' }}</strong>
-                          <span>{{ item.user.email|default:'Sin correo' }}</span>
+                          <strong>{{ item.name|default:'Docente seleccionado' }}</strong>
+                          <span>{{ item.email|default:'Sin correo' }}</span>
                         </div>
                         <label class="permissions-dialog__select-all">
                           <input class="form-check-input" type="checkbox" data-permission-select-all>
@@ -188,11 +188,10 @@
               <p>{{ create_form.bio.label_tag }}{{ create_form.bio }}{{ create_form.bio.errors }}</p>
               <div class="admin-dialog__section-title">
                 <strong>Cuenta de acceso</strong>
-                <span>Datos que usará el docente para iniciar sesión.</span>
+                <span>Datos propios de la tabla docente.</span>
               </div>
               <div class="admin-dialog__grid">
-                <p class="admin-dialog__readonly-field"><label>Usuario</label><span data-teacher-login-preview>docente@correo.com</span><small>Usará el mismo correo institucional.</small></p>
-                <p>{{ create_form.password.label_tag }}{{ create_form.password }}{{ create_form.password.errors }}<span class="helptext">{{ create_form.password.help_text }}</span></p>
+                <p class="admin-dialog__readonly-field"><label>Correo</label><span data-teacher-login-preview>docente@correo.com</span><small>Este correo pertenece al registro del docente, no a la tabla de usuarios.</small></p>
               </div>
               <div class="admin-dialog__permission-trigger">
                 <div>
