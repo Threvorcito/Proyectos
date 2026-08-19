@@ -1203,6 +1203,7 @@ a { text-decoration: none; }
   border: 1px solid #d9dde7;
   border-radius: 18px;
   box-shadow: 0 28px 90px rgba(16, 24, 40, .28);
+  max-height: calc(100vh - 1.5rem);
   overflow: hidden;
 }
 .admin-dialog .modal-dialog {
@@ -1241,6 +1242,7 @@ a { text-decoration: none; }
   align-items: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.admin-dialog__span-2 { grid-column: 1 / -1; }
 .admin-dialog__grid--resource > p:has(textarea),
 .admin-dialog__grid--resource > p:has(.form-check),
 .admin-dialog__grid--resource > p:has(input[type="file"]) {
@@ -1263,6 +1265,10 @@ a { text-decoration: none; }
 .admin-dialog__body textarea.form-control {
   max-height: 132px;
   min-height: 84px;
+}
+.admin-dialog__compact-content textarea.form-control {
+  max-height: 96px;
+  min-height: 76px;
 }
 .admin-dialog__body input[type="file"].form-control {
   padding-bottom: .55rem;

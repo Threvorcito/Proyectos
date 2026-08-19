@@ -154,6 +154,22 @@
                 </div>
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#createTeacherPermissionsModal">Configurar permisos</button>
               </div>
+            {% elif resource == 'lecturas' %}
+              <div class="admin-dialog__grid admin-dialog__grid--resource">
+                <p>{{ create_form.subject.label_tag }}{{ create_form.subject }}{{ create_form.subject.errors }}</p>
+                <p>{{ create_form.grade.label_tag }}{{ create_form.grade }}{{ create_form.grade.errors }}</p>
+                <p>{{ create_form.title.label_tag }}{{ create_form.title }}{{ create_form.title.errors }}</p>
+                <p>{{ create_form.level.label_tag }}{{ create_form.level }}{{ create_form.level.errors }}</p>
+                <p class="admin-dialog__span-2">{{ create_form.description.label_tag }}{{ create_form.description }}{{ create_form.description.errors }}</p>
+                <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.content.label_tag }}{{ create_form.content }}{{ create_form.content.errors }}</p>
+                <p>{{ create_form.image.label_tag }}{{ create_form.image }}{{ create_form.image.errors }}</p>
+                <p>{{ create_form.difficulty.label_tag }}{{ create_form.difficulty }}{{ create_form.difficulty.errors }}</p>
+                <p>{{ create_form.estimated_time.label_tag }}{{ create_form.estimated_time }}{{ create_form.estimated_time.errors }}</p>
+              </div>
+              <div class="admin-dialog__switch-row">
+                <label>{{ create_form.audio_optional }}<span><strong>Audio opcional</strong><small>Permite acompañar la lectura con audio.</small></span></label>
+                <label>{{ create_form.is_active }}<span><strong>Activa</strong><small>Mostrar esta lectura a los estudiantes.</small></span></label>
+              </div>
             {% else %}
               <div class="admin-dialog__grid admin-dialog__grid--resource">
                 {{ create_form.as_p }}
