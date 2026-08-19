@@ -1368,6 +1368,13 @@ a { text-decoration: none; }
   border-color: #8fc5f2;
   box-shadow: 0 0 0 .22rem rgba(31, 112, 184, .16);
 }
+.teacher-form-grid {
+  display: grid;
+  gap: .85rem 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.teacher-form-grid p { margin: 0; }
+.teacher-form-grid__full { grid-column: 1 / -1; }
 .admin-dialog__permission-trigger {
   align-items: center;
   background: #f8fafc;

@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
 
 
@@ -93,6 +94,7 @@ class TeacherProfile(models.Model):
     first_name = models.CharField(max_length=80, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
     email = models.EmailField(blank=True)
+    password = models.CharField(max_length=128, blank=True)
     name = models.CharField(max_length=150)
     bio = models.TextField(blank=True)
     can_manage_lessons = models.BooleanField(default=False, verbose_name='Puede gestionar clases')
@@ -107,6 +109,12 @@ class TeacherProfile(models.Model):
         if full_name:
             self.name = full_name
         super().save(*args, **kwargs)
+
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password) if raw_password else ''
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
 
 
 class Subject(models.Model):

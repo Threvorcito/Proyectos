@@ -177,21 +177,14 @@
             {% elif resource == 'profesores' %}
               <div class="admin-dialog__section-title">
                 <strong>Datos del docente</strong>
-                <span>Información básica para identificarlo en el panel.</span>
+                <span>Registro independiente del docente.</span>
               </div>
-              <div class="admin-dialog__grid">
+              <div class="teacher-form-grid">
                 <p>{{ create_form.first_name.label_tag }}{{ create_form.first_name }}{{ create_form.first_name.errors }}</p>
                 <p>{{ create_form.last_name.label_tag }}{{ create_form.last_name }}{{ create_form.last_name.errors }}</p>
                 <p>{{ create_form.email.label_tag }}{{ create_form.email }}{{ create_form.email.errors }}</p>
-                <p class="admin-dialog__readonly-field"><label>Correo de acceso</label><span data-teacher-login-preview>docente@correo.com</span><small>Este correo será su usuario para iniciar sesión.</small></p>
-              </div>
-              <p>{{ create_form.bio.label_tag }}{{ create_form.bio }}{{ create_form.bio.errors }}</p>
-              <div class="admin-dialog__section-title">
-                <strong>Cuenta de acceso</strong>
-                <span>Datos propios de la tabla docente.</span>
-              </div>
-              <div class="admin-dialog__grid">
-                <p class="admin-dialog__readonly-field"><label>Correo</label><span data-teacher-login-preview>docente@correo.com</span><small>Este correo pertenece al registro del docente, no a la tabla de usuarios.</small></p>
+                <p>{{ create_form.password.label_tag }}{{ create_form.password }}{{ create_form.password.errors }}<span class="helptext">{{ create_form.password.help_text }}</span></p>
+                <p class="teacher-form-grid__full">{{ create_form.bio.label_tag }}{{ create_form.bio }}{{ create_form.bio.errors }}</p>
               </div>
               <div class="admin-dialog__permission-trigger">
                 <div>

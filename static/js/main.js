@@ -45,19 +45,3 @@
     syncSelectAll();
   });
 })();
-
-(() => {
-  const emailInput = document.querySelector('[data-teacher-email]');
-  const loginPreviews = document.querySelectorAll('[data-teacher-login-preview]');
-  if (!emailInput || !loginPreviews.length) return;
-
-  const syncLoginPreview = () => {
-    const value = emailInput.value.trim() || 'docente@correo.com';
-    loginPreviews.forEach((preview) => {
-      preview.textContent = value;
-    });
-  };
-
-  emailInput.addEventListener('input', syncLoginPreview);
-  syncLoginPreview();
-})();

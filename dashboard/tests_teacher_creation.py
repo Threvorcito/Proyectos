@@ -24,6 +24,7 @@ class TeacherCreationFormTests(TestCase):
         self.assertIsNone(teacher.user)
         self.assertEqual(teacher.name, 'Maria Lopez')
         self.assertEqual(teacher.email, 'mlopez@example.com')
+        self.assertTrue(teacher.check_password('Demo12345!'))
         self.assertFalse(CustomUser.objects.filter(email='mlopez@example.com').exists())
 
     def test_admin_panel_creates_independent_teacher_profile(self):
@@ -40,11 +41,13 @@ class TeacherCreationFormTests(TestCase):
             'first_name': 'Carlos',
             'last_name': 'Rivera',
             'email': 'crivera@example.com',
+            'password': 'Docente123!',
             'can_manage_lessons': 'on',
             'can_manage_activities': 'on',
             'can_manage_readings': 'on',
         })
 
         self.assertRedirects(response, reverse('dashboard:admin_resource', args=['profesores']))
-        self.assertTrue(TeacherProfile.objects.filter(user__isnull=True, name='Carlos Rivera', email='crivera@example.com').exists())
+        teacher = TeacherProfile.objects.get(user__isnull=True, name='Carlos Rivera', email='crivera@example.com')
+        self.assertTrue(teacher.check_password('Docente123!'))
         self.assertFalse(CustomUser.objects.filter(email='crivera@example.com').exists())

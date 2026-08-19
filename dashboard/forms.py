@@ -87,6 +87,12 @@ class TeacherCreationForm(forms.Form):
     first_name = forms.CharField(label='Nombres', max_length=80)
     last_name = forms.CharField(label='Apellidos', max_length=100)
     email = forms.EmailField(label='Correo institucional')
+    password = forms.CharField(
+        label='Contraseña',
+        max_length=32,
+        help_text='Contraseña inicial del docente.',
+        widget=forms.PasswordInput(render_value=True),
+    )
     bio = forms.CharField(label='Perfil docente', required=False, widget=forms.Textarea(attrs={'rows': 3}))
     can_manage_lessons = forms.BooleanField(label='Puede gestionar clases', required=False, initial=True)
     can_manage_activities = forms.BooleanField(label='Puede gestionar actividades', required=False, initial=True)
@@ -99,6 +105,7 @@ class TeacherCreationForm(forms.Form):
         self.fields['last_name'].widget.attrs.setdefault('placeholder', 'Ej. López Pérez')
         self.fields['email'].widget.attrs.setdefault('placeholder', 'docente@correo.com')
         self.fields['email'].widget.attrs['data-teacher-email'] = '1'
+        self.fields['password'].widget.attrs.setdefault('placeholder', 'Crea una contraseña')
         self.fields['bio'].widget.attrs.setdefault('placeholder', 'Área que atiende, grado asignado o notas internas.')
 
     def clean_email(self):
@@ -109,7 +116,7 @@ class TeacherCreationForm(forms.Form):
 
     def save(self):
         full_name = f"{self.cleaned_data['first_name']} {self.cleaned_data['last_name']}".strip()
-        teacher = TeacherProfile.objects.create(
+        teacher = TeacherProfile(
             first_name=self.cleaned_data['first_name'],
             last_name=self.cleaned_data['last_name'],
             email=self.cleaned_data['email'],
@@ -119,6 +126,8 @@ class TeacherCreationForm(forms.Form):
             can_manage_activities=self.cleaned_data.get('can_manage_activities', False),
             can_manage_readings=self.cleaned_data.get('can_manage_readings', False),
         )
+        teacher.set_password(self.cleaned_data['password'])
+        teacher.save()
         return teacher
 
 
