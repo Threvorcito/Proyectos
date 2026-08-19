@@ -1209,6 +1209,8 @@ a { text-decoration: none; }
   margin-bottom: .75rem;
   margin-top: .75rem;
 }
+.admin-dialog .modal-xl { max-width: min(1120px, calc(100% - 2rem)); }
+.admin-dialog .modal-lg { max-width: min(760px, calc(100% - 2rem)); }
 .admin-dialog .modal-header {
   align-items: flex-start;
   border-bottom: 0;
@@ -1235,6 +1237,15 @@ a { text-decoration: none; }
   gap: .85rem 1rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.admin-dialog__grid--resource {
+  align-items: start;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.admin-dialog__grid--resource > p:has(textarea),
+.admin-dialog__grid--resource > p:has(.form-check),
+.admin-dialog__grid--resource > p:has(input[type="file"]) {
+  grid-column: 1 / -1;
+}
 .admin-dialog__body p { margin: 0; }
 .admin-dialog__body label {
   color: #344054;
@@ -1248,6 +1259,14 @@ a { text-decoration: none; }
   border-color: #d9dde7;
   border-radius: 12px;
   min-height: 44px;
+}
+.admin-dialog__body textarea.form-control {
+  max-height: 132px;
+  min-height: 84px;
+}
+.admin-dialog__body input[type="file"].form-control {
+  padding-bottom: .55rem;
+  padding-top: .55rem;
 }
 .admin-dialog__body .helptext {
   color: #667085;
@@ -1418,6 +1437,7 @@ a { text-decoration: none; }
   .admin-metric-grid,
   .admin-insight-grid { grid-template-columns: 1fr; }
   .admin-dialog__grid,
+  .admin-dialog__grid--resource,
   .admin-dialog__switch-row,
   .permissions-dialog__grid,
   .permissions-dialog__inline { grid-template-columns: 1fr; }

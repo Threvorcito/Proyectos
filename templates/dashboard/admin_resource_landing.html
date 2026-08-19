@@ -112,7 +112,7 @@
 
 {% if create_form %}
   <div class="modal fade admin-dialog" id="createResourceModal" tabindex="-1" aria-labelledby="createResourceModalTitle" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' %}modal-xl{% else %}modal-lg{% endif %}">
       <div class="modal-content">
         <form id="createResourceForm" method="post" action="{% url 'dashboard:admin_resource_create' resource %}" enctype="multipart/form-data">
           {% csrf_token %}
@@ -155,7 +155,9 @@
                 <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#createTeacherPermissionsModal">Configurar permisos</button>
               </div>
             {% else %}
-              {{ create_form.as_p }}
+              <div class="admin-dialog__grid admin-dialog__grid--resource">
+                {{ create_form.as_p }}
+              </div>
             {% endif %}
           </div>
           <div class="modal-footer">

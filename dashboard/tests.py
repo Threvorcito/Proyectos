@@ -82,6 +82,21 @@ class AdminResourceDeleteTests(TestCase):
         plans_response = self.client.get(reverse('dashboard:lesson_plans'))
         self.assertContains(plans_response, 'createLessonPlanModal')
 
+    def test_educational_resources_create_dialogs_are_rendered(self):
+        admin = CustomUser.objects.create_user(
+            username='adminrecursosdialogos',
+            email='adminrecursosdialogos@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        self.client.force_login(admin)
+
+        for resource in ('niveles', 'actividades', 'juegos', 'lecturas', 'palabras', 'silabas'):
+            response = self.client.get(reverse('dashboard:admin_resource', args=[resource]))
+            self.assertContains(response, 'createResourceModal')
+            self.assertContains(response, f'Agregar')
+
     def test_teacher_permissions_dialog_is_rendered_and_updates_permissions(self):
         admin = CustomUser.objects.create_user(
             username='adminpermisos',

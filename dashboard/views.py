@@ -108,10 +108,8 @@ def admin_resource_landing(request, resource):
     if resource == 'usuarios':
         objects = objects.filter(is_superuser=False)
     objects = objects.order_by('-pk')[:20]
-    create_form = None
-    if resource in ('usuarios', 'profesores', 'alumnos'):
-        form_class = config.get('create_form') or config.get('form') or build_admin_model_form(config['model'], config['fields'])
-        create_form = style_admin_form(form_class())
+    form_class = config.get('create_form') or config.get('form') or build_admin_model_form(config['model'], config['fields'])
+    create_form = style_admin_form(form_class())
     return render(request, 'dashboard/admin_resource_landing.html', {
         'resource': resource,
         'config': config,
