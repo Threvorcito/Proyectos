@@ -45,3 +45,16 @@
     syncSelectAll();
   });
 })();
+
+(() => {
+  const forms = document.querySelectorAll('[data-submit-once]');
+  forms.forEach((form) => {
+    form.addEventListener('submit', () => {
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (!submitButton || submitButton.disabled) return;
+      submitButton.disabled = true;
+      submitButton.dataset.originalText = submitButton.textContent;
+      submitButton.textContent = 'Guardando...';
+    });
+  });
+})();

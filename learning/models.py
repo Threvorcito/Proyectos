@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
+from django.db.models import Q
 
 
 class Level(models.Model):
@@ -100,6 +101,11 @@ class TeacherProfile(models.Model):
     can_manage_lessons = models.BooleanField(default=False, verbose_name='Puede gestionar clases')
     can_manage_activities = models.BooleanField(default=False, verbose_name='Puede gestionar actividades')
     can_manage_readings = models.BooleanField(default=False, verbose_name='Puede gestionar lecturas')
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['email'], condition=~Q(email=''), name='unique_teacher_email_when_present'),
+        ]
 
     def __str__(self):
         return self.name

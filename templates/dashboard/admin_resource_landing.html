@@ -149,7 +149,7 @@
   <div class="modal fade admin-dialog {% if resource == 'profesores' %}admin-dialog--teacher{% endif %}" id="createResourceModal" tabindex="-1" aria-labelledby="createResourceModalTitle" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' %}modal-xl{% else %}modal-lg{% endif %}">
       <div class="modal-content">
-        <form id="createResourceForm" method="post" action="{% url 'dashboard:admin_resource_create' resource %}" enctype="multipart/form-data">
+        <form id="createResourceForm" method="post" action="{% url 'dashboard:admin_resource_create' resource %}" enctype="multipart/form-data" data-submit-once>
           {% csrf_token %}
           <input type="hidden" name="_from_modal" value="1">
           <div class="modal-header">
