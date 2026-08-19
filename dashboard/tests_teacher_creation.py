@@ -9,8 +9,8 @@ from learning.models import TeacherProfile
 class TeacherCreationFormTests(TestCase):
     def test_creates_teacher_user_and_profile(self):
         form = TeacherCreationForm(data={
-            'name': 'Maria Lopez',
-            'username': 'mlopez',
+            'first_name': 'Maria',
+            'last_name': 'Lopez',
             'email': 'mlopez@example.com',
             'password': 'Demo12345!',
             'can_manage_lessons': 'on',
@@ -22,6 +22,7 @@ class TeacherCreationFormTests(TestCase):
         user = form.save()
 
         self.assertEqual(user.role, CustomUser.Role.TEACHER)
+        self.assertEqual(user.username, 'mlopez@example.com')
         self.assertTrue(user.check_password('Demo12345!'))
         self.assertTrue(TeacherProfile.objects.filter(user=user, name='Maria Lopez').exists())
 
@@ -36,8 +37,8 @@ class TeacherCreationFormTests(TestCase):
         self.client.force_login(admin)
 
         response = self.client.post(reverse('dashboard:admin_resource_create', args=['profesores']), data={
-            'name': 'Carlos Rivera',
-            'username': 'crivera',
+            'first_name': 'Carlos',
+            'last_name': 'Rivera',
             'email': 'crivera@example.com',
             'password': 'Docente123!',
             'can_manage_lessons': 'on',
@@ -46,7 +47,7 @@ class TeacherCreationFormTests(TestCase):
         })
 
         self.assertEqual(response.status_code, 200)
-        teacher_user = CustomUser.objects.get(username='crivera')
+        teacher_user = CustomUser.objects.get(username='crivera@example.com')
         self.assertEqual(teacher_user.role, CustomUser.Role.TEACHER)
         self.assertTrue(teacher_user.check_password('Docente123!'))
         self.assertTrue(TeacherProfile.objects.filter(user=teacher_user, name='Carlos Rivera').exists())

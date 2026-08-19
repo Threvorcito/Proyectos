@@ -84,8 +84,8 @@ class AdminUserUpdateForm(forms.ModelForm):
 
 
 class TeacherCreationForm(forms.Form):
-    name = forms.CharField(label='Nombre y apellidos', max_length=150)
-    username = forms.CharField(label='Usuario de acceso', max_length=150, help_text='Se puede generar desde el correo o escribir manualmente.')
+    first_name = forms.CharField(label='Nombres', max_length=80)
+    last_name = forms.CharField(label='Apellidos', max_length=100)
     email = forms.EmailField(label='Correo institucional')
     password = forms.CharField(
         label='Contraseña',
@@ -102,20 +102,12 @@ class TeacherCreationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         style_admin_form(self)
-        self.fields['name'].widget.attrs.setdefault('placeholder', 'Ej. María López Pérez')
-        self.fields['name'].widget.attrs['data-teacher-name'] = '1'
+        self.fields['first_name'].widget.attrs.setdefault('placeholder', 'Ej. María')
+        self.fields['last_name'].widget.attrs.setdefault('placeholder', 'Ej. López Pérez')
         self.fields['email'].widget.attrs.setdefault('placeholder', 'docente@correo.com')
         self.fields['email'].widget.attrs['data-teacher-email'] = '1'
-        self.fields['username'].widget.attrs.setdefault('placeholder', 'mlopez')
-        self.fields['username'].widget.attrs['data-teacher-username'] = '1'
         self.fields['password'].widget.attrs.setdefault('placeholder', 'Generar automáticamente')
         self.fields['bio'].widget.attrs.setdefault('placeholder', 'Área que atiende, grado asignado o notas internas.')
-
-    def clean_username(self):
-        username = self.cleaned_data['username'].strip()
-        if CustomUser.objects.filter(username=username).exists():
-            raise forms.ValidationError('Ya existe un usuario con este nombre.')
-        return username
 
     def clean_email(self):
         email = self.cleaned_data['email'].strip().lower()
@@ -125,19 +117,19 @@ class TeacherCreationForm(forms.Form):
 
     def save(self):
         password = self.cleaned_data.get('password') or get_random_string(10, allowed_chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz')
-        name_parts = self.cleaned_data['name'].split(' ', 1)
+        full_name = f"{self.cleaned_data['first_name']} {self.cleaned_data['last_name']}".strip()
         user = CustomUser.objects.create(
-            username=self.cleaned_data['username'],
+            username=self.cleaned_data['email'],
             email=self.cleaned_data['email'],
-            first_name=name_parts[0],
-            last_name=name_parts[1] if len(name_parts) > 1 else '',
+            first_name=self.cleaned_data['first_name'],
+            last_name=self.cleaned_data['last_name'],
             role=CustomUser.Role.TEACHER,
         )
         user.set_password(password)
         user.save(update_fields=['password'])
         TeacherProfile.objects.create(
             user=user,
-            name=self.cleaned_data['name'],
+            name=full_name,
             bio=self.cleaned_data.get('bio', ''),
             can_manage_lessons=self.cleaned_data.get('can_manage_lessons', False),
             can_manage_activities=self.cleaned_data.get('can_manage_activities', False),

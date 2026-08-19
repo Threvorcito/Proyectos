@@ -1388,6 +1388,27 @@ a { text-decoration: none; }
   display: block;
   font-size: .84rem;
 }
+.admin-dialog__readonly-field {
+  background: #f8fafc;
+  border: 1px solid #edf0f5;
+  border-radius: 14px;
+  padding: .75rem .9rem;
+}
+.admin-dialog__readonly-field label {
+  margin-bottom: .35rem;
+}
+.admin-dialog__readonly-field span {
+  color: #1f3d5a;
+  display: block;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+.admin-dialog__readonly-field small {
+  color: #667085;
+  display: block;
+  font-size: .78rem;
+  margin-top: .2rem;
+}
 .admin-dialog__switch-row {
   display: grid;
   gap: .75rem;
