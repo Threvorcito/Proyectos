@@ -10,6 +10,7 @@ urlpatterns = [
     path('admin/gestion/<slug:resource>/', views.admin_resource_landing, name='admin_resource'),
     path('admin/gestion/<slug:resource>/nuevo/', views.admin_resource_create, name='admin_resource_create'),
     path('admin/gestion/<slug:resource>/<int:pk>/editar/', views.admin_resource_update, name='admin_resource_update'),
+    path('admin/gestion/<slug:resource>/<int:pk>/eliminar/', views.admin_resource_delete, name='admin_resource_delete'),
     path('alumnos/nuevo/', views.quick_student_create, name='quick_student_create'),
     path('planes/', views.lesson_plan_list, name='lesson_plans'),
     path('planes/nuevo/', views.lesson_plan_create, name='lesson_plan_create'),

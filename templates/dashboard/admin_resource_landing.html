@@ -12,13 +12,19 @@
     </div>
   </div>
 
-  <div class="list-group">
+  <div class="list-group admin-resource-list">
     {% for item in objects %}
-      <div class="list-group-item d-flex justify-content-between align-items-center">
+      <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
         <span>{{ item }}</span>
-        {% if not config.form %}
-          <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:admin_resource_update' resource item.pk %}">Editar</a>
-        {% endif %}
+        <div class="d-flex flex-wrap gap-2">
+          {% if not config.form %}
+            <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:admin_resource_update' resource item.pk %}">Editar</a>
+          {% endif %}
+          <form method="post" action="{% url 'dashboard:admin_resource_delete' resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
+            {% csrf_token %}
+            <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+          </form>
+        </div>
       </div>
     {% empty %}
       <div class="alert alert-info">No hay registros todavía.</div>

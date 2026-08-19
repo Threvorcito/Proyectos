@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import CustomUser
+from learning.models import TeacherProfile
 
 
 class DashboardProfileGuardTests(TestCase):
@@ -17,6 +18,46 @@ class DashboardProfileGuardTests(TestCase):
         response = self.client.get(reverse('dashboard:student'))
 
         self.assertRedirects(response, reverse('accounts:profile'))
+
+
+class AdminResourceDeleteTests(TestCase):
+    def test_admin_can_delete_teacher_profile_and_user(self):
+        admin = CustomUser.objects.create_user(
+            username='adminborrar',
+            email='adminborrar@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        teacher_user = CustomUser.objects.create_user(
+            username='docenteborrar',
+            email='docenteborrar@example.com',
+            password='Docente123!',
+            role=CustomUser.Role.TEACHER,
+        )
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Borrar')
+        self.client.force_login(admin)
+
+        response = self.client.post(reverse('dashboard:admin_resource_delete', args=['profesores', teacher.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:admin_resource', args=['profesores']))
+        self.assertFalse(CustomUser.objects.filter(pk=teacher_user.pk).exists())
+        self.assertFalse(TeacherProfile.objects.filter(pk=teacher.pk).exists())
+
+    def test_admin_cannot_delete_self(self):
+        admin = CustomUser.objects.create_user(
+            username='adminpropio',
+            email='adminpropio@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        self.client.force_login(admin)
+
+        response = self.client.post(reverse('dashboard:admin_resource_delete', args=['usuarios', admin.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:admin_resource', args=['usuarios']))
+        self.assertTrue(CustomUser.objects.filter(pk=admin.pk).exists())
 
     def test_parent_without_profile_is_redirected_to_profile(self):
         user = CustomUser.objects.create_user(

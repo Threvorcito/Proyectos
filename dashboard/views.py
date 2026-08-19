@@ -1,7 +1,9 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Q
+from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
 from accounts.models import CustomUser
 from activities.models import Activity
@@ -148,6 +150,39 @@ def admin_resource_update(request, resource, pk):
         messages.success(request, f"Se actualizó correctamente el {config['singular']}.")
         return redirect('dashboard:admin_resource', resource=resource)
     return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': True, 'object': instance})
+
+
+@login_required
+@require_POST
+def admin_resource_delete(request, resource, pk):
+    config = ADMIN_RESOURCES.get(resource)
+    if not config:
+        messages.error(request, 'El recurso solicitado no existe.')
+        return redirect('dashboard:admin')
+    if not can_manage_resource(request.user, resource):
+        messages.error(request, 'No tienes permiso para eliminar este recurso.')
+        return redirect('dashboard:redirect')
+
+    instance = get_object_or_404(config['model'], pk=pk)
+    if isinstance(instance, CustomUser) and instance == request.user:
+        messages.error(request, 'No puedes eliminar tu propia cuenta de administrador desde aquí.')
+        return redirect('dashboard:admin_resource', resource=resource)
+
+    label = str(instance)
+    try:
+        if isinstance(instance, (TeacherProfile, StudentProfile, ParentProfile)):
+            user = instance.user
+            if user == request.user:
+                messages.error(request, 'No puedes eliminar tu propia cuenta desde aquí.')
+                return redirect('dashboard:admin_resource', resource=resource)
+            user.delete()
+        else:
+            instance.delete()
+    except ProtectedError:
+        messages.error(request, f'No se puede eliminar {label} porque está relacionado con otros registros.')
+    else:
+        messages.success(request, f'Se eliminó correctamente {label}.')
+    return redirect('dashboard:admin_resource', resource=resource)
 
 
 @login_required
