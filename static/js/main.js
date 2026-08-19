@@ -24,3 +24,24 @@
     }, 3500);
   });
 })();
+
+(() => {
+  const dialogs = document.querySelectorAll('[data-permission-dialog]');
+  dialogs.forEach((dialog) => {
+    const selectAll = dialog.querySelector('[data-permission-select-all]');
+    const checkboxes = dialog.querySelectorAll('[data-permission-checkbox]');
+    if (!selectAll || !checkboxes.length) return;
+
+    const syncSelectAll = () => {
+      selectAll.checked = Array.from(checkboxes).every((checkbox) => checkbox.checked);
+    };
+
+    selectAll.addEventListener('change', () => {
+      checkboxes.forEach((checkbox) => {
+        checkbox.checked = selectAll.checked;
+      });
+    });
+    checkboxes.forEach((checkbox) => checkbox.addEventListener('change', syncSelectAll));
+    syncSelectAll();
+  });
+})();

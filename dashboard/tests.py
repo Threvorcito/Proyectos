@@ -82,6 +82,38 @@ class AdminResourceDeleteTests(TestCase):
         plans_response = self.client.get(reverse('dashboard:lesson_plans'))
         self.assertContains(plans_response, 'createLessonPlanModal')
 
+    def test_teacher_permissions_dialog_is_rendered_and_updates_permissions(self):
+        admin = CustomUser.objects.create_user(
+            username='adminpermisos',
+            email='adminpermisos@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        teacher_user = CustomUser.objects.create_user(
+            username='docentepermisos',
+            email='docentepermisos@example.com',
+            password='Docente123!',
+            role=CustomUser.Role.TEACHER,
+        )
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Permisos')
+        self.client.force_login(admin)
+
+        list_response = self.client.get(reverse('dashboard:admin_resource', args=['profesores']))
+        self.assertContains(list_response, f'permissionsModal{teacher.pk}')
+        self.assertContains(list_response, 'Permisos del usuario')
+
+        update_response = self.client.post(reverse('dashboard:teacher_permissions_update', args=[teacher.pk]), data={
+            'can_manage_lessons': 'on',
+            'can_manage_readings': 'on',
+        })
+
+        self.assertRedirects(update_response, reverse('dashboard:admin_resource', args=['profesores']))
+        teacher.refresh_from_db()
+        self.assertTrue(teacher.can_manage_lessons)
+        self.assertFalse(teacher.can_manage_activities)
+        self.assertTrue(teacher.can_manage_readings)
+
     def test_admin_can_delete_teacher_profile_and_user(self):
         admin = CustomUser.objects.create_user(
             username='adminborrar',

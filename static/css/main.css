@@ -1258,6 +1258,86 @@ a { text-decoration: none; }
   padding: 1rem 1.35rem;
 }
 .admin-dialog .btn { border-radius: 10px; font-weight: 800; }
+.permissions-dialog__body {
+  display: grid;
+  gap: 1.35rem;
+  padding: 1rem 1.35rem 1.4rem;
+}
+.permissions-dialog__user {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #edf0f5;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+}
+.permissions-dialog__user strong {
+  color: #344054;
+  display: block;
+  font-weight: 900;
+}
+.permissions-dialog__user span {
+  color: #667085;
+  display: block;
+  font-size: .85rem;
+  margin-top: .15rem;
+}
+.permissions-dialog__select-all {
+  align-items: center;
+  color: #344054;
+  cursor: pointer;
+  display: flex;
+  font-weight: 800;
+  gap: .55rem;
+  margin: 0;
+  white-space: nowrap;
+}
+.permissions-dialog__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.permissions-dialog__card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1rem;
+}
+.permissions-dialog__card--wide { grid-column: 1 / -1; }
+.permissions-dialog__card h3 {
+  border-bottom: 1px solid #edf0f5;
+  color: #344054;
+  font-size: .95rem;
+  font-weight: 900;
+  margin-bottom: .85rem;
+  padding-bottom: .7rem;
+}
+.permissions-dialog__card label,
+.permissions-dialog__inline label {
+  align-items: center;
+  color: #475467;
+  cursor: pointer;
+  display: flex;
+  gap: .55rem;
+  margin: .7rem 0 0;
+}
+.permissions-dialog__inline {
+  display: grid;
+  gap: .4rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.permissions-dialog .form-check-input {
+  border-color: #d0d5dd;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+  height: 1.05rem;
+  width: 1.05rem;
+}
+.permissions-dialog .form-check-input:checked {
+  background-color: #5b5ee6;
+  border-color: #5b5ee6;
+}
 
 @media (max-width: 1100px) {
   .admin-console { grid-template-columns: 250px minmax(0, 1fr); }
@@ -1275,6 +1355,9 @@ a { text-decoration: none; }
   .admin-content { padding: 1.5rem 1rem; }
   .admin-metric-grid,
   .admin-insight-grid { grid-template-columns: 1fr; }
+  .permissions-dialog__grid,
+  .permissions-dialog__inline { grid-template-columns: 1fr; }
+  .permissions-dialog__user { align-items: flex-start; flex-direction: column; }
 }
 
 .register-page {

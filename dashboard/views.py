@@ -202,6 +202,22 @@ def admin_resource_delete(request, resource, pk):
 
 
 @login_required
+@require_POST
+def teacher_permissions_update(request, pk):
+    if not is_admin_user(request.user):
+        messages.error(request, 'No tienes permiso para cambiar permisos de docentes.')
+        return redirect('dashboard:redirect')
+
+    teacher = get_object_or_404(TeacherProfile.objects.select_related('user'), pk=pk)
+    teacher.can_manage_lessons = request.POST.get('can_manage_lessons') == 'on'
+    teacher.can_manage_activities = request.POST.get('can_manage_activities') == 'on'
+    teacher.can_manage_readings = request.POST.get('can_manage_readings') == 'on'
+    teacher.save(update_fields=['can_manage_lessons', 'can_manage_activities', 'can_manage_readings'])
+    messages.success(request, f'Se actualizaron los permisos de {teacher.name}.')
+    return redirect('dashboard:admin_resource', resource='profesores')
+
+
+@login_required
 @user_passes_test(is_teacher_or_admin)
 def lesson_plan_list(request):
     plans = LessonPlan.objects.select_related('teacher', 'subject', 'level')
