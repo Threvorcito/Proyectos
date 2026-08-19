@@ -131,6 +131,42 @@ class TeacherCreationForm(forms.Form):
         return teacher
 
 
+class TeacherUpdateForm(forms.ModelForm):
+    password = forms.CharField(
+        label='Nueva contraseña',
+        required=False,
+        help_text='Opcional. Déjalo vacío para mantener la contraseña actual.',
+        widget=forms.PasswordInput(render_value=True),
+    )
+
+    class Meta:
+        model = TeacherProfile
+        fields = ('first_name', 'last_name', 'email', 'password', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_password = self.instance.password if self.instance and self.instance.pk else ''
+        self.fields['first_name'].label = 'Nombres'
+        self.fields['last_name'].label = 'Apellidos'
+        self.fields['email'].label = 'Correo institucional'
+        self.fields['bio'].label = 'Perfil docente'
+        self.fields['can_manage_lessons'].label = 'Puede gestionar planes de clase'
+        self.fields['can_manage_activities'].label = 'Puede gestionar actividades'
+        self.fields['can_manage_readings'].label = 'Puede gestionar lecturas'
+        style_admin_form(self)
+
+    def save(self, commit=True):
+        password = self.cleaned_data.get('password', '')
+        teacher = super().save(commit=False)
+        if password:
+            teacher.set_password(password)
+        else:
+            teacher.password = self._original_password
+        if commit:
+            teacher.save()
+        return teacher
+
+
 class QuickStudentCreationForm(forms.Form):
     name = forms.CharField(label='Nombre completo', max_length=150)
     alias = forms.CharField(label='Nombre corto o alias', max_length=80, required=False)

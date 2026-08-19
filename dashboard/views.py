@@ -14,12 +14,12 @@ from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, L
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading
 
-from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, build_admin_model_form, style_admin_form
+from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
 
 
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'update_form': AdminUserUpdateForm, 'fields': None},
-    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
+    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'update_form': TeacherUpdateForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
     'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},

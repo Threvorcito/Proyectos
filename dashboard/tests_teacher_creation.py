@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from accounts.models import CustomUser
-from dashboard.forms import TeacherCreationForm
+from dashboard.forms import TeacherCreationForm, TeacherUpdateForm
 from learning.models import TeacherProfile
 
 
@@ -51,3 +51,41 @@ class TeacherCreationFormTests(TestCase):
         teacher = TeacherProfile.objects.get(user__isnull=True, name='Carlos Rivera', email='crivera@example.com')
         self.assertTrue(teacher.check_password('Docente123!'))
         self.assertFalse(CustomUser.objects.filter(email='crivera@example.com').exists())
+
+    def test_teacher_update_form_can_change_password(self):
+        teacher = TeacherProfile.objects.create(first_name='Ana', last_name='Ruiz', email='ana@example.com', name='Ana Ruiz')
+        teacher.set_password('Anterior123!')
+        teacher.save()
+
+        form = TeacherUpdateForm(instance=teacher, data={
+            'first_name': 'Ana',
+            'last_name': 'Ruiz',
+            'email': 'ana@example.com',
+            'password': 'Nueva123!',
+            'bio': 'Docente de primaria',
+            'can_manage_lessons': 'on',
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)
+        updated = form.save()
+
+        self.assertTrue(updated.check_password('Nueva123!'))
+        self.assertTrue(updated.can_manage_lessons)
+
+    def test_teacher_update_form_preserves_password_when_empty(self):
+        teacher = TeacherProfile.objects.create(first_name='Luis', last_name='Mora', email='luis@example.com', name='Luis Mora')
+        teacher.set_password('Actual123!')
+        teacher.save()
+
+        form = TeacherUpdateForm(instance=teacher, data={
+            'first_name': 'Luis',
+            'last_name': 'Mora',
+            'email': 'luis@example.com',
+            'password': '',
+            'bio': '',
+        })
+
+        self.assertTrue(form.is_valid(), form.errors)
+        updated = form.save()
+
+        self.assertTrue(updated.check_password('Actual123!'))
