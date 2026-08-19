@@ -46,6 +46,62 @@ class AdminUserCreationForm(UserCreationForm):
         return user
 
 
+class TeacherCreationForm(forms.Form):
+    name = forms.CharField(label='Nombre completo del profesor', max_length=150)
+    username = forms.CharField(label='Usuario', max_length=150, help_text='Este será el usuario para iniciar sesión.')
+    email = forms.EmailField(label='Correo electrónico')
+    password = forms.CharField(
+        label='Contraseña',
+        max_length=32,
+        required=False,
+        help_text='Opcional. Si se deja vacío, el sistema genera una contraseña segura.',
+        widget=forms.PasswordInput(render_value=True),
+    )
+    bio = forms.CharField(label='Descripción', required=False, widget=forms.Textarea(attrs={'rows': 3}))
+    can_manage_lessons = forms.BooleanField(label='Puede gestionar clases', required=False, initial=True)
+    can_manage_activities = forms.BooleanField(label='Puede gestionar actividades', required=False, initial=True)
+    can_manage_readings = forms.BooleanField(label='Puede gestionar lecturas', required=False, initial=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        style_admin_form(self)
+
+    def clean_username(self):
+        username = self.cleaned_data['username'].strip()
+        if CustomUser.objects.filter(username=username).exists():
+            raise forms.ValidationError('Ya existe un usuario con este nombre.')
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data['email'].strip().lower()
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError('Ya existe una cuenta con este correo.')
+        return email
+
+    def save(self):
+        password = self.cleaned_data.get('password') or get_random_string(10, allowed_chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz')
+        name_parts = self.cleaned_data['name'].split(' ', 1)
+        user = CustomUser.objects.create(
+            username=self.cleaned_data['username'],
+            email=self.cleaned_data['email'],
+            first_name=name_parts[0],
+            last_name=name_parts[1] if len(name_parts) > 1 else '',
+            role=CustomUser.Role.TEACHER,
+        )
+        user.set_password(password)
+        user.save(update_fields=['password'])
+        TeacherProfile.objects.create(
+            user=user,
+            name=self.cleaned_data['name'],
+            bio=self.cleaned_data.get('bio', ''),
+            can_manage_lessons=self.cleaned_data.get('can_manage_lessons', False),
+            can_manage_activities=self.cleaned_data.get('can_manage_activities', False),
+            can_manage_readings=self.cleaned_data.get('can_manage_readings', False),
+        )
+        self.created_credentials = {'username': user.username, 'password': password}
+        return user
+
+
 class QuickStudentCreationForm(forms.Form):
     name = forms.CharField(label='Nombre completo', max_length=150)
     alias = forms.CharField(label='Nombre corto o alias', max_length=80, required=False)

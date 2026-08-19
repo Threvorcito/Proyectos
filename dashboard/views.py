@@ -12,12 +12,12 @@ from learning.models import Lesson, LessonPlan, Level, ParentProfile, StudentPro
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading
 
-from .forms import AdminUserCreationForm, LessonPlanForm, QuickStudentCreationForm, build_admin_model_form, style_admin_form
+from .forms import AdminUserCreationForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, build_admin_model_form, style_admin_form
 
 
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'fields': None},
-    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'fields': ('user', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
+    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'fields': ('user', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
     'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},
@@ -115,13 +115,17 @@ def admin_resource_create(request, resource):
     if not can_manage_resource(request.user, resource):
         messages.error(request, 'No tienes permiso para crear este recurso.')
         return redirect('dashboard:redirect')
-    form_class = config.get('form') or build_admin_model_form(config['model'], config['fields'])
+    form_class = config.get('create_form') or config.get('form') or build_admin_model_form(config['model'], config['fields'])
     form = style_admin_form(form_class(request.POST or None, request.FILES or None))
+    credentials = None
     if request.method == 'POST' and form.is_valid():
         form.save()
+        credentials = getattr(form, 'created_credentials', None)
         messages.success(request, f"Se agregó correctamente el {config['singular']}.")
-        return redirect('dashboard:admin_resource', resource=resource)
-    return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': False})
+        if credentials is None:
+            return redirect('dashboard:admin_resource', resource=resource)
+        form = form_class()
+    return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': False, 'credentials': credentials})
 
 
 @login_required

@@ -4,6 +4,13 @@
   <div class="mx-auto" style="max-width: 860px;">
     <span class="eyebrow">{{ config.title }}</span>
     <h1>{% if is_edit %}Editar{% else %}Agregar{% endif %} {{ config.singular }}</h1>
+    {% if credentials %}
+      <div class="alert alert-success mt-4">
+        <strong>Usuario creado para iniciar sesión:</strong>
+        <div>Usuario: <code>{{ credentials.username }}</code></div>
+        <div>Contraseña: <code>{{ credentials.password }}</code></div>
+      </div>
+    {% endif %}
     <form method="post" enctype="multipart/form-data" class="feature-card mt-4">
       {% csrf_token %}
       {{ form.as_p }}
