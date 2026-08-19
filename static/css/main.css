@@ -1586,25 +1586,33 @@ a { text-decoration: none; }
 
 @media (max-width: 575.98px) {
   .admin-sidebar {
-    max-height: 38vh;
+    max-height: none;
+    overflow: visible;
     padding: .7rem;
+    position: static;
   }
   .admin-brand strong { font-size: 1rem; }
   .admin-menu {
-    display: flex;
+    display: grid;
     gap: .45rem;
-    overflow-x: auto;
-    padding-bottom: .2rem;
-    scroll-snap-type: x proximity;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+    padding-bottom: 0;
   }
   .admin-menu a {
-    flex: 0 0 auto;
+    align-items: center;
     font-size: .86rem;
-    min-width: 158px;
-    scroll-snap-align: start;
-    white-space: nowrap;
+    min-height: 48px;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    padding: .65rem .7rem;
+    white-space: normal;
   }
-  .admin-menu small { display: none; }
+  .admin-menu small {
+    display: block;
+    grid-column: 1 / -1;
+    padding: .8rem .35rem .25rem;
+  }
   .admin-content { padding: 1rem .75rem; }
   .admin-content h1 { font-size: clamp(1.75rem, 9vw, 2.25rem); }
   .admin-resource-list .list-group-item {
@@ -1634,6 +1642,10 @@ a { text-decoration: none; }
   .admin-dialog__checklist { max-height: 92px; }
   .permissions-dialog__select-all { white-space: normal; }
   .system-messages { top: .5rem; width: calc(100% - 1rem); }
+}
+
+@media (max-width: 420px) {
+  .admin-menu { grid-template-columns: 1fr; }
 }
 
 .register-page {
