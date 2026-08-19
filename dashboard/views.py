@@ -14,11 +14,11 @@ from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, L
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading
 
-from .forms import AdminUserCreationForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, build_admin_model_form, style_admin_form
+from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, build_admin_model_form, style_admin_form
 
 
 ADMIN_RESOURCES = {
-    'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'fields': None},
+    'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'update_form': AdminUserUpdateForm, 'fields': None},
     'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'fields': ('user', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
     'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
@@ -116,13 +116,21 @@ def admin_resource_landing(request, resource):
     objects = config['model'].objects.all()
     if resource == 'usuarios':
         objects = objects.filter(is_superuser=False)
-    objects = objects.order_by('-pk')[:20]
+    objects = list(objects.order_by('-pk')[:20])
     form_class = config.get('create_form') or config.get('form') or build_admin_model_form(config['model'], config['fields'])
     create_form = style_admin_form(form_class())
+    edit_rows = []
+    if config.get('update_form') or not config.get('form'):
+        edit_form_class = config.get('update_form') or build_admin_model_form(config['model'], config['fields'])
+        edit_rows = [
+            {'object': item, 'form': style_admin_form(edit_form_class(instance=item))}
+            for item in objects
+        ]
     return render(request, 'dashboard/admin_resource_landing.html', {
         'resource': resource,
         'config': config,
         'objects': objects,
+        'edit_rows': edit_rows,
         'create_form': create_form,
     })
 
@@ -162,11 +170,14 @@ def admin_resource_update(request, resource, pk):
     if not can_manage_resource(request.user, resource):
         messages.error(request, 'No tienes permiso para editar este recurso.')
         return redirect('dashboard:redirect')
-    if config.get('form'):
+    if config.get('form') and not config.get('update_form'):
         messages.info(request, 'Este recurso debe editarse desde el administrador avanzado.')
         return redirect('dashboard:admin_resource', resource=resource)
     instance = get_object_or_404(config['model'], pk=pk)
-    form_class = build_admin_model_form(config['model'], config['fields'])
+    if isinstance(instance, CustomUser) and instance.is_superuser:
+        messages.error(request, 'El superusuario no se edita desde esta pantalla.')
+        return redirect('dashboard:admin_resource', resource=resource)
+    form_class = config.get('update_form') or build_admin_model_form(config['model'], config['fields'])
     form = style_admin_form(form_class(request.POST or None, request.FILES or None, instance=instance))
     if request.method == 'POST' and form.is_valid():
         form.save()

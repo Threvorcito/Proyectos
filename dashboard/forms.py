@@ -19,6 +19,7 @@ class AdminUserCreationForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._original_password = self.instance.password if self.instance and self.instance.pk else ''
         self.fields['role'].choices = (
             (CustomUser.Role.ADMIN, 'Administrador'),
             (CustomUser.Role.TEACHER, 'Docente'),
@@ -45,6 +46,40 @@ class AdminUserCreationForm(UserCreationForm):
                     user=user,
                     defaults={'name': full_name, 'reading_level': level, 'current_level': level},
                 )
+        return user
+
+
+class AdminUserUpdateForm(forms.ModelForm):
+    password = forms.CharField(
+        label='Nueva contraseña',
+        required=False,
+        help_text='Opcional. Déjalo vacío para mantener la contraseña actual.',
+        widget=forms.PasswordInput(render_value=True),
+    )
+
+    class Meta:
+        model = CustomUser
+        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff', 'is_active', 'password')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._original_password = self.instance.password if self.instance and self.instance.pk else ''
+        self.fields['role'].choices = (
+            (CustomUser.Role.ADMIN, 'Administrador'),
+            (CustomUser.Role.TEACHER, 'Docente'),
+            (CustomUser.Role.PARENT, 'Padre o tutor'),
+        )
+        style_admin_form(self)
+
+    def save(self, commit=True):
+        password = self.cleaned_data.get('password', '')
+        user = super().save(commit=False)
+        if password:
+            user.set_password(password)
+        else:
+            user.password = self._original_password
+        if commit:
+            user.save()
         return user
 
 

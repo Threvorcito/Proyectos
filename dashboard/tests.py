@@ -97,6 +97,39 @@ class AdminResourceDeleteTests(TestCase):
             self.assertContains(response, 'createResourceModal')
             self.assertContains(response, f'Agregar')
 
+    def test_admin_edit_dialog_is_rendered_for_users_and_preserves_password(self):
+        admin = CustomUser.objects.create_user(
+            username='admineditdialog',
+            email='admineditdialog@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        user = CustomUser.objects.create_user(
+            username='usuarioeditar',
+            email='usuarioeditar@example.com',
+            password='Demo12345!',
+            role=CustomUser.Role.PARENT,
+        )
+        self.client.force_login(admin)
+
+        response = self.client.get(reverse('dashboard:admin_resource', args=['usuarios']))
+        self.assertContains(response, f'editResourceModal{user.pk}')
+
+        update_response = self.client.post(reverse('dashboard:admin_resource_update', args=['usuarios', user.pk]), data={
+            'username': 'usuarioeditado',
+            'email': 'usuarioeditado@example.com',
+            'first_name': 'Usuario',
+            'last_name': 'Editado',
+            'role': CustomUser.Role.PARENT,
+            'is_active': 'on',
+        })
+
+        self.assertRedirects(update_response, reverse('dashboard:admin_resource', args=['usuarios']))
+        user.refresh_from_db()
+        self.assertEqual(user.username, 'usuarioeditado')
+        self.assertTrue(user.check_password('Demo12345!'))
+
     def test_teacher_permissions_dialog_is_rendered_and_updates_permissions(self):
         admin = CustomUser.objects.create_user(
             username='adminpermisos',
