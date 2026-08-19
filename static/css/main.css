@@ -1287,6 +1287,37 @@ a { text-decoration: none; }
   display: block;
   font-size: .84rem;
 }
+.admin-dialog__switch-row {
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.admin-dialog__switch-row label {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #edf0f5;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  gap: .7rem;
+  margin: 0;
+  padding: .75rem .9rem;
+}
+.admin-dialog__switch-row label > .form-check-input {
+  flex: 0 0 auto;
+  margin: 0;
+}
+.admin-dialog__switch-row strong {
+  color: #344054;
+  display: block;
+  font-size: .9rem;
+}
+.admin-dialog__switch-row small {
+  color: #667085;
+  display: block;
+  font-size: .78rem;
+  line-height: 1.35;
+}
 .permissions-dialog__body {
   display: grid;
   gap: .95rem;
@@ -1387,6 +1418,7 @@ a { text-decoration: none; }
   .admin-metric-grid,
   .admin-insight-grid { grid-template-columns: 1fr; }
   .admin-dialog__grid,
+  .admin-dialog__switch-row,
   .permissions-dialog__grid,
   .permissions-dialog__inline { grid-template-columns: 1fr; }
   .permissions-dialog__user { align-items: flex-start; flex-direction: column; }

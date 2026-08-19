@@ -125,7 +125,21 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
           <div class="modal-body admin-dialog__body">
-            {% if resource == 'profesores' %}
+            {% if resource == 'usuarios' %}
+              <div class="admin-dialog__grid">
+                <p>{{ create_form.username.label_tag }}{{ create_form.username }}{{ create_form.username.errors }}</p>
+                <p>{{ create_form.email.label_tag }}{{ create_form.email }}{{ create_form.email.errors }}</p>
+                <p>{{ create_form.first_name.label_tag }}{{ create_form.first_name }}{{ create_form.first_name.errors }}</p>
+                <p>{{ create_form.last_name.label_tag }}{{ create_form.last_name }}{{ create_form.last_name.errors }}</p>
+                <p>{{ create_form.password1.label_tag }}{{ create_form.password1 }}{{ create_form.password1.errors }}</p>
+                <p>{{ create_form.password2.label_tag }}{{ create_form.password2 }}{{ create_form.password2.errors }}</p>
+                <p>{{ create_form.role.label_tag }}{{ create_form.role }}{{ create_form.role.errors }}</p>
+              </div>
+              <div class="admin-dialog__switch-row">
+                <label>{{ create_form.is_staff }}<span><strong>Acceso administrativo</strong><small>Permite entrar al panel de administración.</small></span></label>
+                <label>{{ create_form.is_superuser }}<span><strong>Superusuario</strong><small>Úsalo solo para cuentas principales.</small></span></label>
+              </div>
+            {% elif resource == 'profesores' %}
               <div class="admin-dialog__grid">
                 <p>{{ create_form.name.label_tag }}{{ create_form.name }}{{ create_form.name.errors }}</p>
                 <p>{{ create_form.email.label_tag }}{{ create_form.email }}{{ create_form.email.errors }}</p>

@@ -24,6 +24,8 @@ class AdminUserCreationForm(UserCreationForm):
             (CustomUser.Role.TEACHER, 'Docente'),
             (CustomUser.Role.PARENT, 'Padre o tutor'),
         )
+        self.fields['password1'].help_text = ''
+        self.fields['password2'].help_text = ''
         style_admin_form(self)
 
     def save(self, commit=True):
