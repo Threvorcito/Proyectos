@@ -1,17 +1,43 @@
 {% extends 'base.html' %}
+{% block title %}{% if is_edit %}Editar plan{% else %}Crear plan{% endif %}{% endblock %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+{% block extra_css %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endblock %}
+{% endif %}
 {% block content %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<div class="admin-console">
+  {% include 'dashboard/partials/admin_sidebar.html' %}
+  <section class="admin-main">
+    {% include 'dashboard/partials/admin_topbar.html' with current_title='Planes de clase' %}
+    <div class="admin-content">
+{% else %}
 <div class="container py-5">
-  <div class="mx-auto" style="max-width: 900px;">
-    <span class="eyebrow">Plan de clase</span>
-    <h1>{% if is_edit %}Editar plan{% else %}Crear plan{% endif %}</h1>
-    <form method="post" class="feature-card mt-4">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <div class="d-flex flex-wrap gap-2 mt-3">
-        <button class="btn btn-primary" type="submit">Guardar</button>
-        <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Cancelar</a>
+{% endif %}
+      <div class="mx-auto" style="max-width: 900px;">
+        <span class="eyebrow">Plan de clase</span>
+        <h1>{% if is_edit %}Editar plan{% else %}Crear plan{% endif %}</h1>
+        <form method="post" class="feature-card mt-4">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">Guardar</button>
+            <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Cancelar</a>
+          </div>
+        </form>
       </div>
-    </form>
-  </div>
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+    </div>
+  </section>
 </div>
+{% else %}
+</div>
+{% endif %}
 {% endblock %}

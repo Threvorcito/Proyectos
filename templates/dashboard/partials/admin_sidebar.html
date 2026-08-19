@@ -1,0 +1,22 @@
+<aside class="admin-sidebar">
+  <a class="admin-brand" href="{% url 'dashboard:admin' %}">
+    <span class="admin-brand__mark">LS</span>
+    <strong>Lectura Sin Límites</strong>
+  </a>
+
+  <nav class="admin-menu" aria-label="Menú administrativo">
+    <a class="{% if request.resolver_match.url_name == 'admin' %}is-active{% endif %}" href="{% url 'dashboard:admin' %}"><span>▦</span>Panel de control</a>
+    <a class="{% if resource == 'usuarios' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'usuarios' %}"><span>👥</span>Usuarios</a>
+    <a class="{% if resource == 'profesores' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'profesores' %}"><span>🧑‍🏫</span>Docentes y permisos</a>
+    <a class="{% if resource == 'alumnos' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'alumnos' %}"><span>🎒</span>Estudiantes</a>
+    <a class="{% if request.resolver_match.url_name == 'lesson_plans' or request.resolver_match.url_name == 'lesson_plan_create' or request.resolver_match.url_name == 'lesson_plan_update' %}is-active{% endif %}" href="{% url 'dashboard:lesson_plans' %}"><span>🗂</span>Planes de clase</a>
+
+    <small>Recursos educativos</small>
+    <a class="{% if resource == 'niveles' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'niveles' %}"><span>📊</span>Niveles</a>
+    <a class="{% if resource == 'actividades' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'actividades' %}"><span>✍</span>Actividades</a>
+    <a class="{% if resource == 'juegos' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'juegos' %}"><span>🎮</span>Juegos</a>
+    <a class="{% if resource == 'lecturas' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'lecturas' %}"><span>📖</span>Cuentos y lecturas</a>
+    <a class="{% if resource == 'palabras' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'palabras' %}"><span>🔤</span>Palabras</a>
+    <a class="{% if resource == 'silabas' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'silabas' %}"><span>🧩</span>Sílabas</a>
+  </nav>
+</aside>

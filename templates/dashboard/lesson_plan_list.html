@@ -1,28 +1,54 @@
 {% extends 'base.html' %}
+{% block title %}Planes de clase{% endblock %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+{% block extra_css %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endblock %}
+{% endif %}
 {% block content %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<div class="admin-console">
+  {% include 'dashboard/partials/admin_sidebar.html' %}
+  <section class="admin-main">
+    {% include 'dashboard/partials/admin_topbar.html' with current_title='Planes de clase' %}
+    <div class="admin-content">
+{% else %}
 <div class="container py-5">
-  <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-4">
-    <div>
-      <span class="eyebrow">Planificación</span>
-      <h1>Planes de clase</h1>
-    </div>
-    <a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_create' %}">Crear plan</a>
-  </div>
-
-  <div class="row g-3">
-    {% for plan in plans %}
-      <div class="col-md-6">
-        <div class="feature-card h-100">
-          <h2 class="h5">{{ plan.title }}</h2>
-          <p class="mb-1"><strong>Materia:</strong> {{ plan.subject }}</p>
-          <p class="mb-1"><strong>Nivel:</strong> {{ plan.level }}</p>
-          <p class="text-muted">{{ plan.objective|truncatewords:24 }}</p>
-          <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>
+{% endif %}
+      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-4">
+        <div>
+          <span class="eyebrow">Planificación</span>
+          <h1>Planes de clase</h1>
         </div>
+        <a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_create' %}">Crear plan</a>
       </div>
-    {% empty %}
-      <p>No hay planes creados todavía.</p>
-    {% endfor %}
-  </div>
+
+      <div class="row g-3">
+        {% for plan in plans %}
+          <div class="col-md-6">
+            <div class="feature-card h-100">
+              <h2 class="h5">{{ plan.title }}</h2>
+              <p class="mb-1"><strong>Materia:</strong> {{ plan.subject }}</p>
+              <p class="mb-1"><strong>Nivel:</strong> {{ plan.level }}</p>
+              <p class="text-muted">{{ plan.objective|truncatewords:24 }}</p>
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>
+            </div>
+          </div>
+        {% empty %}
+          <p>No hay planes creados todavía.</p>
+        {% endfor %}
+      </div>
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+    </div>
+  </section>
 </div>
+{% else %}
+</div>
+{% endif %}
 {% endblock %}

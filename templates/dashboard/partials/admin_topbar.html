@@ -1,0 +1,4 @@
+<header class="admin-topbar">
+  <div class="admin-breadcrumb"><a href="{% url 'core:home' %}">Inicio</a><span>/</span><strong>{{ current_title|default:'Panel de control' }}</strong></div>
+  <div class="admin-user-chip"><span>Panel administrativo</span><strong>{{ request.user.first_name|default:request.user.username|slice:':1' }}</strong></div>
+</header>

@@ -1,24 +1,40 @@
 {% extends 'base.html' %}
+{% block title %}{% if is_edit %}Editar{% else %}Agregar{% endif %} {{ config.singular }}{% endblock %}
+{% block extra_css %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endblock %}
 {% block content %}
-<div class="container py-5">
-  <div class="mx-auto" style="max-width: 860px;">
-    <span class="eyebrow">{{ config.title }}</span>
-    <h1>{% if is_edit %}Editar{% else %}Agregar{% endif %} {{ config.singular }}</h1>
-    {% if credentials %}
-      <div class="alert alert-success mt-4">
-        <strong>Usuario creado para iniciar sesión:</strong>
-        <div>Usuario: <code>{{ credentials.username }}</code></div>
-        <div>Contraseña: <code>{{ credentials.password }}</code></div>
+<div class="admin-console">
+  {% include 'dashboard/partials/admin_sidebar.html' %}
+  <section class="admin-main">
+    {% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}
+    <div class="admin-content">
+      <div class="mx-auto" style="max-width: 860px;">
+        <span class="eyebrow">{{ config.title }}</span>
+        <h1>{% if is_edit %}Editar{% else %}Agregar{% endif %} {{ config.singular }}</h1>
+        {% if credentials %}
+          <div class="alert alert-success mt-4">
+            <strong>Usuario creado para iniciar sesión:</strong>
+            <div>Usuario: <code>{{ credentials.username }}</code></div>
+            <div>Contraseña: <code>{{ credentials.password }}</code></div>
+          </div>
+        {% endif %}
+        <form method="post" enctype="multipart/form-data" class="feature-card mt-4">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="d-flex flex-wrap gap-2 mt-3">
+            <button class="btn btn-primary" type="submit">Guardar</button>
+            <a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' resource %}">Cancelar</a>
+          </div>
+        </form>
       </div>
-    {% endif %}
-    <form method="post" enctype="multipart/form-data" class="feature-card mt-4">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <div class="d-flex flex-wrap gap-2 mt-3">
-        <button class="btn btn-primary" type="submit">Guardar</button>
-        <a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' resource %}">Cancelar</a>
-      </div>
-    </form>
-  </div>
+    </div>
+  </section>
 </div>
 {% endblock %}

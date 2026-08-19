@@ -1,34 +1,50 @@
 {% extends 'base.html' %}
+{% block title %}{{ config.title }}{% endblock %}
+{% block extra_css %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endblock %}
 {% block content %}
-<div class="container py-5">
-  <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-4">
-    <div>
-      <span class="eyebrow">Gestión</span>
-      <h1>{{ config.title }}</h1>
-    </div>
-    <div class="d-flex gap-2">
-      <a class="btn btn-primary" href="{% url 'dashboard:admin_resource_create' resource %}">Agregar {{ config.singular }}</a>
-      <a class="btn btn-outline-primary" href="{% url 'dashboard:redirect' %}">Volver</a>
-    </div>
-  </div>
-
-  <div class="list-group admin-resource-list">
-    {% for item in objects %}
-      <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
-        <span>{{ item }}</span>
-        <div class="d-flex flex-wrap gap-2">
-          {% if not config.form %}
-            <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:admin_resource_update' resource item.pk %}">Editar</a>
-          {% endif %}
-          <form method="post" action="{% url 'dashboard:admin_resource_delete' resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
-            {% csrf_token %}
-            <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
-          </form>
+<div class="admin-console">
+  {% include 'dashboard/partials/admin_sidebar.html' %}
+  <section class="admin-main">
+    {% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}
+    <div class="admin-content">
+      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-4">
+        <div>
+          <span class="eyebrow">Gestión</span>
+          <h1>{{ config.title }}</h1>
+        </div>
+        <div class="d-flex gap-2">
+          <a class="btn btn-primary" href="{% url 'dashboard:admin_resource_create' resource %}">Agregar {{ config.singular }}</a>
+          <a class="btn btn-outline-primary" href="{% url 'dashboard:redirect' %}">Volver</a>
         </div>
       </div>
-    {% empty %}
-      <div class="alert alert-info">No hay registros todavía.</div>
-    {% endfor %}
-  </div>
+
+      <div class="list-group admin-resource-list">
+        {% for item in objects %}
+          <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span>{{ item }}</span>
+            <div class="d-flex flex-wrap gap-2">
+              {% if not config.form %}
+                <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:admin_resource_update' resource item.pk %}">Editar</a>
+              {% endif %}
+              <form method="post" action="{% url 'dashboard:admin_resource_delete' resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
+                {% csrf_token %}
+                <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+              </form>
+            </div>
+          </div>
+        {% empty %}
+          <div class="alert alert-info">No hay registros todavía.</div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock %}

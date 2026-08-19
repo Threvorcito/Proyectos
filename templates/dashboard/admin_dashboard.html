@@ -11,34 +11,10 @@
 {% endblock %}
 {% block content %}
 <div class="admin-console">
-  <aside class="admin-sidebar">
-    <a class="admin-brand" href="{% url 'dashboard:admin' %}">
-      <span class="admin-brand__mark">LS</span>
-      <strong>Lectura Sin Límites</strong>
-    </a>
-
-    <nav class="admin-menu" aria-label="Menú administrativo">
-      <a class="is-active" href="{% url 'dashboard:admin' %}"><span>▦</span>Panel de control</a>
-      <a href="{% url 'dashboard:admin_resource' 'usuarios' %}"><span>👥</span>Usuarios</a>
-      <a href="{% url 'dashboard:admin_resource' 'profesores' %}"><span>🧑‍🏫</span>Docentes y permisos</a>
-      <a href="{% url 'dashboard:admin_resource' 'alumnos' %}"><span>🎒</span>Estudiantes</a>
-      <a href="{% url 'dashboard:lesson_plans' %}"><span>🗂</span>Planes de clase</a>
-
-      <small>Recursos educativos</small>
-      <a href="{% url 'dashboard:admin_resource' 'niveles' %}"><span>📊</span>Niveles</a>
-      <a href="{% url 'dashboard:admin_resource' 'actividades' %}"><span>✍</span>Actividades</a>
-      <a href="{% url 'dashboard:admin_resource' 'juegos' %}"><span>🎮</span>Juegos</a>
-      <a href="{% url 'dashboard:admin_resource' 'lecturas' %}"><span>📖</span>Cuentos y lecturas</a>
-      <a href="{% url 'dashboard:admin_resource' 'palabras' %}"><span>🔤</span>Palabras</a>
-      <a href="{% url 'dashboard:admin_resource' 'silabas' %}"><span>🧩</span>Sílabas</a>
-    </nav>
-  </aside>
+  {% include 'dashboard/partials/admin_sidebar.html' %}
 
   <section class="admin-main">
-    <header class="admin-topbar">
-      <div class="admin-breadcrumb"><a href="{% url 'core:home' %}">Inicio</a><span>/</span><strong>Panel de control</strong></div>
-      <div class="admin-user-chip"><span>Panel administrativo</span><strong>{{ request.user.first_name|default:request.user.username|slice:':1' }}</strong></div>
-    </header>
+    {% include 'dashboard/partials/admin_topbar.html' with current_title='Panel de control' %}
 
     <div class="admin-content">
       <section class="admin-welcome-card">

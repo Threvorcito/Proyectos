@@ -21,6 +21,24 @@ class DashboardProfileGuardTests(TestCase):
 
 
 class AdminResourceDeleteTests(TestCase):
+    def test_admin_sidebar_is_visible_on_resource_pages(self):
+        admin = CustomUser.objects.create_user(
+            username='adminmenu',
+            email='adminmenu@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        self.client.force_login(admin)
+
+        list_response = self.client.get(reverse('dashboard:admin_resource', args=['profesores']))
+        create_response = self.client.get(reverse('dashboard:admin_resource_create', args=['profesores']))
+
+        self.assertContains(list_response, 'Panel de control')
+        self.assertContains(list_response, 'Docentes y permisos')
+        self.assertContains(create_response, 'Panel de control')
+        self.assertContains(create_response, 'Docentes y permisos')
+
     def test_admin_can_delete_teacher_profile_and_user(self):
         admin = CustomUser.objects.create_user(
             username='adminborrar',
