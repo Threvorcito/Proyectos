@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 
 from activities.models import Activity, ActivityOption
 from gamification.models import Achievement
-from learning.models import Lesson, Level, ParentProfile, StudentProfile, TeacherProfile, Syllable, Word
+from learning.models import Lesson, Level, ParentProfile, StudentProfile, Subject, TeacherProfile, Syllable, Word
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading, ReadingAnswer, ReadingQuestion
 
@@ -14,11 +14,32 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         User = get_user_model()
 
+        admin_user, _ = User.objects.get_or_create(username='Admin', defaults={
+            'first_name': 'Administrador', 'last_name': 'Sistema', 'email': 'admin@example.com', 'role': 'ADMIN',
+            'is_staff': True, 'is_superuser': True,
+        })
+        admin_user.role = 'ADMIN'
+        admin_user.is_staff = True
+        admin_user.is_superuser = True
+        admin_user.set_password('admin123')
+        admin_user.save()
+
         levels = [
             Level.objects.get_or_create(number=1, defaults={'name': 'Primeros pasos', 'description': 'Letras, sonidos y sílabas.', 'order': 1})[0],
             Level.objects.get_or_create(number=2, defaults={'name': 'Construyo palabras', 'description': 'Sílabas, palabras y frases.', 'order': 2})[0],
             Level.objects.get_or_create(number=3, defaults={'name': 'Leo y comprendo', 'description': 'Lecturas cortas y comprensión.', 'order': 3})[0],
         ]
+
+        subjects = {}
+        for name, description in [
+            ('Lengua y Literatura', 'Lectoescritura inicial, comprensión oral y lectura guiada con método FAS.'),
+            ('Matemática', 'Pensamiento lógico, conteo, comparación y resolución de problemas con apoyo visual.'),
+            ('Ciencias Naturales', 'Observación del entorno, animales, plantas, cuerpo humano y hábitos saludables.'),
+            ('Estudios Sociales', 'Familia, escuela, comunidad, convivencia y ubicación en el entorno.'),
+            ('English', 'Vocabulario básico mediante escucha, imágenes y repetición.'),
+            ('Educación Artística y Cultural', 'Expresión visual, ritmo, trazos y reconocimiento cultural.'),
+        ]:
+            subjects[name], _ = Subject.objects.get_or_create(name=name, defaults={'description': description, 'is_active': True})
 
         for text in ['MA', 'ME', 'MI', 'MO', 'MU', 'PA', 'PE', 'PI', 'PO', 'PU', 'LA', 'LE', 'LI', 'LO', 'LU', 'CA', 'CO', 'CU']:
             Syllable.objects.get_or_create(text=text, defaults={'level': levels[0]})
@@ -40,7 +61,11 @@ class Command(BaseCommand):
         })
         teacher_user.set_password('Demo12345!')
         teacher_user.save()
-        TeacherProfile.objects.get_or_create(user=teacher_user, defaults={'name': 'Laura Martínez'})
+        teacher_profile, _ = TeacherProfile.objects.get_or_create(user=teacher_user, defaults={'name': 'Laura Martínez'})
+        teacher_profile.can_manage_lessons = True
+        teacher_profile.can_manage_activities = True
+        teacher_profile.can_manage_readings = True
+        teacher_profile.save(update_fields=['can_manage_lessons', 'can_manage_activities', 'can_manage_readings'])
 
         parent_user, _ = User.objects.get_or_create(username='padre_demo', defaults={
             'first_name': 'Carlos', 'last_name': 'Pérez', 'email': 'padre_demo@example.com', 'role': 'PARENT',
@@ -66,6 +91,8 @@ class Command(BaseCommand):
                 'instructions': 'Presiona el sonido y selecciona la respuesta.',
                 'activity_type': 'LISTEN_SELECT',
                 'level': levels[0],
+                'subject': subjects['Lengua y Literatura'],
+                'grade': '1',
                 'difficulty': 'easy',
                 'points': 10,
                 'stars': 1,
@@ -74,6 +101,47 @@ class Command(BaseCommand):
         )
         for option_text, correct in [('CASA', True), ('MASA', False), ('CAMA', False)]:
             ActivityOption.objects.get_or_create(activity=activity, text=option_text, defaults={'is_correct': correct})
+        activity.subject = subjects['Lengua y Literatura']
+        activity.grade = '1'
+        activity.level = levels[0]
+        activity.save(update_fields=['subject', 'grade', 'level'])
+
+        curriculum_activities = [
+            ('1', 'Lengua y Literatura', levels[0], 'Sonido inicial: m, p, l', 'Reconoce sonidos iniciales y diferencia letras parecidas con apoyo visual.', 'Escucha la palabra, mira la imagen mentalmente y selecciona la letra inicial.', 'LISTEN_SELECT', [('m', True), ('n', False), ('p', False)]),
+            ('1', 'Matemática', levels[0], 'Cuenta y lee números del 1 al 5', 'Relaciona cantidad, número y palabra corta.', 'Cuenta despacio, lee el número y elige la cantidad correcta.', 'MATCH_IMAGE_WORD', [('3', True), ('5', False), ('2', False)]),
+            ('1', 'Ciencias Naturales', levels[0], 'Animales de mi entorno', 'Lee nombres cortos de animales y asocia sonido-imagen-palabra.', 'Escucha el nombre del animal y selecciona la palabra correcta.', 'LISTEN_SELECT', [('gato', True), ('pato', False), ('dato', False)]),
+            ('1', 'Estudios Sociales', levels[0], 'Mi familia y mi escuela', 'Identifica palabras frecuentes del entorno familiar y escolar.', 'Lee con calma y selecciona la palabra que corresponde.', 'READING', [('mamá', True), ('mapa', False), ('masa', False)]),
+            ('2', 'Lengua y Literatura', levels[1], 'Sílabas trabadas simples', 'Forma palabras con sílabas y fortalece la ruta fonológica.', 'Ordena las sílabas para formar una palabra conocida.', 'FORM_WORD', [('plato', True), ('palo', False), ('pato', False)]),
+            ('2', 'Matemática', levels[1], 'Problemas cortos con suma', 'Lee enunciados breves y reconoce datos importantes.', 'Lee una oración corta, identifica el número y responde.', 'COMPLETE_WORD', [('7', True), ('6', False), ('8', False)]),
+            ('2', 'Ciencias Naturales', levels[1], 'Partes de una planta', 'Reconoce vocabulario científico básico con segmentación silábica.', 'Lee la palabra por sílabas y selecciona la parte de la planta.', 'SYLLABLES', [('raíz', True), ('risa', False), ('maíz', False)]),
+            ('2', 'Estudios Sociales', levels[1], 'Mi comunidad', 'Lee palabras del barrio y la comunidad con apoyo contextual.', 'Selecciona la palabra que nombra un lugar de la comunidad.', 'LISTEN_SELECT', [('escuela', True), ('estrella', False), ('escoba', False)]),
+            ('3', 'Lengua y Literatura', levels[2], 'Comprendo un cuento corto', 'Lee un texto breve y responde una pregunta literal.', 'Lee por partes, subraya mentalmente la idea y elige la respuesta.', 'READING', [('Milo', True), ('Luna', False), ('Sol', False)]),
+            ('3', 'Matemática', levels[2], 'Lectura de problemas', 'Comprende enunciados matemáticos con palabras clave.', 'Lee el problema y selecciona la operación necesaria.', 'READING', [('sumar', True), ('borrar', False), ('saltar', False)]),
+            ('3', 'Ciencias Naturales', levels[2], 'Cuidado del cuerpo', 'Clasifica hábitos saludables mediante lectura comprensiva.', 'Lee cada opción y selecciona el hábito saludable.', 'LISTEN_SELECT', [('lavarse las manos', True), ('no dormir', False), ('no beber agua', False)]),
+            ('3', 'Estudios Sociales', levels[2], 'Normas de convivencia', 'Comprende normas breves para la escuela y comunidad.', 'Lee la norma y elige la acción respetuosa.', 'READING', [('escuchar', True), ('gritar', False), ('empujar', False)]),
+        ]
+        for grade, subject_name, level, title, description, instructions, activity_type, options in curriculum_activities:
+            item, _ = Activity.objects.get_or_create(
+                title=title,
+                defaults={
+                    'description': description,
+                    'instructions': instructions,
+                    'activity_type': activity_type,
+                    'level': level,
+                    'subject': subjects[subject_name],
+                    'grade': grade,
+                    'difficulty': 'easy' if grade == '1' else 'medium',
+                    'points': 10,
+                    'stars': 1,
+                    'is_active': True,
+                },
+            )
+            item.subject = subjects[subject_name]
+            item.grade = grade
+            item.level = level
+            item.save(update_fields=['subject', 'grade', 'level'])
+            for order, (option_text, correct) in enumerate(options, start=1):
+                ActivityOption.objects.get_or_create(activity=item, text=option_text, defaults={'is_correct': correct, 'order': order})
 
         reading, _ = Reading.objects.get_or_create(
             title='Milo y Luna',
@@ -81,6 +149,8 @@ class Command(BaseCommand):
                 'description': 'Una lectura corta sobre un gato y su amiga Luna.',
                 'content': 'Luna tiene un gato. El gato se llama Milo. Milo juega con una pelota. Luna quiere mucho a Milo.',
                 'level': levels[2],
+                'subject': subjects['Lengua y Literatura'],
+                'grade': '3',
                 'difficulty': 'easy',
                 'estimated_time': 3,
                 'is_active': True,
@@ -89,6 +159,31 @@ class Command(BaseCommand):
         question, _ = ReadingQuestion.objects.get_or_create(reading=reading, question='¿Cómo se llama el gato?', defaults={'question_type': 'multiple_choice'})
         for answer_text, correct in [('Luna', False), ('Milo', True), ('Sol', False)]:
             ReadingAnswer.objects.get_or_create(question=question, answer=answer_text, defaults={'is_correct': correct})
+        reading.subject = subjects['Lengua y Literatura']
+        reading.grade = '3'
+        reading.level = levels[2]
+        reading.save(update_fields=['subject', 'grade', 'level'])
+
+        reading_plan = [
+            ('1', 'Lengua y Literatura', levels[0], 'La mamá lee', 'Lectura con palabras frecuentes.', 'Mamá lee. Memo mira. Memo ama leer.'),
+            ('2', 'Ciencias Naturales', levels[1], 'La semilla', 'Lectura corta sobre plantas.', 'La semilla cae en la tierra. Con agua y sol, la semilla crece.'),
+            ('3', 'Estudios Sociales', levels[2], 'Mi comunidad ayuda', 'Lectura sobre convivencia.', 'En mi comunidad saludamos, escuchamos y ayudamos. Así vivimos mejor.'),
+            ('3', 'Matemática', levels[2], 'Ana cuenta frutas', 'Lectura matemática breve.', 'Ana tiene tres mangos y suma dos más. Ahora puede compartir cinco mangos.'),
+        ]
+        for grade, subject_name, level, title, description, content in reading_plan:
+            Reading.objects.get_or_create(
+                title=title,
+                defaults={
+                    'description': description,
+                    'content': content,
+                    'level': level,
+                    'subject': subjects[subject_name],
+                    'grade': grade,
+                    'difficulty': 'easy',
+                    'estimated_time': 3,
+                    'is_active': True,
+                },
+            )
 
         StudentProgress.objects.get_or_create(student=student_profile, activity=activity, defaults={'completed': False, 'progress_percentage': 20, 'best_score': 0, 'attempts': 0})
         StudentDifficulty.objects.get_or_create(student=student_profile, difficulty_type='letter_confusion', character_a='b', character_b='d', defaults={'error_count': 3})

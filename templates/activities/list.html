@@ -1,21 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-5">
-  <h1>Actividades</h1>
-  <div class="row g-4 mt-2">
-    {% for activity in activities %}
-      <div class="col-md-6 col-lg-4">
-        <a class="card-link" href="{% url 'activities:detail' activity.pk %}">
-          <div class="feature-card level-green">
-            <small>Nivel {{ activity.level.number }}</small>
-            <h3>{{ activity.title }}</h3>
-            <p>{{ activity.description }}</p>
+<div class="activities-page">
+  <div class="container py-5">
+    <section class="activities-hero">
+      <span class="eyebrow">Actividades</span>
+      <h1>Escoge tu grado y luego tu materia</h1>
+      <p>Actividades clasificadas por grado y asignatura, con apoyo visual, repetición guiada y lectura accesible para estudiantes con dislexia.</p>
+      <a class="btn {% if not selected_grade and not selected_subject_id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'activities:list' %}">Ver todas las actividades</a>
+    </section>
+
+    <section class="activity-filter-board mt-4" aria-label="Filtros de actividades por grado y materia">
+      {% for value, label in grades %}
+        <article class="activity-grade-card activity-grade-card--{{ value }} {% if selected_grade == value %}is-active{% endif %}">
+          <div class="activity-grade-card__header">
+            <span>{{ value }}</span>
+            <div>
+              <h2>{{ label }}</h2>
+              <a href="{% url 'activities:list' %}?grade={{ value }}">Ver todo {{ label|lower }}</a>
+            </div>
           </div>
-        </a>
+          <div class="activity-subject-list">
+            {% for subject in subjects %}
+              <a class="activity-subject-chip {% if selected_grade == value and selected_subject_id == subject.pk|stringformat:'s' %}is-active{% endif %}" href="{% url 'activities:list' %}?grade={{ value }}&subject={{ subject.pk }}">
+                <span>{{ subject.name|slice:':2'|upper }}</span>{{ subject.name }}
+              </a>
+            {% endfor %}
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+
+    {% if selected_grade or selected_subject_id %}
+      <div class="activity-current-filter mt-4">
+        <strong>Mostrando:</strong>
+        {% if selected_grade %}<span>Grado {{ selected_grade }}</span>{% endif %}
+        {% for subject in subjects %}
+          {% if selected_subject_id == subject.pk|stringformat:'s' %}<span>{{ subject.name }}</span>{% endif %}
+        {% endfor %}
+        <a href="{% url 'activities:list' %}">Limpiar filtros</a>
       </div>
-    {% empty %}
-      <p>No hay actividades.</p>
-    {% endfor %}
+    {% endif %}
+
+    <div class="row g-4 mt-2">
+      {% for activity in activities %}
+        <div class="col-md-6 col-lg-4">
+          <a class="card-link" href="{% url 'activities:detail' activity.pk %}">
+            <div class="feature-card level-green activity-result-card">
+              <small>{{ activity.get_grade_display }} · {% if activity.subject %}{{ activity.subject.name }}{% else %}Sin materia{% endif %} · Nivel {{ activity.level.number }}</small>
+              <h3>{{ activity.title }}</h3>
+              <p>{{ activity.description }}</p>
+            </div>
+          </a>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="empty-state-card">No hay actividades para esta combinación. Prueba otro grado o materia.</div>
+        </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 {% endblock %}

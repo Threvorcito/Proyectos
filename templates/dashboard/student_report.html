@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Reporte de {{ student.display_name }}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="dashboard-hero mb-4">
+    <span class="eyebrow">Reporte individual</span>
+    <h1>{{ student.display_name }}</h1>
+    <p>Seguimiento del avance lector, actividades y dificultades detectadas.</p>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="stat-card"><span>Grado</span><strong>{{ student.get_grade_display }}</strong></div></div>
+    <div class="col-md-3"><div class="stat-card"><span>Completadas</span><strong>{{ completed_count }}</strong></div></div>
+    <div class="col-md-3"><div class="stat-card"><span>Intentos</span><strong>{{ attempts_count }}</strong></div></div>
+    <div class="col-md-3"><div class="stat-card"><span>Avance</span><strong>{{ completion_percentage }}%</strong></div></div>
+  </div>
+
+  <div class="row g-4">
+    <section class="col-lg-7">
+      <div class="feature-card h-100">
+        <h2 class="h4">Actividades recientes</h2>
+        <div class="table-responsive mt-3">
+          <table class="table align-middle mb-0">
+            <thead><tr><th>Actividad</th><th>Nivel</th><th>Progreso</th><th>Intentos</th></tr></thead>
+            <tbody>
+              {% for item in progress_items %}
+                <tr><td>{{ item.activity.title }}</td><td>Nivel {{ item.activity.level.number }}</td><td>{{ item.progress_percentage }}%</td><td>{{ item.attempts }}</td></tr>
+              {% empty %}
+                <tr><td colspan="4">Todavía no hay actividades registradas.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    <section class="col-lg-5">
+      <div class="feature-card h-100">
+        <h2 class="h4">Dificultades detectadas</h2>
+        {% for difficulty in difficulties %}
+          <span class="badge text-bg-warning me-1 mb-1">{{ difficulty.word|default:difficulty.difficulty_type }} · {{ difficulty.error_count }}</span>
+        {% empty %}
+          <p>No hay dificultades registradas todavía.</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <div class="d-flex flex-wrap gap-2 mt-4">
+    {% if request.user.role == 'TEACHER' %}<a class="btn btn-outline-primary" href="{% url 'dashboard:teacher' %}">Volver al panel docente</a>{% endif %}
+    <a class="btn btn-outline-secondary" href="{% url 'dashboard:redirect' %}">Mi panel</a>
+  </div>
+</div>
+{% endblock %}

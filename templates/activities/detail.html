@@ -5,13 +5,13 @@
     <div class="activity-header">
       <span>Actividad</span>
       <h1>{{ activity.title }}</h1>
+      <p class="text-muted mb-2">{{ activity.get_grade_display }} · {% if activity.subject %}{{ activity.subject.name }}{% else %}Sin materia{% endif %} · Apoyo para dislexia</p>
       <p>{{ activity.instructions }}</p>
     </div>
     <div class="activity-options">
       {% for option in activity.options.all %}
         <form method="post" action="{% url 'activities:submit_answer' activity.pk %}" class="option-form">{% csrf_token %}
-          <input type="hidden" name="answer" value="{{ option.text }}">
-          <input type="hidden" name="is_correct" value="{% if option.is_correct %}1{% else %}0{% endif %}">
+          <input type="hidden" name="option_id" value="{{ option.pk }}">
           <button class="option-btn" type="submit">{{ option.text }}</button>
         </form>
       {% endfor %}

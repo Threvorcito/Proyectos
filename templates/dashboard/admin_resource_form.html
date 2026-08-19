@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <div class="mx-auto" style="max-width: 860px;">
+    <span class="eyebrow">{{ config.title }}</span>
+    <h1>{% if is_edit %}Editar{% else %}Agregar{% endif %} {{ config.singular }}</h1>
+    <form method="post" enctype="multipart/form-data" class="feature-card mt-4">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <button class="btn btn-primary" type="submit">Guardar</button>
+        <a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' resource %}">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

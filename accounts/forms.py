@@ -11,7 +11,6 @@ class RegistrationForm(UserCreationForm):
     role = forms.ChoiceField(
         label='Tipo de cuenta',
         choices=(
-            (CustomUser.Role.STUDENT, 'Estudiante'),
             (CustomUser.Role.TEACHER, 'Docente'),
             (CustomUser.Role.PARENT, 'Padre o tutor'),
         ),
@@ -50,6 +49,12 @@ class RegistrationForm(UserCreationForm):
         self.fields['email'].widget.attrs['autocomplete'] = 'email'
         self.fields['first_name'].widget.attrs['autocomplete'] = 'given-name'
         self.fields['last_name'].widget.attrs['autocomplete'] = 'family-name'
+
+    def clean_role(self):
+        role = self.cleaned_data['role']
+        if role == CustomUser.Role.STUDENT:
+            raise forms.ValidationError('Las cuentas de estudiantes deben ser creadas por un docente.')
+        return role
 
 
 class ProfileUpdateForm(forms.ModelForm):

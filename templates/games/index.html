@@ -60,23 +60,56 @@
   <section class="container games-page__section">
     <div class="games-page__section-heading">
       <h2>Todos los juegos</h2>
-      <p>Elige una práctica breve y avanza a tu ritmo.</p>
+      <p>Elige una práctica breve por grado y materia, pensada para lectura accesible y apoyo multisensorial.</p>
     </div>
+    <div class="activity-filter-board mb-4" aria-label="Filtros de juegos por grado y materia">
+      {% for value, label in grades %}
+        <article class="activity-grade-card activity-grade-card--{{ value }} {% if selected_grade == value %}is-active{% endif %}">
+          <div class="activity-grade-card__header">
+            <span>{{ value }}</span>
+            <div>
+              <h2>{{ label }}</h2>
+              <a href="{% url 'games:index' %}?grade={{ value }}">Todos los juegos</a>
+            </div>
+          </div>
+          <div class="activity-subject-list">
+            {% for subject in subjects %}
+              <a class="activity-subject-chip {% if selected_grade == value and selected_subject_id == subject.pk|stringformat:'s' %}is-active{% endif %}" href="{% url 'games:index' %}?grade={{ value }}&subject={{ subject.pk }}">
+                <span>{{ subject.name|slice:':2'|upper }}</span>{{ subject.name }}
+              </a>
+            {% endfor %}
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+    {% if selected_grade or selected_subject_id %}
+      <div class="activity-current-filter mb-4">
+        <strong>Mostrando:</strong>
+        {% if selected_grade %}<span>Grado {{ selected_grade }}</span>{% endif %}
+        {% for subject in subjects %}
+          {% if selected_subject_id == subject.pk|stringformat:'s' %}<span>{{ subject.name }}</span>{% endif %}
+        {% endfor %}
+        <a href="{% url 'games:index' %}">Limpiar filtros</a>
+      </div>
+    {% endif %}
     <div class="games-page__cards">
       {% for item in game_cards %}
         <article class="games-page__game-card">
           <div class="games-page__game-top">
             <span class="games-page__icon">{{ item.game.icon }}</span>
-            <span class="games-page__level">Nivel {{ item.game.level.number|default:'1' }}</span>
+            <span class="games-page__level">{{ item.game.get_grade_display }} · Nivel {{ item.game.level.number|default:'1' }}</span>
           </div>
           <h3>{{ item.game.name }}</h3>
           <p>{{ item.game.description }}</p>
           <dl class="games-page__meta">
             <div><dt>Habilidad</dt><dd>{{ item.game.skill }}</dd></div>
+            <div><dt>Materia</dt><dd>{% if item.game.subject %}{{ item.game.subject.name }}{% else %}Lengua y Literatura{% endif %}</dd></div>
             <div><dt>Progreso</dt><dd>{% if item.progress %}Mejor resultado: {{ item.progress.best_score }}%{% else %}Listo para iniciar{% endif %}</dd></div>
           </dl>
           <a class="games-page__button games-page__button--full" href="{% url 'games:detail' item.game.slug %}">Jugar</a>
         </article>
+      {% empty %}
+        <div class="empty-state-card">No hay juegos para esta combinación. Prueba otro grado o materia.</div>
       {% endfor %}
     </div>
   </section>

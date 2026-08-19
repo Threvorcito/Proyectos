@@ -80,6 +80,47 @@ class TeacherProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='teacher_profile')
     name = models.CharField(max_length=150)
     bio = models.TextField(blank=True)
+    can_manage_lessons = models.BooleanField(default=False, verbose_name='Puede gestionar clases')
+    can_manage_activities = models.BooleanField(default=False, verbose_name='Puede gestionar actividades')
+    can_manage_readings = models.BooleanField(default=False, verbose_name='Puede gestionar lecturas')
+
+    def __str__(self):
+        return self.name
+
+
+class Subject(models.Model):
+    name = models.CharField(max_length=120, unique=True)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class LessonPlan(models.Model):
+    teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, related_name='lesson_plans')
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT, related_name='lesson_plans')
+    level = models.ForeignKey(Level, on_delete=models.PROTECT, related_name='lesson_plans')
+    grade = models.CharField(max_length=1, choices=StudentProfile.Grade.choices, default=StudentProfile.Grade.FIRST)
+    title = models.CharField(max_length=160)
+    topic = models.CharField(max_length=180)
+    objective = models.TextField()
+    methodology = models.TextField(blank=True, verbose_name='Metodología de aplicación')
+    planned_date = models.DateField(blank=True, null=True)
+    activities = models.ManyToManyField('activities.Activity', blank=True, related_name='lesson_plans')
+    readings = models.ManyToManyField('readings.Reading', blank=True, related_name='lesson_plans')
+    notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-planned_date', '-created_at']
+
+    def __str__(self):
+        return self.title
 
 
 class ParentProfile(models.Model):

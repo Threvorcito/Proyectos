@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container py-5">
+  <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-4">
+    <div>
+      <span class="eyebrow">Planificación</span>
+      <h1>Planes de clase</h1>
+    </div>
+    <a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_create' %}">Crear plan</a>
+  </div>
+
+  <div class="row g-3">
+    {% for plan in plans %}
+      <div class="col-md-6">
+        <div class="feature-card h-100">
+          <h2 class="h5">{{ plan.title }}</h2>
+          <p class="mb-1"><strong>Materia:</strong> {{ plan.subject }}</p>
+          <p class="mb-1"><strong>Nivel:</strong> {{ plan.level }}</p>
+          <p class="text-muted">{{ plan.objective|truncatewords:24 }}</p>
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>
+        </div>
+      </div>
+    {% empty %}
+      <p>No hay planes creados todavía.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

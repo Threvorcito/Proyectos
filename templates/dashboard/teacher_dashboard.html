@@ -2,12 +2,38 @@
 {% block content %}
 <div class="container py-5">
   <h1>Panel docente</h1>
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <a class="btn btn-primary" href="{% url 'dashboard:quick_student_create' %}">Crear alumno</a>
+    <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plan_create' %}">Crear plan</a>
+    <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Ver planes</a>
+    {% if teacher_profile.can_manage_activities %}<a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' 'actividades' %}">Gestionar actividades</a>{% endif %}
+    {% if teacher_profile.can_manage_lessons %}<a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' 'clases' %}">Gestionar clases</a>{% endif %}
+    {% if teacher_profile.can_manage_readings %}<a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' 'lecturas' %}">Gestionar lecturas</a>{% endif %}
+  </div>
+
+  <div class="row g-3 mt-3">
+    <div class="col-md-3"><div class="stat-card"><span>Alumnos</span><strong>{{ summary.students }}</strong></div></div>
+    <div class="col-md-3"><div class="stat-card"><span>Completadas</span><strong>{{ summary.completed_activities }}</strong></div></div>
+    <div class="col-md-3"><div class="stat-card"><span>Intentos</span><strong>{{ summary.attempts }}</strong></div></div>
+    <div class="col-md-3"><div class="stat-card"><span>Dificultades</span><strong>{{ summary.difficulties }}</strong></div></div>
+  </div>
+
+  <section class="mt-4">
+    <h2 class="h4">Planes recientes</h2>
+    <div class="row g-3">
+      {% for plan in lesson_plans %}
+        <div class="col-md-6"><div class="feature-card"><h3 class="h5">{{ plan.title }}</h3><p>{{ plan.subject }} · {{ plan.level }}</p><a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a></div></div>
+      {% empty %}
+        <p>No tienes planes recientes.</p>
+      {% endfor %}
+    </div>
+  </section>
   <div class="table-responsive mt-4">
     <table class="table align-middle">
       <thead><tr><th>Estudiante</th><th>Nivel</th><th>Progreso</th><th>Puntos</th><th>Última actividad</th></tr></thead>
       <tbody>
         {% for student in students %}
-          <tr><td>{{ student.display_name }}</td><td>{% if student.current_level %}Nivel {{ student.current_level.number }}{% endif %}</td><td>{{ student.points }}</td><td>{{ student.stars }}</td><td>{{ student.last_activity_at|default:'Sin actividad' }}</td></tr>
+          <tr><td><a href="{% url 'dashboard:student_report' student.pk %}">{{ student.display_name }}</a></td><td>{% if student.current_level %}Nivel {{ student.current_level.number }}{% endif %}</td><td>{{ student.points }}</td><td>{{ student.stars }}</td><td>{{ student.last_activity_at|default:'Sin actividad' }}</td></tr>
         {% endfor %}
       </tbody>
     </table>

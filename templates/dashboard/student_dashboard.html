@@ -11,6 +11,10 @@
     <div class="col-md-3"><div class="stat-card"><span>Estrellas</span><strong>{{ student.stars }}</strong></div></div>
     <div class="col-md-3"><div class="stat-card"><span>Racha</span><strong>{{ student.learning_streak }}</strong></div></div>
   </div>
+  <div class="d-flex flex-wrap gap-2 mt-4">
+    <a class="btn btn-outline-primary" href="{% url 'dashboard:student_report' student.pk %}">Ver mi reporte</a>
+    <a class="btn btn-primary" href="{% url 'activities:list' %}">Practicar</a>
+  </div>
   <section class="mt-5">
     <h2>Recomendado para ti</h2>
     <div class="row g-4 mt-2">

@@ -1,6 +1,6 @@
 from django.db.models import Count, Max
 
-from learning.models import Level
+from learning.models import Level, Subject
 from progress.models import StudentDifficulty
 
 from .content import GAME_DEFINITIONS
@@ -9,13 +9,14 @@ from .models import Game, GameAttempt
 
 def ensure_games():
     levels = {level.number: level for level in Level.objects.all()}
+    language_subject = Subject.objects.filter(name='Lengua y Literatura').first()
     games = []
     for definition in GAME_DEFINITIONS:
         data = definition.copy()
         level_number = data.pop('level_number')
         game, _ = Game.objects.update_or_create(
             slug=data['slug'],
-            defaults={**data, 'level': levels.get(level_number)},
+            defaults={**data, 'level': levels.get(level_number), 'subject': language_subject, 'grade': str(min(level_number, 3))},
         )
         games.append(game)
     return games

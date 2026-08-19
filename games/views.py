@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from learning.models import Subject
+
 from .content import GAME_CHALLENGES
 from .models import Game, GameAttempt
 from .services import ensure_games, get_game_progress, get_recommended_games, get_started_games, get_student_for_user
@@ -24,7 +26,14 @@ TEMPLATE_BY_TYPE = {
 def games_index(request):
     ensure_games()
     student = get_student_for_user(request.user)
-    games = list(Game.objects.filter(is_active=True).select_related('level').order_by('id'))
+    subject_id = request.GET.get('subject')
+    grade = request.GET.get('grade')
+    games_qs = Game.objects.filter(is_active=True).select_related('level', 'subject').order_by('grade', 'subject__name', 'id')
+    if subject_id:
+        games_qs = games_qs.filter(subject_id=subject_id)
+    if grade:
+        games_qs = games_qs.filter(grade=grade)
+    games = list(games_qs)
     progress = get_game_progress(student, games)
     game_cards = [{'game': game, 'progress': progress.get(game.id)} for game in games]
     recommended = get_recommended_games(student)
@@ -38,13 +47,17 @@ def games_index(request):
             'progress': progress,
             'recommended_games': recommended,
             'started_games': started_games,
+            'subjects': Subject.objects.filter(is_active=True).order_by('name'),
+            'grades': [('1', 'Primer grado'), ('2', 'Segundo grado'), ('3', 'Tercer grado')],
+            'selected_subject_id': subject_id,
+            'selected_grade': grade,
         },
     )
 
 
 def game_detail(request, slug):
     ensure_games()
-    game = get_object_or_404(Game.objects.select_related('level'), slug=slug, is_active=True)
+    game = get_object_or_404(Game.objects.select_related('level', 'subject'), slug=slug, is_active=True)
     challenges = GAME_CHALLENGES.get(slug, [])
     template = TEMPLATE_BY_TYPE.get(game.game_type, 'games/play.html')
     return render(

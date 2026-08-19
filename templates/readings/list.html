@@ -1,13 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-5">
-  <h1>Lecturas</h1>
-  <div class="row g-4 mt-2">
-    {% for reading in readings %}
-      <div class="col-md-6 col-lg-4"><a class="card-link" href="{% url 'readings:detail' reading.pk %}"><div class="feature-card level-purple"><h3>{{ reading.title }}</h3><p>{{ reading.description }}</p></div></a></div>
-    {% empty %}
-      <p>No hay lecturas.</p>
-    {% endfor %}
+<div class="activities-page readings-page">
+  <div class="container py-5">
+    <section class="activities-hero readings-hero">
+      <span class="eyebrow">Lecturas</span>
+      <h1>Escoge un grado y una materia para leer</h1>
+      <p>Cuentos y textos cortos clasificados por grado y materia, con lectura pausada para estudiantes con dislexia.</p>
+      <a class="btn {% if not selected_grade and not selected_subject_id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'readings:list' %}">Ver todas las lecturas</a>
+    </section>
+
+    <section class="activity-filter-board mt-4" aria-label="Filtros de lecturas por grado y materia">
+      {% for value, label in grades %}
+        <article class="activity-grade-card activity-grade-card--{{ value }} {% if selected_grade == value %}is-active{% endif %}">
+          <div class="activity-grade-card__header">
+            <span>{{ value }}</span>
+            <div>
+              <h2>{{ label }}</h2>
+              <a href="{% url 'readings:list' %}?grade={{ value }}">Todas las lecturas</a>
+            </div>
+          </div>
+          <div class="activity-subject-list">
+            {% for subject in subjects %}
+              <a class="activity-subject-chip {% if selected_grade == value and selected_subject_id == subject.pk|stringformat:'s' %}is-active{% endif %}" href="{% url 'readings:list' %}?grade={{ value }}&subject={{ subject.pk }}">
+                <span>{{ subject.name|slice:':2'|upper }}</span>{{ subject.name }}
+              </a>
+            {% endfor %}
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+
+    {% if selected_grade or selected_subject_id %}
+      <div class="activity-current-filter mt-4">
+        <strong>Mostrando:</strong>
+        {% if selected_grade %}<span>Grado {{ selected_grade }}</span>{% endif %}
+        {% for subject in subjects %}
+          {% if selected_subject_id == subject.pk|stringformat:'s' %}<span>{{ subject.name }}</span>{% endif %}
+        {% endfor %}
+        <a href="{% url 'readings:list' %}">Limpiar filtros</a>
+      </div>
+    {% endif %}
+
+    <div class="row g-4 mt-2">
+      {% for reading in readings %}
+        <div class="col-md-6 col-lg-4">
+          <a class="card-link" href="{% url 'readings:detail' reading.pk %}">
+            <div class="feature-card level-purple activity-result-card">
+              <small>{{ reading.get_grade_display }} · {% if reading.subject %}{{ reading.subject.name }}{% else %}Sin materia{% endif %}</small>
+              <h3>{{ reading.title }}</h3>
+              <p>{{ reading.description }}</p>
+            </div>
+          </a>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <div class="empty-state-card">No hay lecturas para esta combinación. Prueba otro grado o materia.</div>
+        </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 {% endblock %}

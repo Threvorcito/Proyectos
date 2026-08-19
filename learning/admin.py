@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AccessibilityPreference, Lesson, Level, ParentProfile, StudentProfile, Syllable, TeacherProfile, Word
+from .models import AccessibilityPreference, Lesson, LessonPlan, Level, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 
 
 @admin.register(Level)
@@ -27,3 +27,5 @@ admin.site.register(StudentProfile)
 admin.site.register(TeacherProfile)
 admin.site.register(ParentProfile)
 admin.site.register(AccessibilityPreference)
+admin.site.register(Subject)
+admin.site.register(LessonPlan)

@@ -1,6 +1,6 @@
 from django.db import models
 
-from learning.models import Level
+from learning.models import Level, StudentProfile, Subject
 
 
 class Reading(models.Model):
@@ -9,6 +9,8 @@ class Reading(models.Model):
     content = models.TextField()
     image = models.ImageField(upload_to='readings/', blank=True, null=True)
     level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name='readings')
+    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, blank=True, null=True, related_name='readings')
+    grade = models.CharField(max_length=1, choices=StudentProfile.Grade.choices, default=StudentProfile.Grade.FIRST)
     difficulty = models.CharField(max_length=20, default='easy')
     estimated_time = models.PositiveSmallIntegerField(default=3)
     audio_optional = models.URLField(blank=True)

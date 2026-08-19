@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+.venv/
+
+# Django/local data
+db.sqlite3
+db_lectura.sqlite3
+media/
+staticfiles/
+
+# Local configuration
+.env
+.env.*
+!.env.example
+
+# Editor/OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
