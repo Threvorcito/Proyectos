@@ -146,7 +146,7 @@
 </div>
 
 {% if create_form %}
-  <div class="modal fade admin-dialog" id="createResourceModal" tabindex="-1" aria-labelledby="createResourceModalTitle" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal fade admin-dialog {% if resource == 'profesores' %}admin-dialog--teacher{% endif %}" id="createResourceModal" tabindex="-1" aria-labelledby="createResourceModalTitle" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' %}modal-xl{% else %}modal-lg{% endif %}">
       <div class="modal-content">
         <form id="createResourceForm" method="post" action="{% url 'dashboard:admin_resource_create' resource %}" enctype="multipart/form-data">
@@ -154,8 +154,8 @@
           <input type="hidden" name="_from_modal" value="1">
           <div class="modal-header">
             <div>
-              <h2 class="modal-title" id="createResourceModalTitle">Crear {{ config.singular }}</h2>
-              <p>Completa los datos para registrar este recurso. Haz clic en guardar cuando termines.</p>
+              <h2 class="modal-title" id="createResourceModalTitle">{% if resource == 'profesores' %}Registrar docente{% else %}Crear {{ config.singular }}{% endif %}</h2>
+              <p>{% if resource == 'profesores' %}Registra al docente, crea su usuario de acceso y define los permisos que tendrá dentro del sistema.{% else %}Completa los datos para registrar este recurso. Haz clic en guardar cuando termines.{% endif %}</p>
             </div>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
           </div>
@@ -175,13 +175,23 @@
                 <label>{{ create_form.is_superuser }}<span><strong>Superusuario</strong><small>Úsalo solo para cuentas principales.</small></span></label>
               </div>
             {% elif resource == 'profesores' %}
+              <div class="admin-dialog__section-title">
+                <strong>Datos del docente</strong>
+                <span>Información básica para identificarlo en el panel.</span>
+              </div>
               <div class="admin-dialog__grid">
                 <p>{{ create_form.name.label_tag }}{{ create_form.name }}{{ create_form.name.errors }}</p>
                 <p>{{ create_form.email.label_tag }}{{ create_form.email }}{{ create_form.email.errors }}</p>
+              </div>
+              <p>{{ create_form.bio.label_tag }}{{ create_form.bio }}{{ create_form.bio.errors }}</p>
+              <div class="admin-dialog__section-title">
+                <strong>Cuenta de acceso</strong>
+                <span>Datos que usará el docente para iniciar sesión.</span>
+              </div>
+              <div class="admin-dialog__grid">
                 <p>{{ create_form.username.label_tag }}{{ create_form.username }}{{ create_form.username.errors }}<span class="helptext">{{ create_form.username.help_text }}</span></p>
                 <p>{{ create_form.password.label_tag }}{{ create_form.password }}{{ create_form.password.errors }}<span class="helptext">{{ create_form.password.help_text }}</span></p>
               </div>
-              <p>{{ create_form.bio.label_tag }}{{ create_form.bio }}{{ create_form.bio.errors }}</p>
               <div class="admin-dialog__permission-trigger">
                 <div>
                   <strong>Permisos</strong>
@@ -213,7 +223,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary">Crear {{ config.singular }}</button>
+            <button type="submit" class="btn btn-primary">{% if resource == 'profesores' %}Registrar docente{% else %}Crear {{ config.singular }}{% endif %}</button>
           </div>
         </form>
       </div>

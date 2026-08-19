@@ -1337,6 +1337,37 @@ a { text-decoration: none; }
   padding: .8rem 1.35rem;
 }
 .admin-dialog .btn { border-radius: 10px; font-weight: 800; }
+.admin-dialog--teacher .modal-content {
+  border-top: 5px solid #1f70b8;
+}
+.admin-dialog--teacher .modal-header {
+  background:
+    linear-gradient(90deg, rgba(31, 112, 184, .08), rgba(255, 255, 255, 0)),
+    #fff;
+}
+.admin-dialog__section-title {
+  align-items: end;
+  border-bottom: 1px solid #edf0f5;
+  display: flex;
+  gap: .75rem;
+  justify-content: space-between;
+  padding-bottom: .45rem;
+}
+.admin-dialog__section-title strong {
+  color: #1f3d5a;
+  font-size: .98rem;
+  font-weight: 900;
+}
+.admin-dialog__section-title span {
+  color: #667085;
+  font-size: .82rem;
+  text-align: right;
+}
+.admin-dialog--teacher .form-control:focus,
+.admin-dialog--teacher .form-select:focus {
+  border-color: #8fc5f2;
+  box-shadow: 0 0 0 .22rem rgba(31, 112, 184, .16);
+}
 .admin-dialog__permission-trigger {
   align-items: center;
   background: #f8fafc;

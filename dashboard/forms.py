@@ -84,17 +84,17 @@ class AdminUserUpdateForm(forms.ModelForm):
 
 
 class TeacherCreationForm(forms.Form):
-    name = forms.CharField(label='Nombre completo del profesor', max_length=150)
-    username = forms.CharField(label='Usuario', max_length=150, help_text='Este será el usuario para iniciar sesión.')
-    email = forms.EmailField(label='Correo electrónico')
+    name = forms.CharField(label='Nombre y apellidos', max_length=150)
+    username = forms.CharField(label='Usuario de acceso', max_length=150, help_text='Se puede generar desde el correo o escribir manualmente.')
+    email = forms.EmailField(label='Correo institucional')
     password = forms.CharField(
         label='Contraseña',
         max_length=32,
         required=False,
-        help_text='Opcional. Si se deja vacío, el sistema genera una contraseña segura.',
+        help_text='Opcional. Si se deja vacío, se genera una contraseña segura.',
         widget=forms.PasswordInput(render_value=True),
     )
-    bio = forms.CharField(label='Descripción', required=False, widget=forms.Textarea(attrs={'rows': 3}))
+    bio = forms.CharField(label='Perfil docente', required=False, widget=forms.Textarea(attrs={'rows': 3}))
     can_manage_lessons = forms.BooleanField(label='Puede gestionar clases', required=False, initial=True)
     can_manage_activities = forms.BooleanField(label='Puede gestionar actividades', required=False, initial=True)
     can_manage_readings = forms.BooleanField(label='Puede gestionar lecturas', required=False, initial=True)
@@ -102,6 +102,14 @@ class TeacherCreationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         style_admin_form(self)
+        self.fields['name'].widget.attrs.setdefault('placeholder', 'Ej. María López Pérez')
+        self.fields['name'].widget.attrs['data-teacher-name'] = '1'
+        self.fields['email'].widget.attrs.setdefault('placeholder', 'docente@correo.com')
+        self.fields['email'].widget.attrs['data-teacher-email'] = '1'
+        self.fields['username'].widget.attrs.setdefault('placeholder', 'mlopez')
+        self.fields['username'].widget.attrs['data-teacher-username'] = '1'
+        self.fields['password'].widget.attrs.setdefault('placeholder', 'Generar automáticamente')
+        self.fields['bio'].widget.attrs.setdefault('placeholder', 'Área que atiende, grado asignado o notas internas.')
 
     def clean_username(self):
         username = self.cleaned_data['username'].strip()
