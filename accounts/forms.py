@@ -62,6 +62,15 @@ class ProfileUpdateForm(forms.ModelForm):
         model = CustomUser
         fields = ('first_name', 'last_name', 'email')
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['first_name'].label = 'Nombres'
+        self.fields['last_name'].label = 'Apellidos'
+        self.fields['email'].label = 'Correo electrónico'
+        self.fields['first_name'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Ej. Administrador'})
+        self.fields['last_name'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Ej. Sistema'})
+        self.fields['email'].widget.attrs.update({'class': 'form-control', 'placeholder': 'correo@ejemplo.com', 'autocomplete': 'email'})
+
 
 class StudentProfileForm(forms.Form):
     grade = forms.ChoiceField(choices=(('1', 'Primer grado'), ('2', 'Segundo grado'), ('3', 'Tercer grado')))
