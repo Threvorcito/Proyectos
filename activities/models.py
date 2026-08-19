@@ -1,6 +1,6 @@
 from django.db import models
 
-from learning.models import Level, StudentProfile, Subject
+from learning.models import CurriculumCompetency, Level, StudentProfile, Subject
 
 
 class Activity(models.Model):
@@ -16,6 +16,7 @@ class Activity(models.Model):
 
     level = models.ForeignKey(Level, on_delete=models.CASCADE, related_name='activities')
     subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, blank=True, null=True, related_name='activities')
+    competency = models.ForeignKey(CurriculumCompetency, on_delete=models.SET_NULL, blank=True, null=True, related_name='activities')
     grade = models.CharField(max_length=1, choices=StudentProfile.Grade.choices, default=StudentProfile.Grade.FIRST)
     title = models.CharField(max_length=160)
     description = models.TextField(blank=True)

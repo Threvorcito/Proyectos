@@ -10,7 +10,7 @@ from activities.models import Activity
 from activities.services import get_recommended_activities
 from gamification.services import evaluate_achievements
 from games.models import Game
-from learning.models import Lesson, LessonPlan, Level, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
+from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading
 
@@ -20,14 +20,18 @@ from .forms import AdminUserCreationForm, LessonPlanForm, QuickStudentCreationFo
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'fields': None},
     'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'fields': ('user', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
-    'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'reading_level', 'current_level', 'points', 'stars')},
+    'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},
     'materias': {'title': 'Materias', 'singular': 'materia', 'model': Subject, 'fields': ('name', 'description', 'is_active')},
+    'estrategias': {'title': 'Estrategias MINED', 'singular': 'estrategia', 'model': MinedStrategy, 'fields': ('name', 'description', 'focus', 'is_active')},
+    'competencias': {'title': 'Competencias curriculares', 'singular': 'competencia', 'model': CurriculumCompetency, 'fields': ('pedagogical_unit', 'grade', 'subject', 'strategy', 'title', 'competency', 'achievement_indicator', 'dyslexia_adaptation', 'is_active')},
+    'metodo-fas': {'title': 'Método FAS', 'singular': 'paso FAS', 'model': FasStep, 'fields': ('stage', 'title', 'description', 'grade', 'order', 'is_active')},
+    'referencias-mined': {'title': 'Biblioteca MINED', 'singular': 'referencia', 'model': MinedReference, 'fields': ('title', 'resource_type', 'grade', 'subject', 'official_url', 'app_usage', 'is_active')},
     'clases': {'title': 'Clases', 'singular': 'clase', 'model': Lesson, 'fields': ('level', 'title', 'description', 'stage', 'order', 'is_active')},
-    'actividades': {'title': 'Actividades', 'singular': 'actividad', 'model': Activity, 'fields': ('subject', 'grade', 'level', 'title', 'description', 'instructions', 'activity_type', 'difficulty', 'points', 'stars', 'is_active')},
-    'lecturas': {'title': 'Lecturas', 'singular': 'lectura', 'model': Reading, 'fields': ('subject', 'grade', 'title', 'description', 'content', 'image', 'level', 'difficulty', 'estimated_time', 'audio_optional', 'is_active')},
-    'juegos': {'title': 'Juegos', 'singular': 'juego', 'model': Game, 'fields': ('subject', 'grade', 'name', 'slug', 'description', 'skill', 'game_type', 'level', 'icon', 'is_active')},
+    'actividades': {'title': 'Actividades', 'singular': 'actividad', 'model': Activity, 'fields': ('subject', 'competency', 'grade', 'level', 'title', 'description', 'instructions', 'activity_type', 'difficulty', 'points', 'stars', 'is_active')},
+    'lecturas': {'title': 'Lecturas', 'singular': 'lectura', 'model': Reading, 'fields': ('subject', 'competency', 'grade', 'title', 'description', 'content', 'image', 'level', 'difficulty', 'estimated_time', 'audio_optional', 'is_active')},
+    'juegos': {'title': 'Juegos', 'singular': 'juego', 'model': Game, 'fields': ('subject', 'competency', 'grade', 'name', 'slug', 'description', 'skill', 'game_type', 'level', 'icon', 'is_active')},
     'palabras': {'title': 'Palabras', 'singular': 'palabra', 'model': Word, 'fields': ('text', 'image', 'level', 'syllables')},
     'silabas': {'title': 'Sílabas', 'singular': 'sílaba', 'model': Syllable, 'fields': ('text', 'level')},
 }
@@ -90,6 +94,11 @@ def admin_dashboard(request):
         'activities': Activity.objects.count(),
         'readings': Reading.objects.count(),
         'games': Game.objects.count(),
+        'strategies': MinedStrategy.objects.count(),
+        'competencies': CurriculumCompetency.objects.count(),
+        'fas_steps': FasStep.objects.count(),
+        'mined_references': MinedReference.objects.count(),
+        'covered_competencies': CurriculumCompetency.objects.filter(Q(activities__isnull=False) | Q(readings__isnull=False) | Q(games__isnull=False)).distinct().count(),
     }
     recent_students = StudentProfile.objects.select_related('user', 'current_level').order_by('-created_at')[:5]
     return render(request, 'dashboard/admin_dashboard.html', {'stats': stats, 'recent_students': recent_students, 'resources': ADMIN_RESOURCES})

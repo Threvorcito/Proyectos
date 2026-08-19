@@ -54,12 +54,24 @@ class StudentProfile(models.Model):
         SECOND = '2', 'Segundo grado'
         THIRD = '3', 'Tercer grado'
 
+    class Modality(models.TextChoices):
+        REGULAR = 'regular', 'Primaria regular'
+        MULTIGRADE = 'multigrade', 'Primaria multigrado'
+        OVERAGE = 'overage', 'Primaria extraedad'
+        DISTANCE_RURAL = 'distance_rural', 'Primaria a distancia en el campo'
+
+    class Zone(models.TextChoices):
+        URBAN = 'urban', 'Urbana'
+        RURAL = 'rural', 'Rural'
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
     name = models.CharField(max_length=150)
     alias = models.CharField(max_length=80, blank=True)
     avatar = models.ImageField(upload_to='avatars/', blank=True, null=True)
     birth_date = models.DateField(blank=True, null=True)
     grade = models.CharField(max_length=1, choices=Grade.choices, default=Grade.FIRST)
+    modality = models.CharField(max_length=20, choices=Modality.choices, default=Modality.REGULAR)
+    zone = models.CharField(max_length=10, choices=Zone.choices, default=Zone.URBAN)
     reading_level = models.ForeignKey(Level, on_delete=models.SET_NULL, null=True, related_name='students')
     current_level = models.ForeignKey(Level, on_delete=models.SET_NULL, null=True, related_name='current_students')
     points = models.PositiveIntegerField(default=0)
@@ -98,6 +110,88 @@ class Subject(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class MinedStrategy(models.Model):
+    name = models.CharField(max_length=160)
+    description = models.TextField(blank=True)
+    focus = models.CharField(max_length=160, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
+class CurriculumCompetency(models.Model):
+    class PedagogicalUnit(models.TextChoices):
+        FIRST = 'first', 'Primera Unidad Pedagógica (1.º y 2.º grado)'
+        SECOND = 'second', 'Segunda Unidad Pedagógica (3.º y 4.º grado)'
+        THIRD = 'third', 'Tercera Unidad Pedagógica (5.º y 6.º grado)'
+
+    pedagogical_unit = models.CharField(max_length=20, choices=PedagogicalUnit.choices, default=PedagogicalUnit.FIRST)
+    grade = models.CharField(max_length=1, choices=StudentProfile.Grade.choices, default=StudentProfile.Grade.FIRST)
+    subject = models.ForeignKey(Subject, on_delete=models.PROTECT, related_name='competencies')
+    strategy = models.ForeignKey(MinedStrategy, on_delete=models.SET_NULL, blank=True, null=True, related_name='competencies')
+    title = models.CharField(max_length=180)
+    competency = models.TextField()
+    achievement_indicator = models.TextField(verbose_name='Indicador de logro')
+    dyslexia_adaptation = models.TextField(blank=True, verbose_name='Adaptación para dislexia')
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['grade', 'subject__name', 'title']
+        verbose_name_plural = 'Curriculum competencies'
+
+    def __str__(self):
+        return f'{self.get_grade_display()} - {self.subject}: {self.title}'
+
+
+class FasStep(models.Model):
+    class Stage(models.TextChoices):
+        PHONEME = 'phoneme', 'Fonema'
+        SYLLABLE = 'syllable', 'Sílaba'
+        WORD = 'word', 'Palabra'
+        PHRASE = 'phrase', 'Frase'
+        READING = 'reading', 'Lectura corta'
+
+    stage = models.CharField(max_length=20, choices=Stage.choices)
+    title = models.CharField(max_length=160)
+    description = models.TextField(blank=True)
+    grade = models.CharField(max_length=1, choices=StudentProfile.Grade.choices, default=StudentProfile.Grade.FIRST)
+    order = models.PositiveSmallIntegerField(default=1)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['grade', 'order']
+
+    def __str__(self):
+        return f'{self.get_stage_display()} - {self.title}'
+
+
+class MinedReference(models.Model):
+    class ResourceType(models.TextChoices):
+        BOOK = 'book', 'Libro'
+        NOTEBOOK = 'notebook', 'Cuaderno'
+        GUIDE = 'guide', 'Guía docente'
+        READING = 'reading', 'Lectura'
+        STRATEGY = 'strategy', 'Estrategia'
+
+    title = models.CharField(max_length=180)
+    resource_type = models.CharField(max_length=20, choices=ResourceType.choices, default=ResourceType.BOOK)
+    grade = models.CharField(max_length=1, choices=StudentProfile.Grade.choices, default=StudentProfile.Grade.FIRST)
+    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, blank=True, null=True, related_name='mined_references')
+    official_url = models.URLField(blank=True)
+    app_usage = models.TextField(blank=True, verbose_name='Uso dentro de la aplicación')
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['grade', 'subject__name', 'title']
+
+    def __str__(self):
+        return self.title
 
 
 class LessonPlan(models.Model):

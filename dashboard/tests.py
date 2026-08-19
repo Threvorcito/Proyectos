@@ -92,7 +92,7 @@ class AdminResourceDeleteTests(TestCase):
         )
         self.client.force_login(admin)
 
-        for resource in ('niveles', 'actividades', 'juegos', 'lecturas', 'palabras', 'silabas'):
+        for resource in ('niveles', 'estrategias', 'competencias', 'metodo-fas', 'referencias-mined', 'actividades', 'juegos', 'lecturas', 'palabras', 'silabas'):
             response = self.client.get(reverse('dashboard:admin_resource', args=[resource]))
             self.assertContains(response, 'createResourceModal')
             self.assertContains(response, f'Agregar')

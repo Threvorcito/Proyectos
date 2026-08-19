@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 
 from activities.models import Activity, ActivityOption
 from gamification.models import Achievement
-from learning.models import Lesson, Level, ParentProfile, StudentProfile, Subject, TeacherProfile, Syllable, Word
+from learning.models import CurriculumCompetency, FasStep, Lesson, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, TeacherProfile, Syllable, Word
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading, ReadingAnswer, ReadingQuestion
 
@@ -40,6 +40,68 @@ class Command(BaseCommand):
             ('Educación Artística y Cultural', 'Expresión visual, ritmo, trazos y reconocimiento cultural.'),
         ]:
             subjects[name], _ = Subject.objects.get_or_create(name=name, defaults={'description': description, 'is_active': True})
+
+        strategies = {}
+        for name, focus, description in [
+            ('Continuidad de aprendizajes 1.º a 3.º', 'Lenguaje comunicativo, científico, matemático y social', 'Desarrollo progresivo de competencias tempranas en primero, segundo y tercer grado.'),
+            ('Método FAS', 'Lectoescritura inicial', 'Método Fónico Analítico Sintético para trabajar fonemas, sílabas, palabras y lectura.'),
+            ('Inglés como segundo idioma', 'Vocabulario y comprensión oral', 'Aprendizaje inicial del inglés con escucha, repetición e imágenes.'),
+            ('Planes nacionales de lectura y matemática', 'Lectura comprensiva y pensamiento matemático', 'Refuerzo de lectura, ciencias naturales y matemática en primaria.'),
+        ]:
+            strategies[name], _ = MinedStrategy.objects.get_or_create(name=name, defaults={'focus': focus, 'description': description, 'is_active': True})
+
+        competencies = {}
+        competency_rows = [
+            ('1', 'Lengua y Literatura', 'Sonidos iniciales', 'Reconoce sonidos iniciales en palabras familiares.', 'Identifica vocales, consonantes y sílabas simples con apoyo visual.', 'Usar letras grandes, lectura pausada, repetición oral y una instrucción por pantalla.', 'Método FAS'),
+            ('1', 'Matemática', 'Conteo inicial', 'Relaciona cantidad, número y palabra numérica en situaciones cercanas.', 'Cuenta objetos del 1 al 5 y selecciona el número correcto.', 'Presentar cantidades con imágenes claras y pocas opciones.', 'Continuidad de aprendizajes 1.º a 3.º'),
+            ('2', 'Lengua y Literatura', 'Fluidez de frases', 'Lee frases cortas y ordena palabras para formar oraciones.', 'Responde preguntas literales sobre frases y textos breves.', 'Separar palabras, resaltar sílabas trabadas y permitir relectura.', 'Método FAS'),
+            ('2', 'Ciencias Naturales', 'Vocabulario científico básico', 'Reconoce partes de plantas, animales y hábitos saludables.', 'Relaciona palabra, imagen y concepto en textos cortos.', 'Acompañar conceptos con pictogramas y segmentación silábica.', 'Continuidad de aprendizajes 1.º a 3.º'),
+            ('3', 'Lengua y Literatura', 'Comprensión de cuento corto', 'Comprende personajes, lugar e idea principal en lecturas infantiles.', 'Elige respuestas literales después de leer por partes.', 'Dividir textos en párrafos cortos y usar preguntas de una idea.', 'Planes nacionales de lectura y matemática'),
+            ('3', 'Matemática', 'Lectura de problemas', 'Comprende enunciados matemáticos con datos y operación.', 'Identifica palabras clave como total, quedan, más y menos.', 'Separar visualmente datos, operación y respuesta.', 'Continuidad de aprendizajes 1.º a 3.º'),
+        ]
+        for grade, subject_name, title, competency, indicator, adaptation, strategy_name in competency_rows:
+            unit = 'first' if grade in ('1', '2') else 'second'
+            competencies[title], _ = CurriculumCompetency.objects.get_or_create(
+                title=title,
+                grade=grade,
+                subject=subjects[subject_name],
+                defaults={
+                    'pedagogical_unit': unit,
+                    'strategy': strategies[strategy_name],
+                    'competency': competency,
+                    'achievement_indicator': indicator,
+                    'dyslexia_adaptation': adaptation,
+                    'is_active': True,
+                },
+            )
+
+        for order, stage, title, description, grade in [
+            (1, 'phoneme', 'Escuchar el sonido', 'Identificar fonemas en palabras familiares.', '1'),
+            (2, 'syllable', 'Formar sílabas', 'Unir sonidos para leer sílabas simples.', '1'),
+            (3, 'word', 'Construir palabras', 'Ordenar sílabas y reconocer palabras frecuentes.', '2'),
+            (4, 'phrase', 'Leer frases', 'Leer oraciones cortas con sentido.', '2'),
+            (5, 'reading', 'Comprender textos cortos', 'Leer por partes y responder preguntas literales.', '3'),
+        ]:
+            FasStep.objects.get_or_create(stage=stage, title=title, grade=grade, defaults={'description': description, 'order': order, 'is_active': True})
+
+        for title, resource_type, grade, subject_name, usage in [
+            ('Libros de Primaria MINED', 'book', '1', 'Lengua y Literatura', 'Referencia para organizar lecturas y vocabulario por grado.'),
+            ('Cuaderno de Aprestamiento', 'notebook', '1', 'Lengua y Literatura', 'Base para trazos, percepción visual y preparación lectora.'),
+            ('Conociendo mi Mundo', 'book', '1', 'Estudios Sociales', 'Referencia para vocabulario de familia, escuela y comunidad.'),
+            ('Ciencias Naturales Primaria', 'book', '2', 'Ciencias Naturales', 'Referencia para textos científicos cortos con apoyo visual.'),
+            ('Colección de lecturas infantiles', 'reading', '3', 'Lengua y Literatura', 'Inspiración para cuentos breves con preguntas literales.'),
+        ]:
+            MinedReference.objects.get_or_create(
+                title=title,
+                defaults={
+                    'resource_type': resource_type,
+                    'grade': grade,
+                    'subject': subjects[subject_name],
+                    'official_url': 'https://www.mined.gob.ni/biblioteca/?s=primaria&post_type=product',
+                    'app_usage': usage,
+                    'is_active': True,
+                },
+            )
 
         for text in ['MA', 'ME', 'MI', 'MO', 'MU', 'PA', 'PE', 'PI', 'PO', 'PU', 'LA', 'LE', 'LI', 'LO', 'LU', 'CA', 'CO', 'CU']:
             Syllable.objects.get_or_create(text=text, defaults={'level': levels[0]})
@@ -92,6 +154,7 @@ class Command(BaseCommand):
                 'activity_type': 'LISTEN_SELECT',
                 'level': levels[0],
                 'subject': subjects['Lengua y Literatura'],
+                'competency': competencies['Sonidos iniciales'],
                 'grade': '1',
                 'difficulty': 'easy',
                 'points': 10,
@@ -102,9 +165,10 @@ class Command(BaseCommand):
         for option_text, correct in [('CASA', True), ('MASA', False), ('CAMA', False)]:
             ActivityOption.objects.get_or_create(activity=activity, text=option_text, defaults={'is_correct': correct})
         activity.subject = subjects['Lengua y Literatura']
+        activity.competency = competencies['Sonidos iniciales']
         activity.grade = '1'
         activity.level = levels[0]
-        activity.save(update_fields=['subject', 'grade', 'level'])
+        activity.save(update_fields=['subject', 'competency', 'grade', 'level'])
 
         curriculum_activities = [
             ('1', 'Lengua y Literatura', levels[0], 'Sonido inicial: m, p, l', 'Reconoce sonidos iniciales y diferencia letras parecidas con apoyo visual.', 'Escucha la palabra, mira la imagen mentalmente y selecciona la letra inicial.', 'LISTEN_SELECT', [('m', True), ('n', False), ('p', False)]),
@@ -129,6 +193,7 @@ class Command(BaseCommand):
                     'activity_type': activity_type,
                     'level': level,
                     'subject': subjects[subject_name],
+                    'competency': CurriculumCompetency.objects.filter(grade=grade, subject=subjects[subject_name]).first(),
                     'grade': grade,
                     'difficulty': 'easy' if grade == '1' else 'medium',
                     'points': 10,
@@ -137,9 +202,10 @@ class Command(BaseCommand):
                 },
             )
             item.subject = subjects[subject_name]
+            item.competency = CurriculumCompetency.objects.filter(grade=grade, subject=subjects[subject_name]).first()
             item.grade = grade
             item.level = level
-            item.save(update_fields=['subject', 'grade', 'level'])
+            item.save(update_fields=['subject', 'competency', 'grade', 'level'])
             for order, (option_text, correct) in enumerate(options, start=1):
                 ActivityOption.objects.get_or_create(activity=item, text=option_text, defaults={'is_correct': correct, 'order': order})
 
@@ -150,6 +216,7 @@ class Command(BaseCommand):
                 'content': 'Luna tiene un gato. El gato se llama Milo. Milo juega con una pelota. Luna quiere mucho a Milo.',
                 'level': levels[2],
                 'subject': subjects['Lengua y Literatura'],
+                'competency': competencies['Comprensión de cuento corto'],
                 'grade': '3',
                 'difficulty': 'easy',
                 'estimated_time': 3,
@@ -160,9 +227,10 @@ class Command(BaseCommand):
         for answer_text, correct in [('Luna', False), ('Milo', True), ('Sol', False)]:
             ReadingAnswer.objects.get_or_create(question=question, answer=answer_text, defaults={'is_correct': correct})
         reading.subject = subjects['Lengua y Literatura']
+        reading.competency = competencies['Comprensión de cuento corto']
         reading.grade = '3'
         reading.level = levels[2]
-        reading.save(update_fields=['subject', 'grade', 'level'])
+        reading.save(update_fields=['subject', 'competency', 'grade', 'level'])
 
         reading_plan = [
             ('1', 'Lengua y Literatura', levels[0], 'La mamá lee', 'Lectura con palabras frecuentes.', 'Mamá lee. Memo mira. Memo ama leer.'),
@@ -178,6 +246,7 @@ class Command(BaseCommand):
                     'content': content,
                     'level': level,
                     'subject': subjects[subject_name],
+                    'competency': CurriculumCompetency.objects.filter(grade=grade, subject=subjects[subject_name]).first(),
                     'grade': grade,
                     'difficulty': 'easy',
                     'estimated_time': 3,

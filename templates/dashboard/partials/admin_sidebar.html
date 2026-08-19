@@ -13,6 +13,10 @@
 
     <small>Recursos educativos</small>
     <a class="{% if resource == 'niveles' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'niveles' %}"><span>📊</span>Niveles</a>
+    <a class="{% if resource == 'estrategias' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'estrategias' %}"><span>🧭</span>Estrategias MINED</a>
+    <a class="{% if resource == 'competencias' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'competencias' %}"><span>🎯</span>Competencias</a>
+    <a class="{% if resource == 'metodo-fas' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'metodo-fas' %}"><span>🔡</span>Método FAS</a>
+    <a class="{% if resource == 'referencias-mined' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'referencias-mined' %}"><span>🏛</span>Biblioteca MINED</a>
     <a class="{% if resource == 'actividades' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'actividades' %}"><span>✍</span>Actividades</a>
     <a class="{% if resource == 'juegos' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'juegos' %}"><span>🎮</span>Juegos</a>
     <a class="{% if resource == 'lecturas' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'lecturas' %}"><span>📖</span>Cuentos y lecturas</a>

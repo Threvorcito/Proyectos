@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AccessibilityPreference, Lesson, LessonPlan, Level, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
+from .models import AccessibilityPreference, CurriculumCompetency, FasStep, Lesson, LessonPlan, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 
 
 @admin.register(Level)
@@ -29,3 +29,7 @@ admin.site.register(ParentProfile)
 admin.site.register(AccessibilityPreference)
 admin.site.register(Subject)
 admin.site.register(LessonPlan)
+admin.site.register(MinedStrategy)
+admin.site.register(CurriculumCompetency)
+admin.site.register(FasStep)
+admin.site.register(MinedReference)

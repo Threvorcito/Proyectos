@@ -108,6 +108,8 @@ class QuickStudentCreationForm(forms.Form):
     name = forms.CharField(label='Nombre completo', max_length=150)
     alias = forms.CharField(label='Nombre corto o alias', max_length=80, required=False)
     grade = forms.ChoiceField(label='Grado', choices=StudentProfile.Grade.choices)
+    modality = forms.ChoiceField(label='Modalidad educativa', choices=StudentProfile.Modality.choices, initial=StudentProfile.Modality.REGULAR)
+    zone = forms.ChoiceField(label='Zona', choices=StudentProfile.Zone.choices, initial=StudentProfile.Zone.URBAN)
     reading_level = forms.ModelChoiceField(label='Nivel lector inicial', queryset=Level.objects.none())
     username = forms.CharField(label='Usuario', max_length=150, required=False, help_text='Opcional. Si se deja vacío, el sistema lo genera automáticamente.')
     password = forms.CharField(label='Contraseña o PIN', max_length=32, required=False, help_text='Opcional. Si se deja vacío, el sistema genera un PIN seguro.')
@@ -147,6 +149,8 @@ class QuickStudentCreationForm(forms.Form):
             name=self.cleaned_data['name'],
             alias=self.cleaned_data.get('alias', ''),
             grade=self.cleaned_data['grade'],
+            modality=self.cleaned_data['modality'],
+            zone=self.cleaned_data['zone'],
             reading_level=level,
             current_level=level,
         )

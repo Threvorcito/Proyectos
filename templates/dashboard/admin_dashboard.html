@@ -35,6 +35,7 @@
         <article class="admin-metric-card"><span>Docentes</span><strong>{{ stats.teachers }}</strong><p>Con permisos configurables</p></article>
         <article class="admin-metric-card"><span>Estudiantes</span><strong>{{ stats.students }}</strong><p>Primaria: 1ro, 2do y 3ro</p></article>
         <article class="admin-metric-card"><span>Padres o tutores</span><strong>{{ stats.parents }}</strong><p>Acompañamiento familiar</p></article>
+        <article class="admin-metric-card"><span>Competencias MINED</span><strong>{{ stats.competencies }}</strong><p>{{ stats.covered_competencies }} vinculadas a recursos</p></article>
       </section>
 
       <section class="admin-insight-grid">
@@ -42,6 +43,8 @@
           <div class="admin-card-title"><h2>Recursos de aprendizaje</h2><span>Catálogo</span></div>
           <div class="admin-resource-list">
             <a href="{% url 'dashboard:admin_resource' 'niveles' %}"><span>Niveles configurados</span><strong>{{ stats.levels }}</strong></a>
+            <a href="{% url 'dashboard:admin_resource' 'competencias' %}"><span>Competencias curriculares</span><strong>{{ stats.competencies }}</strong></a>
+            <a href="{% url 'dashboard:admin_resource' 'metodo-fas' %}"><span>Pasos método FAS</span><strong>{{ stats.fas_steps }}</strong></a>
             <a href="{% url 'dashboard:admin_resource' 'actividades' %}"><span>Actividades activas</span><strong>{{ stats.activities }}</strong></a>
             <a href="{% url 'dashboard:admin_resource' 'juegos' %}"><span>Juegos didácticos</span><strong>{{ stats.games }}</strong></a>
             <a href="{% url 'dashboard:admin_resource' 'lecturas' %}"><span>Cuentos y lecturas</span><strong>{{ stats.readings }}</strong></a>
@@ -53,6 +56,8 @@
           <div class="admin-trend-row"><span>Planes de clase</span><strong>{{ stats.lesson_plans }}</strong></div>
           <div class="admin-trend-row"><span>Clases registradas</span><strong>{{ stats.lessons }}</strong></div>
           <div class="admin-trend-row"><span>Materias</span><strong>{{ stats.subjects }}</strong></div>
+          <div class="admin-trend-row"><span>Estrategias MINED</span><strong>{{ stats.strategies }}</strong></div>
+          <div class="admin-trend-row"><span>Referencias Biblioteca MINED</span><strong>{{ stats.mined_references }}</strong></div>
           <div class="admin-trend-bar"><span style="width: 72%"></span></div>
         </article>
 
