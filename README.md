@@ -22,7 +22,8 @@ Todo recurso debe mantener adaptaciones para dislexia: instrucciones cortas, lec
 ## Tecnologías
 - Python 3
 - Django
-- SQLite
+- SQLite para desarrollo local
+- PostgreSQL opcional/recomendado para producción
 - HTML5, CSS3, JavaScript
 - Bootstrap 5
 
@@ -37,6 +38,36 @@ python manage.py seed_demo
 python manage.py createsuperuser
 python manage.py runserver
 ```
+
+## Base de datos
+
+Por defecto el proyecto usa SQLite con `db_lectura.sqlite3`. Para usar PostgreSQL no es necesario cambiar código; basta con configurar variables de entorno.
+
+El archivo local `.env` se carga automáticamente si existe. Este archivo está ignorado por git y debe usarse para credenciales locales.
+
+Variables principales:
+
+```bash
+DB_ENGINE=postgresql
+DB_NAME=lectura_sin_limites
+DB_USER=lectura_user
+DB_PASSWORD=tu_contrasena
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+Migración de prueba desde SQLite a PostgreSQL:
+
+```bash
+python manage.py dumpdata --exclude contenttypes --exclude auth.permission > data.json
+# Cambiar DB_ENGINE y variables DB_* a PostgreSQL
+python manage.py migrate
+python manage.py loaddata data.json
+python manage.py check
+python manage.py test
+```
+
+Mantén una copia de `db_lectura.sqlite3` antes de importar datos en PostgreSQL.
 
 ## Cuentas demo
 - `Admin` / `admin123`

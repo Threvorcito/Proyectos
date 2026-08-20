@@ -435,6 +435,44 @@ Ultimas verificaciones realizadas durante el trabajo:
 
 Suele aparecer modificado despues de ejecutar migraciones.
 
+Se dejo preparada configuracion dual de base de datos:
+
+- SQLite queda como base por defecto para desarrollo local.
+- PostgreSQL se activa por variables de entorno sin cambiar codigo.
+- `settings.py` carga automaticamente un archivo local `.env` si existe.
+- Variables principales:
+  - `DB_ENGINE=postgresql`
+  - `DB_NAME`
+  - `DB_USER`
+  - `DB_PASSWORD`
+  - `DB_HOST`
+  - `DB_PORT`
+- Se agrego `.env.example` con configuracion segura de ejemplo.
+- Se agrego `psycopg[binary]>=3.1` a `requirements.txt`.
+- Se documento en `README.md` el flujo de migracion de prueba:
+  - `dumpdata` desde SQLite
+  - cambiar variables a PostgreSQL
+  - `migrate`
+  - `loaddata`
+  - `check` y `test`
+
+PostgreSQL ya fue configurado localmente:
+
+- Servicio detectado: `postgresql-x64-18`.
+- Base creada: `lectura_sin_limites`.
+- Usuario creado: `lectura_user`.
+- Contrasena usada localmente: `Admin123`.
+- Se cambio la contrasena local del superusuario PostgreSQL `postgres` a `Admin123`.
+- Se restauro `pg_hba.conf` a `scram-sha-256` y se recargo configuracion.
+- Se creo `.env` local ignorado por git para que Django use PostgreSQL por defecto en esta maquina.
+- Datos de SQLite fueron exportados e importados correctamente a PostgreSQL.
+- Se eliminaron los archivos temporales de dump.
+- Validaciones contra PostgreSQL:
+  - `python manage.py check` OK
+  - `python manage.py makemigrations --check --dry-run` OK
+  - `python manage.py test` OK, 33 tests
+  - prueba funcional admin/docente/estudiante/padre OK
+
 ## Prioridades recomendadas siguientes
 
 1. Cargar un banco mas completo de indicadores MINED por grado/materia/unidad.
