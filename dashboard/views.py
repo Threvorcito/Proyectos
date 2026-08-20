@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from accounts.models import CustomUser
@@ -19,7 +20,7 @@ from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, Q
 
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'update_form': AdminUserUpdateForm, 'fields': None},
-    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'update_form': TeacherUpdateForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')},
+    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'update_form': TeacherUpdateForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'can_create_students', 'can_view_student_reports', 'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games')},
     'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'school', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},
@@ -60,11 +61,34 @@ def can_manage_resource(user, resource):
     if not user.is_authenticated or user.role != 'TEACHER' or teacher is None:
         return False
     permission_map = {
+        'planes': teacher.can_create_lesson_plans or teacher.can_edit_lesson_plans or teacher.can_assign_lesson_plans,
         'clases': teacher.can_manage_lessons,
         'actividades': teacher.can_manage_activities,
         'lecturas': teacher.can_manage_readings,
+        'juegos': teacher.can_manage_games,
     }
     return permission_map.get(resource, False)
+
+
+def teacher_has_permission(user, permission):
+    if is_admin_user(user):
+        return True
+    teacher = getattr(user, 'teacher_profile', None)
+    return user.is_authenticated and user.role == 'TEACHER' and teacher is not None and getattr(teacher, permission, False)
+
+
+def require_teacher_permission(request, permission, message):
+    if teacher_has_permission(request.user, permission):
+        return None
+    messages.error(request, message)
+    return redirect('dashboard:teacher')
+
+
+def require_any_teacher_permission(request, permissions, message):
+    if is_admin_user(request.user) or any(teacher_has_permission(request.user, permission) for permission in permissions):
+        return None
+    messages.error(request, message)
+    return redirect('dashboard:teacher')
 
 
 @login_required
@@ -98,10 +122,13 @@ def admin_dashboard(request):
         'competencies': CurriculumCompetency.objects.count(),
         'fas_steps': FasStep.objects.count(),
         'mined_references': MinedReference.objects.count(),
+        'words': Word.objects.count(),
+        'syllables': Syllable.objects.count(),
         'covered_competencies': CurriculumCompetency.objects.filter(Q(activities__isnull=False) | Q(readings__isnull=False) | Q(games__isnull=False)).distinct().count(),
     }
     recent_students = StudentProfile.objects.select_related('user', 'current_level').order_by('-created_at')[:5]
-    return render(request, 'dashboard/admin_dashboard.html', {'stats': stats, 'recent_students': recent_students, 'resources': ADMIN_RESOURCES})
+    recent_plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').order_by('-created_at')[:5]
+    return render(request, 'dashboard/admin_dashboard.html', {'stats': stats, 'recent_students': recent_students, 'recent_plans': recent_plans, 'resources': ADMIN_RESOURCES})
 
 
 @login_required
@@ -229,10 +256,20 @@ def teacher_permissions_update(request, pk):
         return redirect('dashboard:redirect')
 
     teacher = get_object_or_404(TeacherProfile.objects.select_related('user'), pk=pk)
+    teacher.can_create_students = request.POST.get('can_create_students') == 'on'
+    teacher.can_view_student_reports = request.POST.get('can_view_student_reports') == 'on'
+    teacher.can_create_lesson_plans = request.POST.get('can_create_lesson_plans') == 'on'
+    teacher.can_edit_lesson_plans = request.POST.get('can_edit_lesson_plans') == 'on'
+    teacher.can_assign_lesson_plans = request.POST.get('can_assign_lesson_plans') == 'on'
     teacher.can_manage_lessons = request.POST.get('can_manage_lessons') == 'on'
     teacher.can_manage_activities = request.POST.get('can_manage_activities') == 'on'
     teacher.can_manage_readings = request.POST.get('can_manage_readings') == 'on'
-    teacher.save(update_fields=['can_manage_lessons', 'can_manage_activities', 'can_manage_readings'])
+    teacher.can_manage_games = request.POST.get('can_manage_games') == 'on'
+    teacher.save(update_fields=[
+        'can_create_students', 'can_view_student_reports',
+        'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans',
+        'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games',
+    ])
     messages.success(request, f'Se actualizaron los permisos de {teacher.name}.')
     return redirect('dashboard:admin_resource', resource='profesores')
 
@@ -240,6 +277,13 @@ def teacher_permissions_update(request, pk):
 @login_required
 @user_passes_test(is_teacher_or_admin)
 def lesson_plan_list(request):
+    permission_response = require_any_teacher_permission(
+        request,
+        ('can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans'),
+        'No tienes permiso para ver planes de clase.',
+    )
+    if permission_response:
+        return permission_response
     plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings')
     if not is_admin_user(request.user):
         teacher = getattr(request.user, 'teacher_profile', None)
@@ -253,6 +297,9 @@ def lesson_plan_list(request):
 @login_required
 @user_passes_test(is_teacher_or_admin)
 def lesson_plan_create(request):
+    permission_response = require_teacher_permission(request, 'can_create_lesson_plans', 'No tienes permiso para crear planes de clase.')
+    if permission_response:
+        return permission_response
     form = LessonPlanForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         plan = form.save(commit=False)
@@ -288,6 +335,9 @@ def lesson_plan_create(request):
 @login_required
 @user_passes_test(is_teacher_or_admin)
 def lesson_plan_update(request, pk):
+    permission_response = require_teacher_permission(request, 'can_edit_lesson_plans', 'No tienes permiso para editar planes de clase.')
+    if permission_response:
+        return permission_response
     plan = get_object_or_404(LessonPlan.objects.select_related('teacher'), pk=pk)
     teacher = getattr(request.user, 'teacher_profile', None)
     if not is_admin_user(request.user) and plan.teacher != teacher:
@@ -305,6 +355,9 @@ def lesson_plan_update(request, pk):
 @login_required
 @user_passes_test(is_teacher_or_admin)
 def lesson_plan_implementation(request, pk):
+    permission_response = require_teacher_permission(request, 'can_assign_lesson_plans', 'No tienes permiso para asignar o implementar planes de clase.')
+    if permission_response:
+        return permission_response
     plan = get_object_or_404(
         LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings'),
         pk=pk,
@@ -342,8 +395,98 @@ def lesson_plan_implementation(request, pk):
 
 
 @login_required
+@user_passes_test(is_teacher_or_admin)
+def lesson_plan_report(request, pk):
+    permission_response = require_any_teacher_permission(
+        request,
+        ('can_assign_lesson_plans', 'can_view_student_reports'),
+        'No tienes permiso para ver reportes de planes de clase.',
+    )
+    if permission_response:
+        return permission_response
+    plan = get_object_or_404(
+        LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings'),
+        pk=pk,
+    )
+    teacher = getattr(request.user, 'teacher_profile', None)
+    if not is_admin_user(request.user) and plan.teacher != teacher:
+        messages.error(request, 'No tienes permiso para ver el reporte de este plan de clase.')
+        return redirect('dashboard:lesson_plans')
+
+    assignments = list(
+        plan.assignments.select_related('student', 'student__current_level', 'student__reading_level').order_by('student__name')
+    )
+    total_assignments = len(assignments)
+    completed_count = sum(1 for assignment in assignments if assignment.status == LessonPlanAssignment.Status.COMPLETED)
+    in_progress_count = sum(1 for assignment in assignments if assignment.status == LessonPlanAssignment.Status.IN_PROGRESS)
+    assigned_count = sum(1 for assignment in assignments if assignment.status == LessonPlanAssignment.Status.ASSIGNED)
+    completion_percentage = round((completed_count / total_assignments) * 100) if total_assignments else 0
+    student_ids = [assignment.student_id for assignment in assignments]
+    difficulties = StudentDifficulty.objects.filter(student_id__in=student_ids).select_related('student').order_by('-error_count', '-last_error_date')[:8]
+
+    reinforcement_recommendations = []
+    if assigned_count:
+        reinforcement_recommendations.append('Iniciar con lectura modelada y una instrucción corta para estudiantes aún asignados.')
+    if in_progress_count:
+        reinforcement_recommendations.append('Reforzar con práctica silábica, apoyo visual y relectura acompañada para quienes están en progreso.')
+    if difficulties:
+        reinforcement_recommendations.append('Usar juegos y lecturas del mismo nivel para trabajar los errores frecuentes detectados.')
+    if total_assignments and completion_percentage < 70:
+        reinforcement_recommendations.append('Dividir el plan en pasos más breves antes de marcarlo como completado.')
+    if not reinforcement_recommendations:
+        reinforcement_recommendations.append('Mantener actividades multisensoriales y registrar notas breves después de cada sesión.')
+
+    return render(request, 'dashboard/lesson_plan_report.html', {
+        'plan': plan,
+        'assignments': assignments,
+        'assigned_count': assigned_count,
+        'in_progress_count': in_progress_count,
+        'completed_count': completed_count,
+        'completion_percentage': completion_percentage,
+        'difficulties': difficulties,
+        'reinforcement_recommendations': reinforcement_recommendations,
+        'status_choices': LessonPlanAssignment.Status.choices,
+        'can_update_assignments': is_admin_user(request.user) or teacher_has_permission(request.user, 'can_assign_lesson_plans'),
+    })
+
+
+@login_required
+@user_passes_test(is_teacher_or_admin)
+@require_POST
+def lesson_plan_assignment_update(request, pk, assignment_pk):
+    permission_response = require_teacher_permission(request, 'can_assign_lesson_plans', 'No tienes permiso para actualizar el seguimiento del plan.')
+    if permission_response:
+        return permission_response
+    assignment = get_object_or_404(
+        LessonPlanAssignment.objects.select_related('plan', 'plan__teacher'),
+        pk=assignment_pk,
+        plan_id=pk,
+    )
+    teacher = getattr(request.user, 'teacher_profile', None)
+    if not is_admin_user(request.user) and assignment.plan.teacher != teacher:
+        messages.error(request, 'No tienes permiso para actualizar este seguimiento.')
+        return redirect('dashboard:lesson_plans')
+
+    status = request.POST.get('status')
+    valid_statuses = {choice[0] for choice in LessonPlanAssignment.Status.choices}
+    if status not in valid_statuses:
+        messages.error(request, 'Selecciona un estado válido para el seguimiento.')
+        return redirect('dashboard:lesson_plan_report', pk=pk)
+
+    assignment.status = status
+    assignment.teacher_notes = request.POST.get('teacher_notes', '').strip()
+    assignment.completed_at = timezone.now() if status == LessonPlanAssignment.Status.COMPLETED else None
+    assignment.save(update_fields=['status', 'teacher_notes', 'completed_at'])
+    messages.success(request, 'Seguimiento del estudiante actualizado.')
+    return redirect('dashboard:lesson_plan_report', pk=pk)
+
+
+@login_required
 @user_passes_test(is_teacher)
 def quick_student_create(request):
+    permission_response = require_teacher_permission(request, 'can_create_students', 'No tienes permiso para crear estudiantes.')
+    if permission_response:
+        return permission_response
     credentials = None
     form = QuickStudentCreationForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -358,7 +501,8 @@ def quick_student_create(request):
 def student_report(request, pk):
     student = get_object_or_404(StudentProfile.objects.select_related('user', 'current_level', 'reading_level'), pk=pk)
     own_report = getattr(request.user, 'student_profile', None) == student
-    if not (own_report or is_teacher_or_admin(request.user)):
+    can_view_report = own_report or is_admin_user(request.user) or teacher_has_permission(request.user, 'can_view_student_reports')
+    if not can_view_report:
         messages.error(request, 'No tienes permiso para ver este reporte.')
         return redirect('dashboard:redirect')
     progress_items = StudentProgress.objects.filter(student=student).select_related('activity', 'activity__level').order_by('-last_activity_date')[:10]

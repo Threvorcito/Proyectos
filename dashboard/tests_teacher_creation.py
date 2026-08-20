@@ -89,3 +89,13 @@ class TeacherCreationFormTests(TestCase):
         updated = form.save()
 
         self.assertTrue(updated.check_password('Actual123!'))
+
+    def test_teacher_update_password_field_renders_empty(self):
+        teacher = TeacherProfile.objects.create(first_name='Eva', last_name='Rios', email='eva@example.com', name='Eva Rios')
+        teacher.set_password('Actual123!')
+        teacher.save()
+
+        form = TeacherUpdateForm(instance=teacher)
+
+        self.assertEqual(form.fields['password'].initial, '')
+        self.assertNotIn('value=', form['password'].as_widget())

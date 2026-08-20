@@ -7,6 +7,152 @@
   .accessibility-fab { display: none !important; }
   .page-shell { min-height: 100vh; }
   body { background: #f6f7fb; }
+  .admin-content { max-width: none; padding: 2.5rem 2rem; }
+  .resource-page-head {
+    align-items: flex-start;
+    display: flex;
+    gap: 1.5rem;
+    justify-content: space-between;
+    margin-bottom: 1.4rem;
+  }
+  .resource-page-head h1 {
+    color: #2f3947;
+    font-size: 1.8rem;
+    font-weight: 900;
+    letter-spacing: -.03em;
+    margin: 0 0 .35rem;
+  }
+  .resource-page-head p {
+    color: #5f6b7a;
+    font-size: 1rem;
+    margin: 0;
+  }
+  .resource-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .65rem;
+    justify-content: flex-end;
+  }
+  .resource-actions .btn {
+    border-radius: 10px;
+    font-weight: 800;
+    min-height: 42px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .resource-search {
+    margin-bottom: 1rem;
+    max-width: 520px;
+    position: relative;
+  }
+  .resource-search span {
+    color: #8a96a6;
+    left: 1rem;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  .resource-search input {
+    background: #fff;
+    border: 1px solid #dfe5ec;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(16, 24, 40, .04);
+    color: #344054;
+    height: 46px;
+    padding: 0 1rem 0 2.65rem;
+    width: 100%;
+  }
+  .resource-table-card {
+    background: #fff;
+    border: 1px solid #dfe5ec;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(16, 24, 40, .06);
+    overflow: hidden;
+  }
+  .resource-table-wrap {
+    max-height: calc(100vh - 315px);
+    overflow: auto;
+  }
+  .resource-table {
+    margin: 0;
+    min-width: 880px;
+  }
+  .resource-table thead th {
+    background: #f8fafc;
+    border-bottom: 1px solid #e5eaf0;
+    color: #465466;
+    font-size: .85rem;
+    font-weight: 900;
+    padding: .95rem 1.1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .resource-table tbody td {
+    border-bottom: 1px solid #edf0f5;
+    color: #4b596b;
+    padding: 1rem 1.1rem;
+    vertical-align: middle;
+  }
+  .resource-table tbody tr:last-child td { border-bottom: 0; }
+  .resource-table tbody tr:hover { background: #fbfcff; }
+  .resource-title-cell strong,
+  .resource-title-cell span { display: block; }
+  .resource-title-cell strong {
+    color: #344054;
+    font-weight: 900;
+    max-width: 460px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .resource-title-cell span {
+    color: #7b8794;
+    font-size: .88rem;
+    margin-top: .2rem;
+    max-width: 520px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .resource-badge {
+    background: #e9edff;
+    border-radius: 999px;
+    color: #4f54c8;
+    display: inline-flex;
+    font-size: .78rem;
+    font-weight: 900;
+    padding: .35rem .75rem;
+  }
+  .resource-status {
+    color: #16a35b;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+  .resource-status::before { content: "✓ "; }
+  .resource-row-actions {
+    align-items: center;
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+    white-space: nowrap;
+  }
+  .resource-row-actions .btn {
+    border-radius: 8px;
+    font-weight: 800;
+  }
+  .resource-empty {
+    color: #667085;
+    padding: 2rem;
+    text-align: center;
+  }
+  @media (max-width: 900px) {
+    .admin-content { padding: 1.25rem .9rem; }
+    .resource-page-head { flex-direction: column; }
+    .resource-actions { justify-content: flex-start; width: 100%; }
+    .resource-actions .btn { flex: 1 1 180px; }
+    .resource-search { max-width: none; }
+  }
 </style>
 {% endblock %}
 {% block content %}
@@ -15,12 +161,12 @@
   <section class="admin-main">
     {% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}
     <div class="admin-content">
-      <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center mb-4">
+      <div class="resource-page-head">
         <div>
-          <span class="eyebrow">Gestión</span>
           <h1>{{ config.title }}</h1>
+          <p>Administra los registros de {{ config.title|lower }} desde una vista clara y ordenada.</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="resource-actions">
           {% if create_form %}
             <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createResourceModal">Agregar {{ config.singular }}</button>
           {% else %}
@@ -30,12 +176,36 @@
         </div>
       </div>
 
-      <div class="list-group admin-resource-list">
+      <div class="resource-search">
+        <span>⌕</span>
+        <input type="search" id="resourceSearchInput" placeholder="Buscar en {{ config.title|lower }}..." aria-label="Buscar registros">
+      </div>
+
+      <div class="resource-table-card">
+        <div class="resource-table-wrap">
+          <table class="table resource-table align-middle">
+            <thead>
+              <tr>
+                <th>{% if resource == 'actividades' %}Actividad{% elif resource == 'lecturas' %}Lectura{% elif resource == 'juegos' %}Juego{% else %}Registro{% endif %}</th>
+                <th>Descripción</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="resourceTableBody">
         {% for row in edit_rows %}
           {% with item=row.object %}
-          <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <span>{{ item }}</span>
-            <div class="d-flex flex-wrap gap-2">
+          <tr data-resource-row data-search="{{ item }} {{ item.description|default:'' }} {{ item.email|default:'' }} {{ item.name|default:'' }} {{ item.title|default:'' }}">
+            <td class="resource-title-cell">
+              <strong>{{ item }}</strong>
+              <span>{% if item.email %}{{ item.email }}{% elif item.topic %}{{ item.topic }}{% elif item.subject %}{{ item.subject }}{% else %}{{ config.singular|capfirst }}{% endif %}</span>
+            </td>
+            <td class="resource-title-cell"><span>{% if item.description %}{{ item.description }}{% elif item.bio %}{{ item.bio }}{% elif item.objective %}{{ item.objective }}{% else %}Sin descripción registrada{% endif %}</span></td>
+            <td><span class="resource-badge">{% if item.activity_type %}{{ item.get_activity_type_display }}{% elif item.resource_type %}{{ item.get_resource_type_display }}{% elif item.role %}{{ item.get_role_display }}{% elif item.grade %}{{ item.get_grade_display }}{% else %}{{ config.singular|capfirst }}{% endif %}</span></td>
+            <td><span class="resource-status">{% if resource == 'profesores' or resource == 'alumnos' or resource == 'padres' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
+            <td>
+              <div class="resource-row-actions">
               {% if resource == 'profesores' %}
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#permissionsModal{{ item.pk }}">Permisos</button>
               {% endif %}
@@ -44,106 +214,116 @@
                 {% csrf_token %}
                 <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
               </form>
-            </div>
-          </div>
-          {% if resource == 'profesores' %}
-            <div class="modal fade admin-dialog permissions-dialog" id="permissionsModal{{ item.pk }}" tabindex="-1" aria-labelledby="permissionsModalTitle{{ item.pk }}" aria-hidden="true" data-bs-backdrop="static">
-              <div class="modal-dialog modal-dialog-centered modal-lg">
-                <div class="modal-content">
-                  <form method="post" action="{% url 'dashboard:teacher_permissions_update' item.pk %}" data-permission-dialog>
-                    {% csrf_token %}
-                    <div class="modal-header">
-                      <div>
-                        <h2 class="modal-title" id="permissionsModalTitle{{ item.pk }}">Permisos del usuario</h2>
-                        <p>Configura los accesos disponibles para este docente dentro de los módulos de Lectura Sin Límites.</p>
-                      </div>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                    </div>
-                    <div class="modal-body permissions-dialog__body">
-                      <div class="permissions-dialog__user">
-                        <div>
-                          <strong>{{ item.name|default:'Docente seleccionado' }}</strong>
-                          <span>{{ item.email|default:'Sin correo' }}</span>
-                        </div>
-                        <label class="permissions-dialog__select-all">
-                          <input class="form-check-input" type="checkbox" data-permission-select-all>
-                          <span>Seleccionar todo</span>
-                        </label>
-                      </div>
-
-                      <div class="permissions-dialog__grid">
-                        <section class="permissions-dialog__card">
-                          <h3>Gestión de planificación</h3>
-                          <label><input class="form-check-input" type="checkbox" name="can_manage_lessons" data-permission-checkbox {% if item.can_manage_lessons %}checked{% endif %}> Crear y editar planes de clase</label>
-                          <label><input class="form-check-input" type="checkbox" data-permission-checkbox {% if item.can_manage_lessons %}checked{% endif %}> Ver clases asignadas</label>
-                        </section>
-                        <section class="permissions-dialog__card">
-                          <h3>Gestión de actividades</h3>
-                          <label><input class="form-check-input" type="checkbox" name="can_manage_activities" data-permission-checkbox {% if item.can_manage_activities %}checked{% endif %}> Crear actividades</label>
-                          <label><input class="form-check-input" type="checkbox" data-permission-checkbox {% if item.can_manage_activities %}checked{% endif %}> Editar actividades</label>
-                        </section>
-                        <section class="permissions-dialog__card permissions-dialog__card--wide">
-                          <h3>Gestión de lecturas y cuentos</h3>
-                          <div class="permissions-dialog__inline">
-                            <label><input class="form-check-input" type="checkbox" name="can_manage_readings" data-permission-checkbox {% if item.can_manage_readings %}checked{% endif %}> Crear lecturas</label>
-                            <label><input class="form-check-input" type="checkbox" data-permission-checkbox {% if item.can_manage_readings %}checked{% endif %}> Editar cuentos</label>
-                            <label><input class="form-check-input" type="checkbox" data-permission-checkbox {% if item.can_manage_readings %}checked{% endif %}> Organizar por materia</label>
-                          </div>
-                        </section>
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                      <button type="submit" class="btn btn-primary">Listo</button>
-                    </div>
-                  </form>
-                </div>
               </div>
-            </div>
-          {% endif %}
-          <div class="modal fade admin-dialog" id="editResourceModal{{ item.pk }}" tabindex="-1" aria-labelledby="editResourceModalTitle{{ item.pk }}" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' or resource == 'competencias' %}modal-xl{% else %}modal-lg{% endif %}">
-              <div class="modal-content">
-                <form method="post" action="{% url 'dashboard:admin_resource_update' resource item.pk %}" enctype="multipart/form-data">
-                  {% csrf_token %}
-                  <div class="modal-header">
-                    <div>
-                      <h2 class="modal-title" id="editResourceModalTitle{{ item.pk }}">Editar {{ config.singular }}</h2>
-                      <p>Actualiza la información de este registro. Haz clic en guardar cuando termines.</p>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                  </div>
-                  <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
-                    <div class="admin-dialog__grid admin-dialog__grid--resource">
-                      {{ row.form.as_p }}
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
-                  </div>
-                </form>
-              </div>
-            </div>
-          </div>
+            </td>
+          </tr>
           {% endwith %}
         {% empty %}
           {% for item in objects %}
-            <div class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
-              <span>{{ item }}</span>
-              <form method="post" action="{% url 'dashboard:admin_resource_delete' resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
-                {% csrf_token %}
-                <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
-              </form>
-            </div>
+            <tr data-resource-row data-search="{{ item }}">
+              <td class="resource-title-cell"><strong>{{ item }}</strong><span>{{ config.singular|capfirst }}</span></td>
+              <td class="resource-title-cell"><span>Sin descripción registrada</span></td>
+              <td><span class="resource-badge">{{ config.singular|capfirst }}</span></td>
+              <td><span class="resource-status">Registrado</span></td>
+              <td class="text-end">
+                <form method="post" action="{% url 'dashboard:admin_resource_delete' resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+                </form>
+              </td>
+            </tr>
           {% empty %}
-            <div class="alert alert-info">No hay registros todavía.</div>
+            <tr><td colspan="5"><div class="resource-empty">No hay registros todavía.</div></td></tr>
           {% endfor %}
         {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </section>
 </div>
+
+{% for row in edit_rows %}
+  {% with item=row.object %}
+    {% if resource == 'profesores' %}
+      <div class="modal fade admin-dialog permissions-dialog" id="permissionsModal{{ item.pk }}" tabindex="-1" aria-labelledby="permissionsModalTitle{{ item.pk }}" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <form method="post" action="{% url 'dashboard:teacher_permissions_update' item.pk %}" data-permission-dialog>
+              {% csrf_token %}
+              <div class="modal-header">
+                <div>
+                  <h2 class="modal-title" id="permissionsModalTitle{{ item.pk }}">Permisos del usuario</h2>
+                  <p>Configura los accesos disponibles para este docente dentro de los módulos de Lectura Sin Límites.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body permissions-dialog__body">
+                <div class="permissions-dialog__user">
+                  <div><strong>{{ item.name|default:'Docente seleccionado' }}</strong><span>{{ item.email|default:'Sin correo' }}</span></div>
+                  <label class="permissions-dialog__select-all"><input class="form-check-input" type="checkbox" data-permission-select-all><span>Seleccionar todo</span></label>
+                </div>
+                <div class="permissions-dialog__grid">
+                  <section class="permissions-dialog__card">
+                    <h3>Estudiantes</h3>
+                    <label><input class="form-check-input" type="checkbox" name="can_create_students" data-permission-checkbox {% if item.can_create_students %}checked{% endif %}> Crear estudiantes</label>
+                    <label><input class="form-check-input" type="checkbox" name="can_view_student_reports" data-permission-checkbox {% if item.can_view_student_reports %}checked{% endif %}> Ver reportes</label>
+                  </section>
+                  <section class="permissions-dialog__card">
+                    <h3>Planificación</h3>
+                    <label><input class="form-check-input" type="checkbox" name="can_create_lesson_plans" data-permission-checkbox {% if item.can_create_lesson_plans %}checked{% endif %}> Crear planes</label>
+                    <label><input class="form-check-input" type="checkbox" name="can_edit_lesson_plans" data-permission-checkbox {% if item.can_edit_lesson_plans %}checked{% endif %}> Editar planes</label>
+                    <label><input class="form-check-input" type="checkbox" name="can_assign_lesson_plans" data-permission-checkbox {% if item.can_assign_lesson_plans %}checked{% endif %}> Asignar/implementar planes</label>
+                  </section>
+                  <section class="permissions-dialog__card">
+                    <h3>Recursos</h3>
+                    <label><input class="form-check-input" type="checkbox" name="can_manage_lessons" data-permission-checkbox {% if item.can_manage_lessons %}checked{% endif %}> Gestionar clases</label>
+                    <label><input class="form-check-input" type="checkbox" name="can_manage_activities" data-permission-checkbox {% if item.can_manage_activities %}checked{% endif %}> Gestionar actividades</label>
+                    <label><input class="form-check-input" type="checkbox" name="can_manage_readings" data-permission-checkbox {% if item.can_manage_readings %}checked{% endif %}> Gestionar lecturas</label>
+                    <label><input class="form-check-input" type="checkbox" name="can_manage_games" data-permission-checkbox {% if item.can_manage_games %}checked{% endif %}> Gestionar juegos</label>
+                  </section>
+                </div>
+              </div>
+              <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Listo</button></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <div class="modal fade admin-dialog" id="editResourceModal{{ item.pk }}" tabindex="-1" aria-labelledby="editResourceModalTitle{{ item.pk }}" aria-hidden="true" data-bs-backdrop="static">
+      <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' or resource == 'competencias' %}modal-xl{% else %}modal-lg{% endif %}">
+        <div class="modal-content">
+          <form method="post" action="{% url 'dashboard:admin_resource_update' resource item.pk %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="modal-header"><div><h2 class="modal-title" id="editResourceModalTitle{{ item.pk }}">Editar {{ config.singular }}</h2><p>Actualiza la información de este registro. Haz clic en guardar cuando termines.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+            <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
+              {% if resource == 'profesores' %}
+                <div class="admin-dialog__section-title"><strong>Datos del docente</strong><span>Información principal y acceso.</span></div>
+                <div class="teacher-form-grid">
+                  <p>{{ row.form.first_name.label_tag }}{{ row.form.first_name }}{{ row.form.first_name.errors }}</p>
+                  <p>{{ row.form.last_name.label_tag }}{{ row.form.last_name }}{{ row.form.last_name.errors }}</p>
+                  <p>{{ row.form.email.label_tag }}{{ row.form.email }}{{ row.form.email.errors }}</p>
+                  <p>{{ row.form.password.label_tag }}{{ row.form.password }}{{ row.form.password.errors }}<span class="helptext">{{ row.form.password.help_text }}</span></p>
+                  <p class="teacher-form-grid__full">{{ row.form.bio.label_tag }}{{ row.form.bio }}{{ row.form.bio.errors }}</p>
+                </div>
+                <div class="admin-dialog__section-title mt-2"><strong>Permisos del docente</strong><span>Activa solo las funciones que podrá usar.</span></div>
+                <div class="permissions-dialog__grid teacher-permission-grid">
+                  <section class="permissions-dialog__card"><h3>Estudiantes</h3><label>{{ row.form.can_create_students }} <span>Crear estudiantes</span></label><label>{{ row.form.can_view_student_reports }} <span>Ver reportes de estudiantes</span></label></section>
+                  <section class="permissions-dialog__card"><h3>Planificación</h3><label>{{ row.form.can_create_lesson_plans }} <span>Crear planes de clase</span></label><label>{{ row.form.can_edit_lesson_plans }} <span>Editar planes de clase</span></label><label>{{ row.form.can_assign_lesson_plans }} <span>Asignar/implementar planes</span></label></section>
+                  <section class="permissions-dialog__card permissions-dialog__card--wide"><h3>Recursos educativos</h3><div class="permissions-dialog__inline"><label>{{ row.form.can_manage_lessons }} <span>Gestionar clases</span></label><label>{{ row.form.can_manage_activities }} <span>Gestionar actividades</span></label><label>{{ row.form.can_manage_readings }} <span>Gestionar lecturas</span></label><label>{{ row.form.can_manage_games }} <span>Gestionar juegos</span></label></div></section>
+                </div>
+              {% else %}
+                <div class="admin-dialog__grid admin-dialog__grid--resource">{{ row.form.as_p }}</div>
+              {% endif %}
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar cambios</button></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  {% endwith %}
+{% endfor %}
 
 {% if create_form %}
   <div class="modal fade admin-dialog {% if resource == 'profesores' %}admin-dialog--teacher{% endif %}" id="createResourceModal" tabindex="-1" aria-labelledby="createResourceModalTitle" aria-hidden="true" data-bs-backdrop="static">
@@ -248,20 +428,22 @@
 
             <div class="permissions-dialog__grid">
               <section class="permissions-dialog__card">
-                <h3>Gestión de planificación</h3>
-                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_manage_lessons" data-permission-checkbox checked> Crear y editar planes</label>
+                <h3>Estudiantes</h3>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_create_students" data-permission-checkbox checked> Crear estudiantes</label>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_view_student_reports" data-permission-checkbox checked> Ver reportes</label>
               </section>
               <section class="permissions-dialog__card">
-                <h3>Gestión de actividades</h3>
-                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_manage_activities" data-permission-checkbox checked> Crear y editar actividades</label>
+                <h3>Planificación</h3>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_create_lesson_plans" data-permission-checkbox checked> Crear planes</label>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_edit_lesson_plans" data-permission-checkbox checked> Editar planes</label>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_assign_lesson_plans" data-permission-checkbox checked> Asignar/implementar planes</label>
               </section>
-              <section class="permissions-dialog__card permissions-dialog__card--wide">
-                <h3>Gestión de lecturas y cuentos</h3>
-                <div class="permissions-dialog__inline">
-                  <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_manage_readings" data-permission-checkbox checked> Crear lecturas</label>
-                  <label><input class="form-check-input" type="checkbox" data-permission-checkbox checked> Editar cuentos</label>
-                  <label><input class="form-check-input" type="checkbox" data-permission-checkbox checked> Organizar por materia</label>
-                </div>
+              <section class="permissions-dialog__card">
+                <h3>Recursos</h3>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_manage_lessons" data-permission-checkbox checked> Gestionar clases</label>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_manage_activities" data-permission-checkbox checked> Gestionar actividades</label>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_manage_readings" data-permission-checkbox checked> Gestionar lecturas</label>
+                <label><input class="form-check-input" form="createResourceForm" type="checkbox" name="can_manage_games" data-permission-checkbox checked> Gestionar juegos</label>
               </section>
             </div>
           </div>
@@ -273,4 +455,22 @@
     </div>
   {% endif %}
 {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const input = document.getElementById('resourceSearchInput');
+    const rows = Array.from(document.querySelectorAll('[data-resource-row]'));
+    if (!input || !rows.length) return;
+
+    input.addEventListener('input', () => {
+      const term = input.value.trim().toLowerCase();
+      rows.forEach((row) => {
+        const text = (row.dataset.search || '').toLowerCase();
+        row.hidden = term && !text.includes(term);
+      });
+    });
+  });
+</script>
 {% endblock %}

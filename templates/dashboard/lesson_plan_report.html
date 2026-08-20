@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Reporte del plan | {{ plan.title }}{% endblock %}
+{% block content %}
+<div class="lesson-implementation-page">
+  <div class="container py-5">
+    <section class="implementation-hero">
+      <div>
+        <span class="eyebrow">Reporte académico del plan</span>
+        <h1>{{ plan.title }}</h1>
+        <p>{{ plan.subject }} · {{ plan.get_grade_display }} · {{ plan.level }} · {{ completion_percentage }}% completado</p>
+      </div>
+      <div class="implementation-hero__actions">
+        {% if request.user.is_staff or request.user.is_superuser or request.user.role == 'ADMIN' or request.user.teacher_profile.can_assign_lesson_plans %}<a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_implementation' plan.pk %}">Implementar</a>{% endif %}
+        <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Volver a planes</a>
+      </div>
+    </section>
+
+    <section class="implementation-grid mt-4">
+      <article class="implementation-card implementation-card--wide">
+        <div class="lesson-report-detail__metrics">
+          <div><span>Asignados</span><strong>{{ assigned_count }}</strong></div>
+          <div><span>En progreso</span><strong>{{ in_progress_count }}</strong></div>
+          <div><span>Completados</span><strong>{{ completed_count }}</strong></div>
+          <div><span>Avance promedio</span><strong>{{ completion_percentage }}%</strong></div>
+        </div>
+      </article>
+
+      <article class="implementation-card implementation-card--wide">
+        <div class="implementation-card__header">
+          <h2>Seguimiento por estudiante</h2>
+          <span>Actualiza estado, fecha de cierre y notas docentes</span>
+        </div>
+        <div class="table-responsive">
+          <table class="table lesson-report__table lesson-report-detail__table align-middle">
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th>Nivel</th>
+                <th>Estado</th>
+                <th>Notas del docente</th>
+                <th>Completado</th>
+                <th class="text-end">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for assignment in assignments %}
+                <tr>
+                  <td><strong>{{ assignment.student.display_name }}</strong><small>{{ assignment.student.get_school_display }}</small></td>
+                  <td>{{ assignment.student.current_level|default:'Por definir' }}</td>
+                  <td>
+                    {% if can_update_assignments %}
+                      <form id="assignment-form-{{ assignment.pk }}" method="post" action="{% url 'dashboard:lesson_plan_assignment_update' plan.pk assignment.pk %}">
+                        {% csrf_token %}
+                        <select class="form-select form-select-sm" name="status">
+                          {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if assignment.status == value %}selected{% endif %}>{{ label }}</option>
+                          {% endfor %}
+                        </select>
+                      </form>
+                    {% else %}
+                      <span class="lesson-report__status {% if assignment.status == 'completed' %}lesson-report__status--active{% endif %}">{{ assignment.get_status_display }}</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if can_update_assignments %}
+                      <textarea class="form-control form-control-sm" name="teacher_notes" rows="2" form="assignment-form-{{ assignment.pk }}" placeholder="Observaciones, apoyo requerido o avance observado">{{ assignment.teacher_notes }}</textarea>
+                    {% else %}
+                      {{ assignment.teacher_notes|default:'Sin notas' }}
+                    {% endif %}
+                  </td>
+                  <td>{{ assignment.completed_at|date:'d/m/Y H:i'|default:'Pendiente' }}</td>
+                  <td class="text-end">
+                    {% if can_update_assignments %}
+                      <button class="btn btn-sm btn-primary" type="submit" form="assignment-form-{{ assignment.pk }}">Guardar</button>
+                    {% else %}
+                      <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:student_report' assignment.student.pk %}">Ver estudiante</a>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6"><div class="lesson-report__empty"><strong>No hay estudiantes asignados.</strong><span>Edita el plan y selecciona estudiantes para iniciar seguimiento.</span></div></td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="implementation-card">
+        <div class="implementation-card__header">
+          <h2>Dificultades frecuentes</h2>
+          <span>Señales para reforzar</span>
+        </div>
+        <div class="implementation-list">
+          {% for difficulty in difficulties %}
+            <a href="{% url 'dashboard:student_report' difficulty.student.pk %}"><strong>{{ difficulty.difficulty_type }}</strong><span>{{ difficulty.student.display_name }} · {{ difficulty.error_count }} errores</span></a>
+          {% empty %}
+            <p class="implementation-empty">Aún no hay dificultades registradas para estos estudiantes.</p>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="implementation-card">
+        <div class="implementation-card__header">
+          <h2>Recomendaciones</h2>
+          <span>Refuerzo sugerido</span>
+        </div>
+        <div class="lesson-report-detail__recommendations">
+          {% for recommendation in reinforcement_recommendations %}
+            <p>{{ recommendation }}</p>
+          {% endfor %}
+        </div>
+      </article>
+    </section>
+  </div>
+</div>
+{% endblock %}

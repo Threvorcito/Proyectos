@@ -10,7 +10,8 @@
         <p>{{ plan.subject }} · {{ plan.get_grade_display }} · {{ plan.level }} · {{ plan.period|default:'45 minutos' }}</p>
       </div>
       <div class="implementation-hero__actions">
-        <a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar plan</a>
+        <a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_report' plan.pk %}">Ver reporte</a>
+        {% if request.user.is_staff or request.user.is_superuser or request.user.role == 'ADMIN' or request.user.teacher_profile.can_edit_lesson_plans %}<a class="btn btn-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar plan</a>{% endif %}
         <a class="btn btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Volver a planes</a>
       </div>
     </section>

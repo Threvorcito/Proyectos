@@ -7,6 +7,90 @@
   .accessibility-fab { display: none !important; }
   .page-shell { min-height: 100vh; }
   body { background: #f6f7fb; }
+  .admin-control-section {
+    background: #fff;
+    border: 1px solid #e5eaf0;
+    border-radius: 24px;
+    box-shadow: 0 18px 44px rgba(16, 24, 40, .06);
+    margin-top: 1.25rem;
+    padding: 1.25rem;
+  }
+  .admin-control-section .admin-card-title {
+    border-bottom: 1px solid #edf0f5;
+    margin-bottom: 1rem;
+    padding-bottom: .9rem;
+  }
+  .admin-control-grid {
+    display: grid;
+    gap: .9rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .admin-control-grid--primary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-control-card {
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e5eaf0;
+    border-radius: 18px;
+    color: #344054 !important;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 46px minmax(0, 1fr) auto;
+    min-height: 96px;
+    padding: 1rem;
+    text-decoration: none !important;
+    transition: .18s ease;
+  }
+  .admin-control-card:hover {
+    background: #fff;
+    border-color: #b7dce8;
+    box-shadow: 0 16px 34px rgba(16, 24, 40, .1);
+    transform: translateY(-2px);
+  }
+  .admin-control-card i {
+    align-items: center;
+    background: linear-gradient(135deg, #102033, #23758b);
+    border-radius: 15px;
+    color: #fff;
+    display: inline-flex;
+    font-size: .78rem;
+    font-style: normal;
+    font-weight: 900;
+    height: 46px;
+    justify-content: center;
+    width: 46px;
+  }
+  .admin-control-card strong,
+  .admin-control-card span { display: block; }
+  .admin-control-card strong {
+    color: #102033;
+    font-size: 1rem;
+    font-weight: 900;
+    margin-bottom: .25rem;
+  }
+  .admin-control-card span {
+    color: #64748b;
+    font-size: .9rem;
+    line-height: 1.35;
+  }
+  .admin-control-card b {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #d9e4ea;
+    border-radius: 999px;
+    color: #102033;
+    display: inline-flex;
+    font-size: .9rem;
+    font-weight: 900;
+    justify-content: center;
+    min-width: 38px;
+    padding: .35rem .65rem;
+  }
+  .admin-insight-grid--control { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 1100px) {
+    .admin-control-grid,
+    .admin-control-grid--primary,
+    .admin-insight-grid--control { grid-template-columns: 1fr; }
+  }
 </style>
 {% endblock %}
 {% block content %}
@@ -17,11 +101,11 @@
     {% include 'dashboard/partials/admin_topbar.html' with current_title='Panel de control' %}
 
     <div class="admin-content">
-      <section class="admin-welcome-card">
+      <section class="admin-welcome-card admin-welcome-card--control">
         <div>
           <span class="admin-pill">Sistema educativo inclusivo</span>
-          <h1>Hola, <strong>Administrador</strong></h1>
-          <p>Rol: <b>Admin</b> · Vista general de la aplicación para apoyar estudiantes con dislexia de 1ro, 2do y 3er grado.</p>
+          <h1>Panel de control</h1>
+          <p>Vista ejecutiva de todos los módulos del menú: usuarios, docentes, estudiantes, planificación, currículo MINED y recursos educativos.</p>
         </div>
         <div class="admin-welcome-actions">
           <a href="{% url 'dashboard:admin_resource_create' 'profesores' %}">Agregar docente</a>
@@ -30,35 +114,60 @@
         </div>
       </section>
 
-      <section class="admin-metric-grid" aria-label="Indicadores principales">
+      <section class="admin-metric-grid admin-metric-grid--executive" aria-label="Indicadores principales">
         <article class="admin-metric-card"><span>Usuarios registrados</span><strong>{{ stats.users }}</strong><p>Activos en el sistema</p></article>
         <article class="admin-metric-card"><span>Docentes</span><strong>{{ stats.teachers }}</strong><p>Con permisos configurables</p></article>
         <article class="admin-metric-card"><span>Estudiantes</span><strong>{{ stats.students }}</strong><p>Primaria: 1ro, 2do y 3ro</p></article>
-        <article class="admin-metric-card"><span>Padres o tutores</span><strong>{{ stats.parents }}</strong><p>Acompañamiento familiar</p></article>
-        <article class="admin-metric-card"><span>Competencias MINED</span><strong>{{ stats.competencies }}</strong><p>{{ stats.covered_competencies }} vinculadas a recursos</p></article>
+        <article class="admin-metric-card"><span>Planes de clase</span><strong>{{ stats.lesson_plans }}</strong><p>Planificación docente</p></article>
       </section>
 
-      <section class="admin-insight-grid">
-        <article class="admin-insight-card">
-          <div class="admin-card-title"><h2>Recursos de aprendizaje</h2><span>Catálogo</span></div>
-          <div class="admin-resource-list">
-            <a href="{% url 'dashboard:admin_resource' 'niveles' %}"><span>Niveles configurados</span><strong>{{ stats.levels }}</strong></a>
-            <a href="{% url 'dashboard:admin_resource' 'competencias' %}"><span>Competencias curriculares</span><strong>{{ stats.competencies }}</strong></a>
-            <a href="{% url 'dashboard:admin_resource' 'metodo-fas' %}"><span>Pasos método FAS</span><strong>{{ stats.fas_steps }}</strong></a>
-            <a href="{% url 'dashboard:admin_resource' 'actividades' %}"><span>Actividades activas</span><strong>{{ stats.activities }}</strong></a>
-            <a href="{% url 'dashboard:admin_resource' 'juegos' %}"><span>Juegos didácticos</span><strong>{{ stats.games }}</strong></a>
-            <a href="{% url 'dashboard:admin_resource' 'lecturas' %}"><span>Cuentos y lecturas</span><strong>{{ stats.readings }}</strong></a>
-          </div>
-        </article>
+      <section class="admin-control-section">
+        <div class="admin-card-title"><h2>Gestión principal</h2><span>Usuarios y planificación</span></div>
+        <div class="admin-control-grid admin-control-grid--primary">
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'usuarios' %}"><i>US</i><div><strong>Usuarios</strong><span>Cuentas, roles y accesos</span></div><b>{{ stats.users }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'profesores' %}"><i>DO</i><div><strong>Docentes y permisos</strong><span>Perfiles, correo y permisos</span></div><b>{{ stats.teachers }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'alumnos' %}"><i>ES</i><div><strong>Estudiantes</strong><span>Nivel lector y grado</span></div><b>{{ stats.students }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'padres' %}"><i>PA</i><div><strong>Padres o tutores</strong><span>Acompañamiento familiar</span></div><b>{{ stats.parents }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:lesson_plans' %}"><i>PL</i><div><strong>Planes de clase</strong><span>Implementación y reportes</span></div><b>{{ stats.lesson_plans }}</b></a>
+        </div>
+      </section>
 
+      <section class="admin-control-section">
+        <div class="admin-card-title"><h2>Currículo MINED</h2><span>Alineación pedagógica</span></div>
+        <div class="admin-control-grid">
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'niveles' %}"><i>NI</i><div><strong>Niveles</strong><span>Progresión lectora</span></div><b>{{ stats.levels }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'estrategias' %}"><i>EM</i><div><strong>Estrategias MINED</strong><span>Orientación metodológica</span></div><b>{{ stats.strategies }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'competencias' %}"><i>CO</i><div><strong>Competencias</strong><span>{{ stats.covered_competencies }} vinculadas a recursos</span></div><b>{{ stats.competencies }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'metodo-fas' %}"><i>FA</i><div><strong>Método FAS</strong><span>Pasos de apoyo lector</span></div><b>{{ stats.fas_steps }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'referencias-mined' %}"><i>BM</i><div><strong>Biblioteca MINED</strong><span>Referencias curriculares</span></div><b>{{ stats.mined_references }}</b></a>
+        </div>
+      </section>
+
+      <section class="admin-control-section">
+        <div class="admin-card-title"><h2>Recursos educativos</h2><span>Contenido disponible en el sistema</span></div>
+        <div class="admin-control-grid">
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'clases' %}"><i>CL</i><div><strong>Clases</strong><span>Secuencias por nivel</span></div><b>{{ stats.lessons }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'actividades' %}"><i>AC</i><div><strong>Actividades</strong><span>Práctica guiada</span></div><b>{{ stats.activities }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'juegos' %}"><i>JU</i><div><strong>Juegos</strong><span>Refuerzo multisensorial</span></div><b>{{ stats.games }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'lecturas' %}"><i>LE</i><div><strong>Cuentos y lecturas</strong><span>Comprensión lectora</span></div><b>{{ stats.readings }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'palabras' %}"><i>PR</i><div><strong>Palabras</strong><span>Banco de vocabulario</span></div><b>{{ stats.words }}</b></a>
+          <a class="admin-control-card" href="{% url 'dashboard:admin_resource' 'silabas' %}"><i>SI</i><div><strong>Sílabas</strong><span>Segmentación silábica</span></div><b>{{ stats.syllables }}</b></a>
+        </div>
+      </section>
+
+      <section class="admin-insight-grid admin-insight-grid--control">
         <article class="admin-insight-card">
-          <div class="admin-card-title"><h2>Seguimiento académico</h2><span>30 días</span></div>
-          <div class="admin-trend-row"><span>Planes de clase</span><strong>{{ stats.lesson_plans }}</strong></div>
-          <div class="admin-trend-row"><span>Clases registradas</span><strong>{{ stats.lessons }}</strong></div>
-          <div class="admin-trend-row"><span>Materias</span><strong>{{ stats.subjects }}</strong></div>
-          <div class="admin-trend-row"><span>Estrategias MINED</span><strong>{{ stats.strategies }}</strong></div>
-          <div class="admin-trend-row"><span>Referencias Biblioteca MINED</span><strong>{{ stats.mined_references }}</strong></div>
-          <div class="admin-trend-bar"><span style="width: 72%"></span></div>
+          <div class="admin-card-title"><h2>Planes recientes</h2><span>Docente responsable</span></div>
+          <div class="admin-student-list">
+            {% for plan in recent_plans %}
+              <a href="{% url 'dashboard:lesson_plan_report' plan.pk %}">
+                <strong>{{ plan.title }}</strong>
+                <span>{{ plan.teacher.name|default:'Sin docente' }} · {{ plan.subject }}</span>
+              </a>
+            {% empty %}
+              <p>No hay planes creados todavía.</p>
+            {% endfor %}
+          </div>
         </article>
 
         <article class="admin-insight-card">

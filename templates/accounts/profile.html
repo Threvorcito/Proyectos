@@ -84,20 +84,40 @@
             <div>
               <span class="eyebrow">Reporte docente</span>
               <h2>Resumen de gestión académica</h2>
-              <p>Consulta tus planes creados y los recursos activos disponibles para preparar clases.</p>
+              <p>Consulta únicamente las áreas que tienes autorizadas para gestionar.</p>
             </div>
-            <a class="btn btn-primary" href="{% url 'dashboard:lesson_plans' %}">Agregar plan</a>
+            {% if teacher_profile.can_create_lesson_plans %}
+              <a class="btn btn-primary" href="{% url 'dashboard:lesson_plans' %}">Agregar plan</a>
+            {% endif %}
           </div>
 
-          <div class="profile-report-metrics">
-            <article><span>Planes creados</span><strong>{{ teacher_report_stats.plans }}</strong></article>
-            <article><span>Clases activas</span><strong>{{ teacher_report_stats.lessons }}</strong></article>
-            <article><span>Actividades</span><strong>{{ teacher_report_stats.activities }}</strong></article>
-            <article><span>Juegos</span><strong>{{ teacher_report_stats.games }}</strong></article>
-            <article><span>Lecturas</span><strong>{{ teacher_report_stats.readings }}</strong></article>
-          </div>
+          {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans or teacher_profile.can_manage_lessons or teacher_profile.can_manage_activities or teacher_profile.can_manage_readings or teacher_profile.can_manage_games %}
+            <div class="profile-report-metrics">
+              {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans %}
+                <article><span>Planes creados</span><strong>{{ teacher_report_stats.plans }}</strong></article>
+              {% endif %}
+              {% if teacher_profile.can_manage_lessons %}
+                <article><span>Clases activas</span><strong>{{ teacher_report_stats.lessons }}</strong></article>
+              {% endif %}
+              {% if teacher_profile.can_manage_activities %}
+                <article><span>Actividades</span><strong>{{ teacher_report_stats.activities }}</strong></article>
+              {% endif %}
+              {% if teacher_profile.can_manage_games %}
+                <article><span>Juegos</span><strong>{{ teacher_report_stats.games }}</strong></article>
+              {% endif %}
+              {% if teacher_profile.can_manage_readings %}
+                <article><span>Lecturas</span><strong>{{ teacher_report_stats.readings }}</strong></article>
+              {% endif %}
+            </div>
+          {% else %}
+            <div class="profile-permission-note">
+              <strong>No tienes permisos de gestión académica activos.</strong>
+              <span>El administrador puede habilitar planes de clase, actividades o lecturas desde la gestión de docentes.</span>
+            </div>
+          {% endif %}
 
           <div class="profile-report-grid">
+            {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans %}
             <article class="profile-report-table profile-report-table--wide">
               <div class="profile-report-table__title">
                 <h3>Planes que has creado</h3>
@@ -114,7 +134,9 @@
                         <td>{{ plan.level }}</td>
                         <td>{{ plan.planned_date|date:'d/m/Y'|default:'Sin fecha' }}</td>
                         <td>{{ plan.activities.count }} act. · {{ plan.readings.count }} lect.</td>
-                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a></td>
+                        <td class="text-end">
+                          {% if teacher_profile.can_edit_lesson_plans %}<a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>{% endif %}
+                        </td>
                       </tr>
                     {% empty %}
                       <tr><td colspan="6" class="profile-report-empty">Todavía no has creado planes.</td></tr>
@@ -123,7 +145,9 @@
                 </table>
               </div>
             </article>
+            {% endif %}
 
+            {% if teacher_profile.can_manage_lessons %}
             <article class="profile-report-table">
               <div class="profile-report-table__title"><h3>Clases disponibles</h3><span>Contenido activo</span></div>
               <div class="table-responsive">
@@ -139,7 +163,9 @@
                 </table>
               </div>
             </article>
+            {% endif %}
 
+            {% if teacher_profile.can_manage_games %}
             <article class="profile-report-table">
               <div class="profile-report-table__title"><h3>Juegos activos</h3><span>Recursos lúdicos</span></div>
               <div class="table-responsive">
@@ -155,7 +181,9 @@
                 </table>
               </div>
             </article>
+            {% endif %}
 
+            {% if teacher_profile.can_manage_activities %}
             <article class="profile-report-table">
               <div class="profile-report-table__title"><h3>Actividades recientes</h3><span>Práctica guiada</span></div>
               <div class="table-responsive">
@@ -171,7 +199,9 @@
                 </table>
               </div>
             </article>
+            {% endif %}
 
+            {% if teacher_profile.can_manage_readings %}
             <article class="profile-report-table">
               <div class="profile-report-table__title"><h3>Lecturas activas</h3><span>Biblioteca de apoyo</span></div>
               <div class="table-responsive">
@@ -187,6 +217,7 @@
                 </table>
               </div>
             </article>
+            {% endif %}
           </div>
         </section>
       {% endif %}

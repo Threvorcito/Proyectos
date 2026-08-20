@@ -54,7 +54,7 @@ class AdminUserUpdateForm(forms.ModelForm):
         label='Nueva contraseña',
         required=False,
         help_text='Opcional. Déjalo vacío para mantener la contraseña actual.',
-        widget=forms.PasswordInput(render_value=True),
+        widget=forms.PasswordInput,
     )
 
     class Meta:
@@ -64,6 +64,7 @@ class AdminUserUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._original_password = self.instance.password if self.instance and self.instance.pk else ''
+        self.fields['password'].initial = ''
         self.fields['role'].choices = (
             (CustomUser.Role.ADMIN, 'Administrador'),
             (CustomUser.Role.TEACHER, 'Docente'),
@@ -94,9 +95,15 @@ class TeacherCreationForm(forms.Form):
         widget=forms.PasswordInput(render_value=True),
     )
     bio = forms.CharField(label='Perfil docente', required=False, widget=forms.Textarea(attrs={'rows': 3}))
+    can_create_students = forms.BooleanField(label='Puede crear estudiantes', required=False, initial=True)
+    can_view_student_reports = forms.BooleanField(label='Puede ver reportes de estudiantes', required=False, initial=True)
+    can_create_lesson_plans = forms.BooleanField(label='Puede crear planes de clase', required=False, initial=True)
+    can_edit_lesson_plans = forms.BooleanField(label='Puede editar planes de clase', required=False, initial=True)
+    can_assign_lesson_plans = forms.BooleanField(label='Puede asignar/implementar planes', required=False, initial=True)
     can_manage_lessons = forms.BooleanField(label='Puede gestionar clases', required=False, initial=True)
     can_manage_activities = forms.BooleanField(label='Puede gestionar actividades', required=False, initial=True)
     can_manage_readings = forms.BooleanField(label='Puede gestionar lecturas', required=False, initial=True)
+    can_manage_games = forms.BooleanField(label='Puede gestionar juegos', required=False, initial=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -122,9 +129,15 @@ class TeacherCreationForm(forms.Form):
             email=self.cleaned_data['email'],
             name=full_name,
             bio=self.cleaned_data.get('bio', ''),
+            can_create_students=self.cleaned_data.get('can_create_students', False),
+            can_view_student_reports=self.cleaned_data.get('can_view_student_reports', False),
+            can_create_lesson_plans=self.cleaned_data.get('can_create_lesson_plans', False),
+            can_edit_lesson_plans=self.cleaned_data.get('can_edit_lesson_plans', False),
+            can_assign_lesson_plans=self.cleaned_data.get('can_assign_lesson_plans', False),
             can_manage_lessons=self.cleaned_data.get('can_manage_lessons', False),
             can_manage_activities=self.cleaned_data.get('can_manage_activities', False),
             can_manage_readings=self.cleaned_data.get('can_manage_readings', False),
+            can_manage_games=self.cleaned_data.get('can_manage_games', False),
         )
         teacher.set_password(self.cleaned_data['password'])
         teacher.save()
@@ -136,23 +149,35 @@ class TeacherUpdateForm(forms.ModelForm):
         label='Nueva contraseña',
         required=False,
         help_text='Opcional. Déjalo vacío para mantener la contraseña actual.',
-        widget=forms.PasswordInput(render_value=True),
+        widget=forms.PasswordInput,
     )
 
     class Meta:
         model = TeacherProfile
-        fields = ('first_name', 'last_name', 'email', 'password', 'bio', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings')
+        fields = (
+            'first_name', 'last_name', 'email', 'password', 'bio',
+            'can_create_students', 'can_view_student_reports',
+            'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans',
+            'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games',
+        )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._original_password = self.instance.password if self.instance and self.instance.pk else ''
+        self.fields['password'].initial = ''
         self.fields['first_name'].label = 'Nombres'
         self.fields['last_name'].label = 'Apellidos'
         self.fields['email'].label = 'Correo institucional'
         self.fields['bio'].label = 'Perfil docente'
-        self.fields['can_manage_lessons'].label = 'Puede gestionar planes de clase'
+        self.fields['can_create_students'].label = 'Puede crear estudiantes'
+        self.fields['can_view_student_reports'].label = 'Puede ver reportes de estudiantes'
+        self.fields['can_create_lesson_plans'].label = 'Puede crear planes de clase'
+        self.fields['can_edit_lesson_plans'].label = 'Puede editar planes de clase'
+        self.fields['can_assign_lesson_plans'].label = 'Puede asignar/implementar planes'
+        self.fields['can_manage_lessons'].label = 'Puede gestionar clases'
         self.fields['can_manage_activities'].label = 'Puede gestionar actividades'
         self.fields['can_manage_readings'].label = 'Puede gestionar lecturas'
+        self.fields['can_manage_games'].label = 'Puede gestionar juegos'
         style_admin_form(self)
 
     def save(self, commit=True):

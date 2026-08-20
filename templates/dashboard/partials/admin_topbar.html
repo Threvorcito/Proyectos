@@ -1,4 +1,25 @@
 <header class="admin-topbar">
   <div class="admin-breadcrumb"><a href="{% url 'core:home' %}">Inicio</a><span>/</span><strong>{{ current_title|default:'Panel de control' }}</strong></div>
-  <div class="admin-user-chip"><span>Panel administrativo</span><strong>{{ request.user.first_name|default:request.user.username|slice:':1' }}</strong></div>
+  <div class="dropdown admin-user-menu">
+    <button class="admin-user-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <span>Panel administrativo</span>
+      {% if request.user.profile_photo %}
+        <img src="{{ request.user.profile_photo.url }}" alt="Foto de {{ request.user.get_full_name|default:request.user.username }}">
+      {% else %}
+        <strong>{{ request.user.first_name|default:request.user.username|slice:':1' }}</strong>
+      {% endif %}
+    </button>
+    <ul class="dropdown-menu dropdown-menu-end admin-user-menu__dropdown">
+      <li><a class="dropdown-item" href="{% url 'dashboard:redirect' %}">Mi panel</a></li>
+      <li><a class="dropdown-item" href="{% url 'learning:accessibility' %}">Mi forma de leer</a></li>
+      <li><a class="dropdown-item" href="{% url 'accounts:profile' %}">Perfil</a></li>
+      <li><hr class="dropdown-divider"></li>
+      <li>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button class="dropdown-item" type="submit">Cerrar sesión</button>
+        </form>
+      </li>
+    </ul>
+  </div>
 </header>

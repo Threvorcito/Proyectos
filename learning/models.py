@@ -108,9 +108,15 @@ class TeacherProfile(models.Model):
     password = models.CharField(max_length=128, blank=True)
     name = models.CharField(max_length=150)
     bio = models.TextField(blank=True)
+    can_create_students = models.BooleanField(default=False, verbose_name='Puede crear estudiantes')
+    can_view_student_reports = models.BooleanField(default=False, verbose_name='Puede ver reportes de estudiantes')
+    can_create_lesson_plans = models.BooleanField(default=False, verbose_name='Puede crear planes de clase')
+    can_edit_lesson_plans = models.BooleanField(default=False, verbose_name='Puede editar planes de clase')
+    can_assign_lesson_plans = models.BooleanField(default=False, verbose_name='Puede asignar/implementar planes')
     can_manage_lessons = models.BooleanField(default=False, verbose_name='Puede gestionar clases')
     can_manage_activities = models.BooleanField(default=False, verbose_name='Puede gestionar actividades')
     can_manage_readings = models.BooleanField(default=False, verbose_name='Puede gestionar lecturas')
+    can_manage_games = models.BooleanField(default=False, verbose_name='Puede gestionar juegos')
 
     class Meta:
         constraints = [
