@@ -265,7 +265,7 @@
               </div>
               <div class="modal-body permissions-dialog__body">
                 <div class="permissions-dialog__user">
-                  <div><strong>{{ item.name|default:'Docente seleccionado' }}</strong><span>{{ item.email|default:'Sin correo' }}</span></div>
+                  <div><strong>{{ item.name|default:'Docente seleccionado' }}</strong><span>{% firstof item.email item.user.email 'Sin correo' %}</span></div>
                   <label class="permissions-dialog__select-all"><input class="form-check-input" type="checkbox" data-permission-select-all><span>Seleccionar todo</span></label>
                 </div>
                 <div class="permissions-dialog__grid">
@@ -319,6 +319,27 @@
                   <section class="permissions-dialog__card"><h3>Estudiantes</h3><label>{{ row.form.can_create_students }} <span>Crear estudiantes</span></label><label>{{ row.form.can_view_student_reports }} <span>Ver reportes de estudiantes</span></label></section>
                   <section class="permissions-dialog__card"><h3>Planificación</h3><label>{{ row.form.can_create_lesson_plans }} <span>Crear planes de clase</span></label><label>{{ row.form.can_edit_lesson_plans }} <span>Editar planes de clase</span></label><label>{{ row.form.can_assign_lesson_plans }} <span>Asignar/implementar planes</span></label></section>
                   <section class="permissions-dialog__card permissions-dialog__card--wide"><h3>Recursos educativos</h3><div class="permissions-dialog__inline"><label>{{ row.form.can_manage_lessons }} <span>Gestionar clases</span></label><label>{{ row.form.can_manage_activities }} <span>Gestionar actividades</span></label><label>{{ row.form.can_manage_readings }} <span>Gestionar lecturas</span></label><label>{{ row.form.can_manage_games }} <span>Gestionar juegos</span></label></div></section>
+                </div>
+              {% elif resource == 'usuarios' %}
+                <div class="admin-dialog__section-title">
+                  <strong>Datos de la cuenta</strong>
+                  <span>Información principal del acceso.</span>
+                </div>
+                <div class="admin-dialog__grid admin-dialog__grid--user">
+                  <p>{{ row.form.username.label_tag }}{{ row.form.username }}{{ row.form.username.errors }}{% if row.form.username.help_text %}<span class="helptext">{{ row.form.username.help_text }}</span>{% endif %}</p>
+                  <p>{{ row.form.email.label_tag }}{{ row.form.email }}{{ row.form.email.errors }}</p>
+                  <p>{{ row.form.first_name.label_tag }}{{ row.form.first_name }}{{ row.form.first_name.errors }}</p>
+                  <p>{{ row.form.last_name.label_tag }}{{ row.form.last_name }}{{ row.form.last_name.errors }}</p>
+                  <p>{{ row.form.role.label_tag }}{{ row.form.role }}{{ row.form.role.errors }}</p>
+                  <p>{{ row.form.password.label_tag }}{{ row.form.password }}{{ row.form.password.errors }}{% if row.form.password.help_text %}<span class="helptext">{{ row.form.password.help_text }}</span>{% endif %}</p>
+                </div>
+                <div class="admin-dialog__section-title mt-2">
+                  <strong>Estado y acceso</strong>
+                  <span>Controla permisos sensibles sin borrar historial.</span>
+                </div>
+                <div class="admin-dialog__switch-row admin-dialog__switch-row--user">
+                  <label>{{ row.form.is_active }}<span><strong>{{ row.form.is_active.label }}</strong><small>{{ row.form.is_active.help_text }}</small></span></label>
+                  <label>{{ row.form.is_staff }}<span><strong>{{ row.form.is_staff.label }}</strong><small>{{ row.form.is_staff.help_text }}</small></span></label>
                 </div>
               {% else %}
                 <div class="admin-dialog__grid admin-dialog__grid--resource">{{ row.form.as_p }}</div>

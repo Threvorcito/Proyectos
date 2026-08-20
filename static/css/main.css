@@ -1654,6 +1654,13 @@ a { text-decoration: none; }
   align-items: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.admin-dialog__grid--user {
+  align-items: start;
+  gap: 1rem 1rem;
+}
+.admin-dialog__grid--user > p {
+  min-width: 0;
+}
 .admin-dialog__span-2 { grid-column: 1 / -1; }
 .admin-dialog__grid--resource > p:has(textarea),
 .admin-dialog__grid--resource > p:has(.form-check),
@@ -1818,6 +1825,9 @@ a { text-decoration: none; }
   gap: .75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
+.admin-dialog__switch-row--user {
+  gap: 1rem;
+}
 .admin-dialog__switch-row label {
   align-items: center;
   background: #f8fafc;
@@ -1827,7 +1837,8 @@ a { text-decoration: none; }
   display: flex;
   gap: .7rem;
   margin: 0;
-  padding: .75rem .9rem;
+  min-height: 78px;
+  padding: .85rem .95rem;
 }
 .admin-dialog__switch-row label > .form-check-input {
   flex: 0 0 auto;

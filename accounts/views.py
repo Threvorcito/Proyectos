@@ -55,7 +55,7 @@ class RegisterView(FormView):
             TeacherProfile.objects.get_or_create(user=user, defaults={'name': f'{user.first_name} {user.last_name}'.strip()})
         elif user.role == CustomUser.Role.PARENT:
             ParentProfile.objects.get_or_create(user=user, defaults={'name': f'{user.first_name} {user.last_name}'.strip()})
-        login(self.request, user)
+        login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
         messages.success(self.request, 'Cuenta creada correctamente.')
         return super().form_valid(form)
 

@@ -25,6 +25,26 @@ class LoginTests(TestCase):
         self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
 
 
+class RegisterTests(TestCase):
+    def test_new_teacher_account_is_created_and_logged_in(self):
+        response = self.client.post(reverse('accounts:register'), data={
+            'first_name': 'Maria',
+            'last_name': 'Lopez',
+            'username': 'maria_lopez',
+            'email': 'maria@example.com',
+            'role': CustomUser.Role.TEACHER,
+            'password1': 'Docente123!',
+            'password2': 'Docente123!',
+        })
+
+        self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+        user = CustomUser.objects.get(username='maria_lopez')
+        self.assertEqual(user.role, CustomUser.Role.TEACHER)
+        self.assertEqual(user.email, 'maria@example.com')
+        self.assertTrue(user.is_authenticated)
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+
+
 class ProfileUpdateFormTests(TestCase):
     def test_profile_form_includes_professional_fields(self):
         form = ProfileUpdateForm()
