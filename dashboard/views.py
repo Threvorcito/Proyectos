@@ -9,6 +9,7 @@ from django.views.decorators.http import require_POST
 from accounts.models import CustomUser
 from activities.models import Activity
 from activities.services import get_recommended_activities
+from core.models import AuditLog
 from gamification.services import evaluate_achievements
 from games.models import Game
 from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, LessonPlanAssignment, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
@@ -20,7 +21,7 @@ from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, Q
 
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'update_form': AdminUserUpdateForm, 'fields': None},
-    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'update_form': TeacherUpdateForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'can_create_students', 'can_view_student_reports', 'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games')},
+    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'update_form': TeacherUpdateForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'is_active', 'can_create_students', 'can_view_student_reports', 'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games')},
     'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'school', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
     'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},
@@ -58,7 +59,7 @@ def can_manage_resource(user, resource):
     if is_admin_user(user):
         return True
     teacher = getattr(user, 'teacher_profile', None)
-    if not user.is_authenticated or user.role != 'TEACHER' or teacher is None:
+    if not user.is_authenticated or user.role != 'TEACHER' or teacher is None or not teacher.is_active:
         return False
     permission_map = {
         'planes': teacher.can_create_lesson_plans or teacher.can_edit_lesson_plans or teacher.can_assign_lesson_plans,
@@ -74,7 +75,7 @@ def teacher_has_permission(user, permission):
     if is_admin_user(user):
         return True
     teacher = getattr(user, 'teacher_profile', None)
-    return user.is_authenticated and user.role == 'TEACHER' and teacher is not None and getattr(teacher, permission, False)
+    return user.is_authenticated and user.role == 'TEACHER' and teacher is not None and teacher.is_active and getattr(teacher, permission, False)
 
 
 def require_teacher_permission(request, permission, message):
@@ -89,6 +90,59 @@ def require_any_teacher_permission(request, permissions, message):
         return None
     messages.error(request, message)
     return redirect('dashboard:teacher')
+
+
+def write_audit(request, action, instance, metadata=None):
+    AuditLog.objects.create(
+        actor=request.user if request.user.is_authenticated else None,
+        action=action,
+        model_name=instance.__class__.__name__,
+        object_id=str(getattr(instance, 'pk', '') or ''),
+        object_repr=str(instance),
+        metadata=metadata or {},
+    )
+
+
+def user_has_academic_history(user):
+    student = getattr(user, 'student_profile', None)
+    if student and (
+        student.attempts.exists()
+        or student.progress_items.exists()
+        or student.difficulties.exists()
+        or student.lesson_plan_assignments.exists()
+    ):
+        return True
+    teacher = getattr(user, 'teacher_profile', None)
+    return bool(teacher and teacher.lesson_plans.exists())
+
+
+def resource_has_history(instance):
+    if isinstance(instance, TeacherProfile):
+        return instance.lesson_plans.exists()
+    if isinstance(instance, StudentProfile):
+        return (
+            instance.attempts.exists()
+            or instance.progress_items.exists()
+            or instance.difficulties.exists()
+            or instance.lesson_plan_assignments.exists()
+        )
+    if isinstance(instance, LessonPlan):
+        return instance.assignments.exists()
+    if isinstance(instance, Activity):
+        return instance.attempts.exists() or instance.progress_items.exists() or instance.lesson_plans.exists()
+    if isinstance(instance, (Reading, Game)):
+        return instance.lesson_plans.exists()
+    return False
+
+
+def deactivate_resource(instance):
+    if hasattr(instance, 'status') and isinstance(instance, LessonPlan):
+        instance.status = LessonPlan.Status.ARCHIVED
+        instance.is_active = False
+        instance.save(update_fields=['status', 'is_active'])
+    elif hasattr(instance, 'is_active'):
+        instance.is_active = False
+        instance.save(update_fields=['is_active'])
 
 
 @login_required
@@ -175,8 +229,10 @@ def admin_resource_create(request, resource):
     form = style_admin_form(form_class(request.POST or None, request.FILES or None))
     credentials = None
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        instance = form.save()
         credentials = getattr(form, 'created_credentials', None)
+        audit_instance = instance[0] if isinstance(instance, tuple) else instance
+        write_audit(request, 'create', audit_instance, {'resource': resource})
         messages.success(request, f"Se agregó correctamente el {config['singular']}.")
         if request.POST.get('_from_modal'):
             if credentials:
@@ -207,7 +263,8 @@ def admin_resource_update(request, resource, pk):
     form_class = config.get('update_form') or build_admin_model_form(config['model'], config['fields'])
     form = style_admin_form(form_class(request.POST or None, request.FILES or None, instance=instance))
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        instance = form.save()
+        write_audit(request, 'update', instance, {'resource': resource})
         messages.success(request, f"Se actualizó correctamente el {config['singular']}.")
         return redirect('dashboard:admin_resource', resource=resource)
     return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': True, 'object': instance})
@@ -230,21 +287,56 @@ def admin_resource_delete(request, resource, pk):
         return redirect('dashboard:admin_resource', resource=resource)
 
     label = str(instance)
+    action_message = f'Se eliminó correctamente {label}.'
     try:
-        if isinstance(instance, (StudentProfile, ParentProfile)):
+        if isinstance(instance, CustomUser):
+            teacher = getattr(instance, 'teacher_profile', None)
+            if user_has_academic_history(instance):
+                instance.is_active = False
+                instance.save(update_fields=['is_active'])
+                if teacher and teacher.is_active:
+                    teacher.is_active = False
+                    teacher.save(update_fields=['is_active'])
+                write_audit(request, 'deactivate_with_history', instance, {'resource': resource})
+                action_message = f'Se desactivó correctamente la cuenta de {label}. Su historial se conservó.'
+            else:
+                write_audit(request, 'delete', instance, {'resource': resource})
+                if teacher:
+                    teacher.delete()
+                instance.delete()
+        elif isinstance(instance, (StudentProfile, ParentProfile)):
             user = instance.user
             if user == request.user:
                 messages.error(request, 'No puedes eliminar tu propia cuenta desde aquí.')
                 return redirect('dashboard:admin_resource', resource=resource)
-            user.delete()
+            if resource_has_history(instance):
+                user.is_active = False
+                user.save(update_fields=['is_active'])
+                write_audit(request, 'deactivate_with_history', instance, {'resource': resource, 'user_id': user.pk})
+                action_message = f'Se desactivó correctamente {label}. Su historial académico se conservó.'
+            else:
+                write_audit(request, 'delete', instance, {'resource': resource, 'user_id': user.pk})
+                user.delete()
         elif isinstance(instance, TeacherProfile):
-            instance.delete()
+            user = instance.user
+            instance.is_active = False
+            instance.save(update_fields=['is_active'])
+            if user and user != request.user:
+                user.is_active = False
+                user.save(update_fields=['is_active'])
+            write_audit(request, 'deactivate_teacher', instance, {'resource': resource, 'preserved_plans': instance.lesson_plans.count()})
+            action_message = f'Se desactivó correctamente el docente {label}. Sus planes y reportes se conservaron.'
+        elif resource_has_history(instance):
+            deactivate_resource(instance)
+            write_audit(request, 'archive_with_history', instance, {'resource': resource})
+            action_message = f'Se archivó correctamente {label}. Su historial se conservó.'
         else:
+            write_audit(request, 'delete', instance, {'resource': resource})
             instance.delete()
     except ProtectedError:
         messages.error(request, f'No se puede eliminar {label} porque está relacionado con otros registros.')
     else:
-        messages.success(request, f'Se eliminó correctamente {label}.')
+        messages.success(request, action_message)
     return redirect('dashboard:admin_resource', resource=resource)
 
 
@@ -318,6 +410,7 @@ def lesson_plan_create(request):
         plan.save()
         form.save_m2m()
         form.save_assignments(plan)
+        write_audit(request, 'create_lesson_plan', plan)
         messages.success(request, 'Plan de clase creado correctamente.')
         return redirect('dashboard:lesson_plans')
     if request.method == 'POST':
@@ -347,6 +440,7 @@ def lesson_plan_update(request, pk):
     if request.method == 'POST' and form.is_valid():
         plan = form.save()
         form.save_assignments(plan)
+        write_audit(request, 'update_lesson_plan', plan)
         messages.success(request, 'Plan de clase actualizado correctamente.')
         return redirect('dashboard:lesson_plans')
     return render(request, 'dashboard/lesson_plan_form.html', {'form': form, 'is_edit': True, 'plan': plan})
@@ -477,6 +571,7 @@ def lesson_plan_assignment_update(request, pk, assignment_pk):
     assignment.teacher_notes = request.POST.get('teacher_notes', '').strip()
     assignment.completed_at = timezone.now() if status == LessonPlanAssignment.Status.COMPLETED else None
     assignment.save(update_fields=['status', 'teacher_notes', 'completed_at'])
+    write_audit(request, 'update_lesson_plan_assignment', assignment, {'status': status})
     messages.success(request, 'Seguimiento del estudiante actualizado.')
     return redirect('dashboard:lesson_plan_report', pk=pk)
 

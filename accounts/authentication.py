@@ -17,7 +17,7 @@ class EmailOrTeacherBackend(ModelBackend):
             return user
 
         teacher = TeacherProfile.objects.select_related('user').filter(email__iexact=identifier).first()
-        if teacher is None or not teacher.check_password(password):
+        if teacher is None or not teacher.is_active or not teacher.check_password(password):
             return None
 
         return self._get_or_create_teacher_user(teacher)
@@ -33,6 +33,8 @@ class EmailOrTeacherBackend(ModelBackend):
     def _get_or_create_teacher_user(self, teacher):
         if teacher.user_id:
             user = teacher.user
+            if not user.is_active:
+                return None
         else:
             user = CustomUser.objects.filter(email__iexact=teacher.email, role=CustomUser.Role.TEACHER).first()
             if user is None:

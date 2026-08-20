@@ -65,6 +65,15 @@ class AdminUserUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self._original_password = self.instance.password if self.instance and self.instance.pk else ''
         self.fields['password'].initial = ''
+        self.fields['username'].label = 'Usuario de acceso'
+        self.fields['email'].label = 'Correo electrónico'
+        self.fields['first_name'].label = 'Nombres'
+        self.fields['last_name'].label = 'Apellidos'
+        self.fields['role'].label = 'Rol del sistema'
+        self.fields['is_staff'].label = 'Acceso al administrador Django'
+        self.fields['is_active'].label = 'Cuenta activa'
+        self.fields['is_active'].help_text = 'Activa o suspende el acceso sin borrar el historial de la cuenta.'
+        self.fields['is_staff'].help_text = 'Úsalo solo para administradores que deban entrar al administrador avanzado de Django.'
         self.fields['role'].choices = (
             (CustomUser.Role.ADMIN, 'Administrador'),
             (CustomUser.Role.TEACHER, 'Docente'),
@@ -81,6 +90,36 @@ class AdminUserUpdateForm(forms.ModelForm):
             user.password = self._original_password
         if commit:
             user.save()
+            full_name = user.get_full_name() or user.username
+            if user.is_active and user.role == CustomUser.Role.TEACHER:
+                teacher, _ = TeacherProfile.objects.get_or_create(user=user, defaults={
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.email,
+                    'name': full_name,
+                })
+                update_fields = []
+                if not teacher.is_active:
+                    teacher.is_active = True
+                    update_fields.append('is_active')
+                if not teacher.email and user.email:
+                    teacher.email = user.email
+                    update_fields.append('email')
+                if update_fields:
+                    teacher.save(update_fields=update_fields)
+            elif not user.is_active and user.role == CustomUser.Role.TEACHER:
+                teacher = getattr(user, 'teacher_profile', None)
+                if teacher and teacher.is_active:
+                    teacher.is_active = False
+                    teacher.save(update_fields=['is_active'])
+            elif user.is_active and user.role == CustomUser.Role.PARENT:
+                ParentProfile.objects.get_or_create(user=user, defaults={'name': full_name})
+            elif user.is_active and user.role == CustomUser.Role.STUDENT:
+                level = Level.objects.filter(is_active=True).order_by('order').first()
+                StudentProfile.objects.get_or_create(
+                    user=user,
+                    defaults={'name': full_name, 'reading_level': level, 'current_level': level},
+                )
         return user
 
 
@@ -155,7 +194,7 @@ class TeacherUpdateForm(forms.ModelForm):
     class Meta:
         model = TeacherProfile
         fields = (
-            'first_name', 'last_name', 'email', 'password', 'bio',
+            'first_name', 'last_name', 'email', 'password', 'bio', 'is_active',
             'can_create_students', 'can_view_student_reports',
             'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans',
             'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games',
@@ -169,6 +208,8 @@ class TeacherUpdateForm(forms.ModelForm):
         self.fields['last_name'].label = 'Apellidos'
         self.fields['email'].label = 'Correo institucional'
         self.fields['bio'].label = 'Perfil docente'
+        self.fields['is_active'].label = 'Docente activo'
+        self.fields['is_active'].help_text = 'Desactivar conserva sus planes, reportes y evidencias, pero bloquea su acceso docente.'
         self.fields['can_create_students'].label = 'Puede crear estudiantes'
         self.fields['can_view_student_reports'].label = 'Puede ver reportes de estudiantes'
         self.fields['can_create_lesson_plans'].label = 'Puede crear planes de clase'
@@ -189,6 +230,14 @@ class TeacherUpdateForm(forms.ModelForm):
             teacher.password = self._original_password
         if commit:
             teacher.save()
+            if teacher.user_id:
+                user = teacher.user
+                user.is_active = teacher.is_active
+                user.email = teacher.email
+                user.first_name = teacher.first_name
+                user.last_name = teacher.last_name
+                user.role = CustomUser.Role.TEACHER
+                user.save(update_fields=['is_active', 'email', 'first_name', 'last_name', 'role'])
         return teacher
 
 
@@ -259,7 +308,7 @@ class LessonPlanForm(forms.ModelForm):
             'subject', 'competency', 'level', 'grade', 'planned_date', 'period', 'unit', 'title', 'topic',
             'achievement_indicator', 'evaluation_criteria', 'content', 'objective',
             'initial_activities', 'teacher_reading', 'comprehension_orthography_activities',
-            'methodology', 'activities', 'readings', 'notes', 'is_active',
+            'methodology', 'activities', 'readings', 'notes', 'status', 'is_active',
         )
         widgets = {
             'planned_date': forms.DateInput(attrs={'type': 'date'}),
@@ -292,6 +341,9 @@ class LessonPlanForm(forms.ModelForm):
         self.fields['activities'].label = 'Actividades sugeridas'
         self.fields['readings'].label = 'Lecturas sugeridas'
         self.fields['notes'].label = 'Notas internas'
+        self.fields['status'].label = 'Estado del plan'
+        self.fields['status'].required = False
+        self.fields['status'].initial = LessonPlan.Status.ACTIVE
         self.fields['is_active'].label = 'Plan activo'
         self.fields['subject'].queryset = Subject.objects.filter(is_active=True).order_by('name')
         self.fields['competency'].queryset = CurriculumCompetency.objects.filter(is_active=True).select_related('subject').order_by('grade', 'subject__name', 'title')
@@ -318,6 +370,7 @@ class LessonPlanForm(forms.ModelForm):
             cleaned_data['achievement_indicator'] = cleaned_data.get('achievement_indicator') or competency.achievement_indicator
             cleaned_data['content'] = cleaned_data.get('content') or competency.competency
             cleaned_data['methodology'] = cleaned_data.get('methodology') or competency.dyslexia_adaptation
+        cleaned_data['status'] = cleaned_data.get('status') or LessonPlan.Status.ACTIVE
         return cleaned_data
 
     def save_assignments(self, plan):

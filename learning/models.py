@@ -108,6 +108,7 @@ class TeacherProfile(models.Model):
     password = models.CharField(max_length=128, blank=True)
     name = models.CharField(max_length=150)
     bio = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True, verbose_name='Docente activo')
     can_create_students = models.BooleanField(default=False, verbose_name='Puede crear estudiantes')
     can_view_student_reports = models.BooleanField(default=False, verbose_name='Puede ver reportes de estudiantes')
     can_create_lesson_plans = models.BooleanField(default=False, verbose_name='Puede crear planes de clase')
@@ -234,6 +235,13 @@ class MinedReference(models.Model):
 
 
 class LessonPlan(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = 'draft', 'Borrador'
+        ACTIVE = 'active', 'Activo'
+        IN_PROGRESS = 'in_progress', 'En implementación'
+        COMPLETED = 'completed', 'Completado'
+        ARCHIVED = 'archived', 'Archivado'
+
     teacher = models.ForeignKey(TeacherProfile, on_delete=models.CASCADE, related_name='lesson_plans')
     subject = models.ForeignKey(Subject, on_delete=models.PROTECT, related_name='lesson_plans')
     competency = models.ForeignKey(CurriculumCompetency, on_delete=models.SET_NULL, blank=True, null=True, related_name='lesson_plans')
@@ -255,6 +263,7 @@ class LessonPlan(models.Model):
     activities = models.ManyToManyField('activities.Activity', blank=True, related_name='lesson_plans')
     readings = models.ManyToManyField('readings.Reading', blank=True, related_name='lesson_plans')
     notes = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.ACTIVE)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

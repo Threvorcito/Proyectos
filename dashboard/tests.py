@@ -324,6 +324,63 @@ class AdminResourceDeleteTests(TestCase):
         self.assertEqual(user.username, 'usuarioeditado')
         self.assertTrue(user.check_password('Demo12345!'))
 
+    def test_user_delete_removes_account_and_reactivation_restores_teacher_profile(self):
+        admin = CustomUser.objects.create_user(
+            username='adminsoftdelete',
+            email='adminsoftdelete@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        teacher_user = CustomUser.objects.create_user(
+            username='docentesoftdelete',
+            email='docentesoftdelete@example.com',
+            password='Docente123!',
+            first_name='Docente',
+            last_name='Restaurable',
+            role=CustomUser.Role.TEACHER,
+        )
+        TeacherProfile.objects.create(user=teacher_user, name='Docente Restaurable', email=teacher_user.email)
+        self.client.force_login(admin)
+
+        delete_response = self.client.post(reverse('dashboard:admin_resource_delete', args=['usuarios', teacher_user.pk]))
+
+        self.assertRedirects(delete_response, reverse('dashboard:admin_resource', args=['usuarios']))
+        self.assertFalse(CustomUser.objects.filter(pk=teacher_user.pk).exists())
+
+    def test_reactivating_orphan_teacher_user_restores_teacher_profile(self):
+        admin = CustomUser.objects.create_user(
+            username='adminrestoreteacher',
+            email='adminrestoreteacher@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        teacher_user = CustomUser.objects.create_user(
+            username='docenterestore',
+            email='docenterestore@example.com',
+            password='Docente123!',
+            first_name='Docente',
+            last_name='Restaurado',
+            role=CustomUser.Role.TEACHER,
+            is_active=False,
+        )
+        self.client.force_login(admin)
+
+        restore_response = self.client.post(reverse('dashboard:admin_resource_update', args=['usuarios', teacher_user.pk]), data={
+            'username': teacher_user.username,
+            'email': teacher_user.email,
+            'first_name': teacher_user.first_name,
+            'last_name': teacher_user.last_name,
+            'role': CustomUser.Role.TEACHER,
+            'is_active': 'on',
+        })
+        teacher_user.refresh_from_db()
+
+        self.assertRedirects(restore_response, reverse('dashboard:admin_resource', args=['usuarios']))
+        self.assertTrue(teacher_user.is_active)
+        self.assertTrue(TeacherProfile.objects.filter(user=teacher_user, email=teacher_user.email).exists())
+
     def test_teacher_permissions_dialog_is_rendered_and_updates_permissions(self):
         admin = CustomUser.objects.create_user(
             username='adminpermisos',
@@ -366,7 +423,53 @@ class AdminResourceDeleteTests(TestCase):
         self.assertFalse(teacher.can_manage_activities)
         self.assertTrue(teacher.can_manage_readings)
 
-    def test_admin_can_delete_teacher_profile_without_user(self):
+    def test_teacher_delete_deactivates_profile_and_preserves_lesson_plans(self):
+        admin = CustomUser.objects.create_user(
+            username='adminarchivadocente',
+            email='adminarchivadocente@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        teacher_user = CustomUser.objects.create_user(
+            username='docentearchivable',
+            email='docentearchivable@example.com',
+            password='Docente123!',
+            role=CustomUser.Role.TEACHER,
+        )
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Archivable', email=teacher_user.email)
+        level = Level.objects.create(number=7, name='Nivel archivo', order=7)
+        subject = Subject.objects.create(name='Materia Archivo')
+        plan = LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Plan preservado', topic='Archivo', objective='Conservar evidencia.')
+        self.client.force_login(admin)
+
+        response = self.client.post(reverse('dashboard:admin_resource_delete', args=['profesores', teacher.pk]))
+        teacher.refresh_from_db()
+        teacher_user.refresh_from_db()
+
+        self.assertRedirects(response, reverse('dashboard:admin_resource', args=['profesores']))
+        self.assertFalse(teacher.is_active)
+        self.assertFalse(teacher_user.is_active)
+        self.assertTrue(LessonPlan.objects.filter(pk=plan.pk, teacher=teacher).exists())
+
+    def test_inactive_teacher_cannot_login_with_teacher_profile_password(self):
+        teacher = TeacherProfile.objects.create(
+            name='Docente Inactivo Login',
+            email='docenteinactivo@example.com',
+            is_active=False,
+        )
+        teacher.set_password('Docente123!')
+        teacher.save()
+
+        response = self.client.post(reverse('accounts:login'), {
+            'username': teacher.email,
+            'password': 'Docente123!',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse('_auth_user_id' in self.client.session)
+
+    def test_admin_deactivates_teacher_profile_without_user(self):
         admin = CustomUser.objects.create_user(
             username='adminborrar',
             email='adminborrar@example.com',
@@ -378,9 +481,10 @@ class AdminResourceDeleteTests(TestCase):
         self.client.force_login(admin)
 
         response = self.client.post(reverse('dashboard:admin_resource_delete', args=['profesores', teacher.pk]))
+        teacher.refresh_from_db()
 
         self.assertRedirects(response, reverse('dashboard:admin_resource', args=['profesores']))
-        self.assertFalse(TeacherProfile.objects.filter(pk=teacher.pk).exists())
+        self.assertFalse(teacher.is_active)
 
     def test_admin_cannot_delete_self(self):
         admin = CustomUser.objects.create_user(

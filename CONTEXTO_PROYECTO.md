@@ -45,13 +45,24 @@ El sitio debe estar orientado a comprension infantil y apoyo a dislexia:
 
 - `TeacherProfile.user` es opcional.
 - Crear docente ya no crea inmediatamente un usuario Django.
+- `TeacherProfile` ahora tiene `is_active` para desactivar docentes sin borrar historial.
 - `TeacherProfile` tiene sus propios datos:
   - nombres
   - apellidos
   - correo
   - password cifrado
   - perfil docente
+  - estado activo/inactivo
   - permisos
+
+Regla importante de respaldo academico:
+
+- Al desactivar/eliminar desde `Docentes y permisos`, el docente no se borra fisicamente.
+- Se marca `TeacherProfile.is_active=False`.
+- Si tiene usuario vinculado, tambien se marca `CustomUser.is_active=False`.
+- Sus planes, asignaciones, reportes y evidencias se conservan.
+- Un docente inactivo no puede iniciar sesion por correo/password docente.
+- Si se reactiva desde `Usuarios y roles`, se restaura/vincula el perfil docente si hace falta.
 
 ### Estudiantes
 
@@ -397,6 +408,30 @@ Especial atencion:
 - Actividades no confian en `is_correct` del cliente; usan `option_id`.
 - Password de docente y usuarios no se renderiza en edicion.
 - Campo `Nueva contrasena` queda vacio; si no se escribe nada, conserva la actual.
+- Se agrego auditoria minima con `core.AuditLog` para registrar actor, accion, modelo, objeto y metadatos.
+- La eliminacion administrativa ahora protege datos con historial academico:
+  - docentes con planes se desactivan, no se borran
+  - estudiantes con progreso/intentos/asignaciones se desactivan, no se borran
+  - actividades con intentos/progreso/planes se archivan mediante `is_active=False`
+  - lecturas/juegos vinculados a planes se archivan mediante `is_active=False`
+  - cuentas de usuario con historial se desactivan para conservar evidencia
+- Si una cuenta docente sin historial se elimina desde usuarios, tambien se elimina su perfil docente para evitar perfiles huerfanos activos.
+- La sincronizacion usuario-perfil se reforzo:
+  - reactivar una cuenta docente reactiva o restaura `TeacherProfile`
+  - desactivar una cuenta docente desactiva tambien `TeacherProfile`
+  - editar un docente sincroniza estado, correo, nombres y rol del usuario vinculado
+
+## Estados de planes
+
+`LessonPlan` ahora tiene estado real:
+
+- `draft`: Borrador
+- `active`: Activo
+- `in_progress`: En implementacion
+- `completed`: Completado
+- `archived`: Archivado
+
+El campo `is_active` se conserva para visibilidad, pero `status` permite controlar mejor ciclo de vida academico y reportes.
 
 ## Migraciones importantes recientes
 
@@ -405,6 +440,9 @@ Especial atencion:
 - `learning/0008_lessonplan_achievement_indicator_and_more.py`
 - `learning/0009_lessonplan_competency_lessonplanassignment.py`
 - `learning/0010_teacherprofile_can_assign_lesson_plans_and_more.py`
+- `learning/0011_teacherprofile_is_active.py`
+- `core/0001_initial.py`
+- `learning/0012_lessonplan_status.py`
 
 ## Commits relevantes
 

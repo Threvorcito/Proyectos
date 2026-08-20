@@ -130,6 +130,10 @@
     white-space: nowrap;
   }
   .resource-status::before { content: "✓ "; }
+  .resource-status--inactive {
+    color: #b42318;
+  }
+  .resource-status--inactive::before { content: "× "; }
   .resource-row-actions {
     align-items: center;
     display: flex;
@@ -203,7 +207,7 @@
             </td>
             <td class="resource-title-cell"><span>{% if item.description %}{{ item.description }}{% elif item.bio %}{{ item.bio }}{% elif item.objective %}{{ item.objective }}{% else %}Sin descripción registrada{% endif %}</span></td>
             <td><span class="resource-badge">{% if item.activity_type %}{{ item.get_activity_type_display }}{% elif item.resource_type %}{{ item.get_resource_type_display }}{% elif item.role %}{{ item.get_role_display }}{% elif item.grade %}{{ item.get_grade_display }}{% else %}{{ config.singular|capfirst }}{% endif %}</span></td>
-            <td><span class="resource-status">{% if resource == 'profesores' or resource == 'alumnos' or resource == 'padres' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
+            <td><span class="resource-status {% if item.is_active == False %}resource-status--inactive{% endif %}">{% if resource == 'alumnos' or resource == 'padres' or resource == 'palabras' or resource == 'silabas' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
             <td>
               <div class="resource-row-actions">
               {% if resource == 'profesores' %}
@@ -212,7 +216,7 @@
               <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#editResourceModal{{ item.pk }}">Editar</button>
               <form method="post" action="{% url 'dashboard:admin_resource_delete' resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
                 {% csrf_token %}
-                <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+                <button class="btn btn-sm btn-outline-danger" type="submit">{% if resource == 'profesores' %}Desactivar{% else %}Eliminar{% endif %}</button>
               </form>
               </div>
             </td>
@@ -296,7 +300,7 @@
         <div class="modal-content">
           <form method="post" action="{% url 'dashboard:admin_resource_update' resource item.pk %}" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="modal-header"><div><h2 class="modal-title" id="editResourceModalTitle{{ item.pk }}">Editar {{ config.singular }}</h2><p>Actualiza la información de este registro. Haz clic en guardar cuando termines.</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+            <div class="modal-header"><div><h2 class="modal-title" id="editResourceModalTitle{{ item.pk }}">Editar {{ config.singular }}</h2><p>{% if resource == 'usuarios' %}Administra el acceso de esta cuenta. Desactivar conserva el historial; reactivar restaura el perfil correspondiente si hace falta.{% elif resource == 'profesores' %}Administra el perfil docente. Desactivar conserva sus planes, reportes y evidencias académicas.{% else %}Actualiza la información de este registro. Haz clic en guardar cuando termines.{% endif %}</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
             <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
               {% if resource == 'profesores' %}
                 <div class="admin-dialog__section-title"><strong>Datos del docente</strong><span>Información principal y acceso.</span></div>
@@ -306,6 +310,9 @@
                   <p>{{ row.form.email.label_tag }}{{ row.form.email }}{{ row.form.email.errors }}</p>
                   <p>{{ row.form.password.label_tag }}{{ row.form.password }}{{ row.form.password.errors }}<span class="helptext">{{ row.form.password.help_text }}</span></p>
                   <p class="teacher-form-grid__full">{{ row.form.bio.label_tag }}{{ row.form.bio }}{{ row.form.bio.errors }}</p>
+                </div>
+                <div class="admin-dialog__switch-row mt-2">
+                  <label>{{ row.form.is_active }}<span><strong>{{ row.form.is_active.label }}</strong><small>{{ row.form.is_active.help_text }}</small></span></label>
                 </div>
                 <div class="admin-dialog__section-title mt-2"><strong>Permisos del docente</strong><span>Activa solo las funciones que podrá usar.</span></div>
                 <div class="permissions-dialog__grid teacher-permission-grid">

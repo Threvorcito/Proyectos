@@ -97,10 +97,10 @@
                       <span class="lesson-report__pill">{{ plan.readings.count }} lecturas</span>
                     </td>
                     <td>
-                      {% if plan.is_active %}
-                        <span class="lesson-report__status lesson-report__status--active">Activo</span>
+                      {% if plan.is_active and plan.status != 'archived' %}
+                        <span class="lesson-report__status lesson-report__status--active">{{ plan.get_status_display }}</span>
                       {% else %}
-                        <span class="lesson-report__status">Inactivo</span>
+                        <span class="lesson-report__status">{{ plan.get_status_display|default:'Inactivo' }}</span>
                       {% endif %}
                     </td>
                     <td class="text-end">
@@ -161,6 +161,7 @@
               <p>{{ create_form.level.label_tag }}{{ create_form.level }}{{ create_form.level.errors }}</p>
               <p>{{ create_form.grade.label_tag }}{{ create_form.grade }}{{ create_form.grade.errors }}</p>
               <p>{{ create_form.planned_date.label_tag }}{{ create_form.planned_date }}{{ create_form.planned_date.errors }}</p>
+              <p>{{ create_form.status.label_tag }}{{ create_form.status }}{{ create_form.status.errors }}</p>
               <p>{{ create_form.period.label_tag }}{{ create_form.period }}{{ create_form.period.errors }}</p>
               <p>{{ create_form.unit.label_tag }}{{ create_form.unit }}{{ create_form.unit.errors }}</p>
               <p>{{ create_form.title.label_tag }}{{ create_form.title }}{{ create_form.title.errors }}</p>
