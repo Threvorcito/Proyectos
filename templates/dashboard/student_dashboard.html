@@ -15,6 +15,35 @@
     <a class="btn btn-outline-primary" href="{% url 'dashboard:student_report' student.pk %}">Ver mi reporte</a>
     <a class="btn btn-primary" href="{% url 'activities:list' %}">Practicar</a>
   </div>
+  <section class="learning-path mt-5" aria-labelledby="learning-path-title">
+    <div class="learning-path__header">
+      <span class="eyebrow">Mi camino de hoy</span>
+      <h2 id="learning-path-title">Vamos paso a paso</h2>
+      <p>Haz una cosa a la vez. Si te equivocas, puedes intentarlo otra vez.</p>
+    </div>
+    <div class="learning-path__steps">
+      <a class="learning-path__step" href="{% url 'readings:list' %}">
+        <span>1</span>
+        <strong>Escucho</strong>
+        <small>Una lectura corta con voz.</small>
+      </a>
+      <a class="learning-path__step" href="{% url 'activities:list' %}">
+        <span>2</span>
+        <strong>Practico</strong>
+        <small>Letras, sílabas o palabras.</small>
+      </a>
+      <a class="learning-path__step" href="{% url 'games:index' %}">
+        <span>3</span>
+        <strong>Juego</strong>
+        <small>Refuerzo sin presión.</small>
+      </a>
+      <a class="learning-path__step" href="{% url 'dashboard:student_report' student.pk %}">
+        <span>4</span>
+        <strong>Veo mi avance</strong>
+        <small>Mis puntos y estrellas.</small>
+      </a>
+    </div>
+  </section>
   {% if today_plan %}
     <section class="student-today-card mt-5">
       <div>

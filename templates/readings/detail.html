@@ -4,12 +4,22 @@
   <div class="reading-card">
     <h1>{{ reading.title }}</h1>
     <p>{{ reading.description }}</p>
-    <button class="btn btn-outline-primary mb-3" type="button" data-speak-text="{{ reading.content|escapejs }}">Escuchar lectura</button>
-    <article class="reading-content" data-reading-text>
-      {{ reading.content|linebreaksbr }}
+    <div class="reading-actions mb-3">
+      <button class="btn btn-outline-primary" type="button" data-speak-text="{{ reading.content|escapejs }}">Escuchar lectura completa</button>
+    </div>
+    <article class="reading-content reading-blocks" data-reading-text>
+      {% for paragraph in reading.content.splitlines %}
+        {% if paragraph %}
+          <section class="reading-block">
+            <p>{{ paragraph }}</p>
+            <button class="btn btn-sm btn-soft" type="button" data-speak-text="{{ paragraph|escapejs }}">Escuchar este bloque</button>
+          </section>
+        {% endif %}
+      {% endfor %}
     </article>
     <hr>
     <h2>Comprensión</h2>
+    <p class="text-muted">Lee con calma. Puedes escuchar de nuevo antes de responder.</p>
     {% for question in reading.questions.all %}
       <div class="question-box">
         <h3>{{ question.question }}</h3>

@@ -51,7 +51,14 @@ def submit_answer(request, pk):
     option = get_object_or_404(ActivityOption, pk=request.POST.get('option_id'), activity=activity)
     answer = option.text
     is_correct = option.is_correct
-    register_attempt(request.user, activity, answer=answer, is_correct=is_correct)
+    correct_option = activity.options.filter(is_correct=True).order_by('order', 'pk').first()
+    register_attempt(
+        request.user,
+        activity,
+        answer=answer,
+        is_correct=is_correct,
+        correct_answer=correct_option.text if correct_option else '',
+    )
     if is_correct:
         messages.success(request, 'Respuesta correcta. Ganaste puntos por tu esfuerzo.')
     else:

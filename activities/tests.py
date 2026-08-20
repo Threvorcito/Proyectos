@@ -3,9 +3,10 @@ from django.urls import reverse
 
 from accounts.models import CustomUser
 from learning.models import Level, StudentProfile
-from progress.models import ActivityAttempt
+from progress.models import ActivityAttempt, StudentDifficulty
 
 from .models import Activity, ActivityOption
+from .services import get_recommended_activities
 
 
 class ActivitySubmissionTests(TestCase):
@@ -61,3 +62,29 @@ class ActivitySubmissionTests(TestCase):
 
         self.assertRedirects(response, reverse('activities:detail', args=[self.activity.pk]))
         self.assertEqual(ActivityAttempt.objects.count(), 0)
+
+    def test_recommendations_use_student_letter_difficulty(self):
+        letter_activity = Activity.objects.create(
+            level=self.level,
+            title='Letras parecidas',
+            activity_type=Activity.ActivityType.SIMILAR_LETTERS,
+            grade=StudentProfile.Grade.FIRST,
+        )
+        Activity.objects.create(
+            level=self.level,
+            title='Lectura general',
+            activity_type=Activity.ActivityType.READING,
+            grade=StudentProfile.Grade.FIRST,
+        )
+        StudentDifficulty.objects.create(
+            student=self.student,
+            difficulty_type='letter_confusion',
+            character_a='b',
+            character_b='d',
+            error_count=3,
+        )
+
+        recommendations = list(get_recommended_activities(self.student))
+
+        self.assertIn(letter_activity, recommendations)
+        self.assertTrue(all(activity.activity_type in ('FIND_LETTER', 'SIMILAR_LETTERS') for activity in recommendations))

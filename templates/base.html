@@ -12,7 +12,15 @@
   <link rel="stylesheet" href="{% static 'css/main.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body
+  data-default-font-size="{% if accessibility_preference %}{{ accessibility_preference.font_size }}{% else %}18{% endif %}"
+  data-default-letter-spacing="{% if accessibility_preference %}{{ accessibility_preference.letter_spacing }}{% else %}0{% endif %}"
+  data-default-word-spacing="{% if accessibility_preference %}{{ accessibility_preference.word_spacing }}{% else %}0{% endif %}"
+  data-default-line-height="{% if accessibility_preference %}{{ accessibility_preference.line_height }}{% else %}1.6{% endif %}"
+  data-default-high-contrast="{% if accessibility_preference and accessibility_preference.high_contrast %}true{% else %}false{% endif %}"
+  data-default-reduce-motion="{% if accessibility_preference and accessibility_preference.reduce_motion %}true{% else %}false{% endif %}"
+  data-default-reading-guide="{% if accessibility_preference and accessibility_preference.reading_guide %}true{% else %}false{% endif %}"
+>
   {% include 'partials/navbar.html' %}
   <main class="page-shell">
     {% if messages %}
@@ -29,38 +37,43 @@
   </main>
   {% include 'partials/footer.html' %}
 
-  <button class="accessibility-fab" type="button" data-bs-toggle="offcanvas" data-bs-target="#accessibilityPanel">Aa</button>
+  <button class="accessibility-fab" type="button" data-bs-toggle="offcanvas" data-bs-target="#accessibilityPanel" aria-label="Abrir ajustes de lectura">Aa</button>
 
   <div class="offcanvas offcanvas-end" tabindex="-1" id="accessibilityPanel">
     <div class="offcanvas-header">
       <h5 class="offcanvas-title">Mi forma de leer</h5>
-      <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
     </div>
     <div class="offcanvas-body">
       <div class="accessibility-controls" data-accessibility-controls>
         <label class="form-label">Tamaño del texto</label>
-        <input type="range" min="14" max="28" value="18" data-font-size class="form-range">
+        <input type="range" min="14" max="28" value="{% if accessibility_preference %}{{ accessibility_preference.font_size }}{% else %}18{% endif %}" data-font-size class="form-range">
         <label class="form-label mt-3">Espacio entre letras</label>
-        <input type="range" min="0" max="1.5" step="0.1" value="0" data-letter-spacing class="form-range">
+        <input type="range" min="0" max="1.5" step="0.1" value="{% if accessibility_preference %}{{ accessibility_preference.letter_spacing }}{% else %}0{% endif %}" data-letter-spacing class="form-range">
         <label class="form-label mt-3">Espacio entre palabras</label>
-        <input type="range" min="0" max="1.5" step="0.1" value="0" data-word-spacing class="form-range">
+        <input type="range" min="0" max="1.5" step="0.1" value="{% if accessibility_preference %}{{ accessibility_preference.word_spacing }}{% else %}0{% endif %}" data-word-spacing class="form-range">
         <label class="form-label mt-3">Interlineado</label>
-        <input type="range" min="1.2" max="2.4" step="0.1" value="1.6" data-line-height class="form-range">
+        <input type="range" min="1.2" max="2.4" step="0.1" value="{% if accessibility_preference %}{{ accessibility_preference.line_height }}{% else %}1.6{% endif %}" data-line-height class="form-range">
         <div class="form-check form-switch mt-3">
-          <input class="form-check-input" type="checkbox" data-high-contrast id="contrastSwitch">
+          <input class="form-check-input" type="checkbox" data-high-contrast id="contrastSwitch" {% if accessibility_preference and accessibility_preference.high_contrast %}checked{% endif %}>
           <label class="form-check-label" for="contrastSwitch">Alto contraste</label>
         </div>
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" data-reduce-motion id="motionSwitch">
+          <input class="form-check-input" type="checkbox" data-reduce-motion id="motionSwitch" {% if accessibility_preference and accessibility_preference.reduce_motion %}checked{% endif %}>
           <label class="form-check-label" for="motionSwitch">Reducir animaciones</label>
         </div>
         <div class="form-check form-switch">
-          <input class="form-check-input" type="checkbox" data-reading-guide id="guideSwitch">
+          <input class="form-check-input" type="checkbox" data-reading-guide id="guideSwitch" {% if accessibility_preference and accessibility_preference.reading_guide %}checked{% endif %}>
           <label class="form-check-label" for="guideSwitch">Guía de lectura</label>
         </div>
+        <button class="btn btn-outline-secondary w-100 mt-3" type="button" data-accessibility-reset>Restaurar ajustes</button>
+        {% if user.is_authenticated and user.role == 'STUDENT' %}
+          <a class="btn btn-link w-100 mt-2" href="{% url 'learning:accessibility' %}">Guardar en mi perfil</a>
+        {% endif %}
       </div>
     </div>
   </div>
+  <div class="reading-guide-line" data-reading-guide-line aria-hidden="true"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="{% static 'js/accessibility.js' %}"></script>

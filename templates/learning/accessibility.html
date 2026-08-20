@@ -3,7 +3,41 @@
 <div class="container py-5 auth-wrap">
   <div class="auth-card">
     <h1>Mi forma de leer</h1>
-    <form method="post">{% csrf_token %}{{ form.as_p }}<button class="btn btn-primary" type="submit">Guardar preferencias</button></form>
+    <p class="text-muted">Ajusta la lectura para que sea cómoda. Estos cambios se guardan en tu perfil.</p>
+    <form method="post" class="accessibility-profile-form" data-accessibility-profile-form>
+      {% csrf_token %}
+      <div class="row g-3">
+        {% for field in form %}
+          <div class="col-md-6">
+            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}<div class="field-error">{{ field.errors|striptags }}</div>{% endif %}
+          </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-primary mt-4" type="submit">Guardar preferencias</button>
+    </form>
   </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+  (() => {
+    const form = document.querySelector('[data-accessibility-profile-form]');
+    if (!form) return;
+    form.addEventListener('submit', () => {
+      const setValue = (name, key) => {
+        const field = form.querySelector(`[name="${name}"]`);
+        if (field) localStorage.setItem(key, field.type === 'checkbox' ? field.checked : field.value);
+      };
+      setValue('font_size', 'lsl_fontSize');
+      setValue('letter_spacing', 'lsl_letterSpacing');
+      setValue('word_spacing', 'lsl_wordSpacing');
+      setValue('line_height', 'lsl_lineHeight');
+      setValue('high_contrast', 'lsl_highContrast');
+      setValue('reduce_motion', 'lsl_reduceMotion');
+      setValue('reading_guide', 'lsl_readingGuide');
+    });
+  })();
+</script>
 {% endblock %}

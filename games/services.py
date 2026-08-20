@@ -41,7 +41,7 @@ def get_recommended_games(student):
             return [games[slug] for slug in ('detective-de-letras', 'cazador-de-letras') if slug in games]
         if difficulty.syllable:
             return [games[slug] for slug in ('construye-la-palabra', 'camino-de-lectura') if slug in games]
-        if difficulty.difficulty_type.lower() in ('audio', 'sonido', 'fonologica'):
+        if difficulty.difficulty_type.lower() in ('audio', 'sonido', 'fonologica', 'phonological_awareness'):
             return [games[slug] for slug in ('escucha-y-encuentra', 'memoria-de-palabras') if slug in games]
 
     current_level = student.current_level or student.reading_level
