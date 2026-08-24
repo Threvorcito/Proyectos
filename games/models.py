@@ -12,6 +12,7 @@ class Game(models.Model):
         MEMORY = 'memory', 'Memoria de palabras'
         LETTER_DETECTIVE = 'letter_detective', 'Detective de letras'
         READING_PATH = 'reading_path', 'Camino de lectura'
+        DYSLEXIA_QUIZ = 'dyslexia_quiz', 'Quiz de lectura'
 
     name = models.CharField(max_length=120)
     slug = models.SlugField(unique=True)

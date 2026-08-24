@@ -66,6 +66,154 @@
     return orderedOptions;
   }
 
+  function pickOne(items) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function randomDigit(excluded) {
+    var digit = String(Math.floor(Math.random() * 10));
+    while (excluded.indexOf(digit) !== -1) digit = String(Math.floor(Math.random() * 10));
+    return digit;
+  }
+
+  function randomTwoDigitNumber() {
+    var first = String(Math.floor(Math.random() * 9) + 1);
+    var second = randomDigit([first]);
+    return first + second;
+  }
+
+  function shuffledWithAnswer(options, answer) {
+    return shuffleItems(options.filter(function (option, index) { return options.indexOf(option) === index || option === answer; }));
+  }
+
+  function randomizeQuizChallenge(challenge) {
+    var copy = Object.assign({}, challenge);
+    if (copy.option_visuals) copy.option_visuals = Object.assign({}, copy.option_visuals);
+
+    if (copy.category === 'Matematica' && copy.prompt.indexOf('Memoriza esta secuencia') !== -1) {
+      var digits = [];
+      while (digits.length < 4) digits.push(randomDigit(digits));
+      var position = Math.floor(Math.random() * digits.length);
+      var ordinal = position + 1 + '.º';
+      copy.visual = digits.join(' ');
+      copy.question = '¿Cual era el ' + ordinal + ' digito?';
+      copy.answer = digits[position];
+      copy.options = digits.concat([randomDigit(digits)]);
+      copy.hint = 'Cuenta las posiciones desde la izquierda hasta el ' + ordinal + ' digito.';
+      copy.memory_seconds = 4;
+    }
+
+    if (copy.category === 'Matematica' && copy.prompt.indexOf('Memoriza este numero') !== -1) {
+      var number = randomTwoDigitNumber();
+      var reversed = number.charAt(1) + number.charAt(0);
+      copy.visual = number;
+      copy.question = '¿Que numero viste?';
+      copy.answer = number;
+      copy.options = [reversed, number, randomTwoDigitNumber()];
+      copy.hint = 'Observa el orden: primero va el ' + number.charAt(0) + ' y despues va el ' + number.charAt(1) + '.';
+      copy.memory_seconds = 4;
+    }
+
+    if (copy.category === 'Matematica' && copy.prompt.indexOf('Cuenta los puntos') !== -1) {
+      var total = Math.floor(Math.random() * 4) + 3;
+      copy.visual = Array(total + 1).join('● ').trim();
+      copy.question = '¿Cuantos puntos hay?';
+      copy.answer = String(total);
+      copy.options = [String(total - 1), String(total), String(total + 1)];
+      copy.hint = 'Puedes contarlos uno por uno hasta llegar a ' + total + '.';
+    }
+
+    if (copy.category === 'Matematica' && copy.prompt.indexOf('Completa la serie') !== -1) {
+      var start = Math.floor(Math.random() * 3) + 1;
+      var step = pickOne([2, 3]);
+      var next = start + (step * 3);
+      copy.visual = start + ' - ' + (start + step) + ' - ' + (start + step + step) + ' - ?';
+      copy.question = '¿Que numero sigue?';
+      copy.answer = String(next);
+      copy.options = [String(next - 1), String(next), String(next + 1)];
+      copy.hint = 'La serie avanza de ' + step + ' en ' + step + '.';
+    }
+
+    if (copy.category === 'Lengua y Literatura' && copy.prompt.indexOf('Memoriza la palabra') !== -1) {
+      var word = pickOne([
+        {visual: 'LUNA', options: ['LUNA', 'LANA', 'LIMA'], hint: 'Empieza con LU.'},
+        {visual: 'MESA', options: ['MESA', 'MASA', 'MISA'], hint: 'Tiene la vocal E despues de la M.'},
+        {visual: 'PATO', options: ['PATO', 'PALO', 'DATO'], hint: 'Empieza con P y tiene T.'},
+        {visual: 'CASA', options: ['CASA', 'CAMA', 'COSA'], hint: 'Empieza con CA.'}
+      ]);
+      copy.visual = word.visual;
+      copy.question = '¿Que palabra viste?';
+      copy.answer = word.visual;
+      copy.options = word.options;
+      copy.hint = word.hint;
+      copy.memory_seconds = 4;
+    }
+
+    if (copy.category === 'English' && copy.prompt.indexOf('word') !== -1) {
+      var english = pickOne([
+        {visual: '🐱 CAT', answer: 'CAT', options: ['CAT', 'CAR', 'CAN'], hint: 'Cat means gato.'},
+        {visual: '🐶 DOG', answer: 'DOG', options: ['DOG', 'BOG', 'DOT'], hint: 'Dog means perro.'},
+        {visual: '📘 BOOK', answer: 'BOOK', options: ['BOOK', 'LOOK', 'BOAT'], hint: 'Book means libro.'},
+        {visual: 'BLUE', answer: 'BLUE', options: ['BLUE', 'BULE', 'BLU'], hint: 'Blue means azul.'}
+      ]);
+      copy.visual = english.visual;
+      copy.question = 'Which word did you see?';
+      copy.answer = english.answer;
+      copy.options = english.options;
+      copy.hint = english.hint;
+      copy.memory_seconds = 4;
+    }
+
+    if (copy.category === 'Ciencias Naturales' && copy.prompt.indexOf('animal') !== -1) {
+      var animal = pickOne([
+        {visual: '🐸 RANA', answer: 'RANA', options: ['RANA', 'RAMA', 'LANA'], hint: 'Salta y vive cerca del agua.'},
+        {visual: '🐟 PEZ', answer: 'PEZ', options: ['PEZ', 'PERA', 'PAN'], hint: 'Vive en el agua.'},
+        {visual: '🐶 PERRO', answer: 'PERRO', options: ['PERRO', 'PEZ', 'PATO'], hint: 'Es domestico y ladra.'}
+      ]);
+      copy.visual = animal.visual;
+      copy.question = '¿Que animal viste?';
+      copy.answer = animal.answer;
+      copy.options = animal.options;
+      copy.hint = animal.hint;
+      copy.memory_seconds = 4;
+    }
+
+    if (copy.category === 'Educacion Artistica y Cultural' && copy.prompt.indexOf('Memoriza la figura') !== -1) {
+      var figure = pickOne([
+        {visual: '▲', answer: '▲', options: ['■', '▲', '●'], hint: 'Tiene tres lados.'},
+        {visual: '■', answer: '■', options: ['●', '▲', '■'], hint: 'Tiene cuatro lados iguales.'},
+        {visual: '●', answer: '●', options: ['▲', '●', '■'], hint: 'Es redonda.'}
+      ]);
+      copy.visual = figure.visual;
+      copy.question = '¿Cual figura viste?';
+      copy.answer = figure.answer;
+      copy.options = figure.options;
+      copy.hint = figure.hint;
+      copy.memory_seconds = 4;
+    }
+
+    if (copy.category === 'Estudios Sociales' && copy.prompt.indexOf('Observa el lugar') !== -1) {
+      var place = pickOne([
+        {visual: '🏫 ESCUELA', answer: 'ESCUELA', options: ['ESCUELA', 'CASA', 'PARQUE'], hint: 'Es el lugar donde aprendes.'},
+        {visual: '🏠 CASA', answer: 'CASA', options: ['CASA', 'CALLE', 'ESCUELA'], hint: 'Es donde vive una familia.'},
+        {visual: '🏞️ PARQUE', answer: 'PARQUE', options: ['PARQUE', 'TIENDA', 'CASA'], hint: 'Es un lugar para jugar y cuidar.'}
+      ]);
+      copy.visual = place.visual;
+      copy.question = '¿Que lugar viste?';
+      copy.answer = place.answer;
+      copy.options = place.options;
+      copy.hint = place.hint;
+      copy.memory_seconds = 4;
+    }
+
+    if (copy.options) copy.options = shuffledWithAnswer(copy.options, copy.answer);
+    return copy;
+  }
+
+  function randomizeQuizChallenges(challenges) {
+    return shuffleItems(challenges.map(randomizeQuizChallenge));
+  }
+
   function GameState(root, challenges) {
     this.root = root;
     this.challenges = challenges;
@@ -80,6 +228,19 @@
     this.stars = root.querySelector('[data-game-stars]');
     this.board = root.querySelector('.games-page__board');
     this.saveUrl = root.getAttribute('data-save-url');
+    this.results = [];
+    this.resultsDialog = root.querySelector('[data-game-results-dialog]');
+    this.resultsBody = root.querySelector('[data-game-results-body]');
+    this.resultsOpen = root.querySelector('[data-game-results-open]');
+    this.resultsClose = root.querySelector('[data-game-results-close]');
+    var self = this;
+    if (this.resultsOpen) this.resultsOpen.addEventListener('click', function () { self.openResults(); });
+    if (this.resultsClose) this.resultsClose.addEventListener('click', function () { self.closeResults(); });
+    if (this.resultsDialog) {
+      this.resultsDialog.addEventListener('click', function (event) {
+        if (event.target === self.resultsDialog) self.closeResults();
+      });
+    }
   }
 
   GameState.prototype.current = function () { return this.challenges[this.index]; };
@@ -102,7 +263,11 @@
 
   GameState.prototype.next = function (wasCorrect, render) {
     if (wasCorrect) this.correct += 1;
-    this.sayGood();
+    if (wasCorrect) this.sayGood();
+    else {
+      this.feedback.className = 'games-page__feedback is-try';
+      this.feedback.textContent = 'Seguimos con el siguiente reto.';
+    }
     var self = this;
     window.setTimeout(function () {
       self.index += 1;
@@ -121,7 +286,36 @@
     var starCount = this.correct === total ? 3 : this.correct >= Math.ceil(total * 0.6) ? 2 : 1;
     if (this.stars) this.stars.textContent = '⭐'.repeat(starCount);
     if (this.summary) this.summary.textContent = 'Retos completados: ' + total + ' | Aciertos: ' + this.correct;
+    this.renderResults();
     this.saveAttempt(total);
+  };
+
+  GameState.prototype.renderResults = function () {
+    if (!this.resultsBody || !this.results.length) return;
+    this.resultsBody.innerHTML = '';
+    var list = document.createElement('div');
+    list.className = 'games-page__result-list';
+    this.results.forEach(function (result, index) {
+      var item = document.createElement('article');
+      item.className = 'games-page__result-item ' + (result.correct ? 'is-good' : 'is-bad');
+      item.innerHTML = '<strong>Reto ' + (index + 1) + ': ' + result.category + '</strong><span>' + (result.correct ? 'Acertaste' : 'Fallaste') + '</span><small>' + result.question + ' Respuesta: ' + result.answer + '</small>';
+      list.appendChild(item);
+    });
+    this.resultsBody.appendChild(list);
+    if (this.resultsOpen) this.resultsOpen.hidden = false;
+    this.openResults();
+  };
+
+  GameState.prototype.openResults = function () {
+    if (!this.resultsDialog) return;
+    if (typeof this.resultsDialog.showModal === 'function') this.resultsDialog.showModal();
+    else this.resultsDialog.setAttribute('open', 'open');
+  };
+
+  GameState.prototype.closeResults = function () {
+    if (!this.resultsDialog) return;
+    if (typeof this.resultsDialog.close === 'function') this.resultsDialog.close();
+    else this.resultsDialog.removeAttribute('open');
   };
 
   GameState.prototype.saveAttempt = function (total) {
@@ -354,6 +548,130 @@
     render();
   }
 
+  function initDyslexiaQuiz(root, challenges) {
+    var state = new GameState(root, challenges);
+    var category = root.querySelector('[data-quiz-category]');
+    var prompt = root.querySelector('[data-quiz-prompt]');
+    var visual = root.querySelector('[data-quiz-visual]');
+    var countdown = root.querySelector('[data-quiz-countdown]');
+    var question = root.querySelector('[data-quiz-question]');
+    var options = root.querySelector('[data-quiz-options]');
+    var speakButton = root.querySelector('[data-quiz-speak]');
+    var hintButton = root.querySelector('[data-quiz-hint]');
+    var hintText = root.querySelector('[data-quiz-hint-text]');
+
+    function resetFeedback() {
+      state.feedback.hidden = false;
+      state.feedback.className = 'games-page__feedback';
+      state.feedback.textContent = '';
+    }
+
+    function render() {
+      state.updateProgress();
+      resetFeedback();
+      var challenge = state.current();
+      state.board.classList.toggle('games-page__quiz--pattern-layout', challenge.visual_type === 'missing_grid');
+      category.textContent = challenge.category;
+      prompt.textContent = challenge.prompt;
+      renderQuizVisual(challenge);
+      question.textContent = challenge.question;
+      hintText.textContent = challenge.hint;
+      hintText.hidden = true;
+      options.innerHTML = '';
+      question.hidden = false;
+      options.hidden = false;
+      if (countdown) countdown.hidden = true;
+      challenge.options.forEach(function (option) {
+        var button = createQuizOption(challenge, option);
+        button.addEventListener('click', function () {
+          if (option === challenge.answer) {
+            this.classList.add('is-correct');
+            disableQuizOptions(options);
+            state.results.push({category: challenge.category, question: challenge.question, answer: challenge.answer, correct: true});
+            state.next(true, render);
+          } else {
+            state.tries += 1;
+            this.classList.add('is-missed');
+            this.disabled = true;
+            state.sayTry();
+            if (state.tries === 1) {
+              state.feedback.textContent = 'Casi. Tienes una oportunidad mas.';
+            } else {
+              disableQuizOptions(options);
+              hintText.hidden = false;
+              options.querySelectorAll('button').forEach(function (button) {
+                if ((button.getAttribute('aria-label') || button.textContent) === challenge.answer) button.classList.add('is-hint');
+              });
+              state.results.push({category: challenge.category, question: challenge.question, answer: challenge.answer, correct: false});
+              window.setTimeout(function () { state.next(false, render); }, 1100);
+            }
+          }
+        });
+        options.appendChild(button);
+      });
+      if (challenge.memory_seconds) showMemoryStep(challenge);
+    }
+
+    function renderQuizVisual(challenge) {
+      visual.className = 'games-page__quiz-visual';
+      visual.innerHTML = '';
+      if (challenge.visual_type === 'missing_grid') {
+        visual.classList.add('games-page__quiz-visual--pattern');
+        if (challenge.visual_pattern) visual.classList.add('games-page__quiz-visual--' + challenge.visual_pattern);
+        visual.innerHTML = '<div class="games-page__missing-pattern" aria-hidden="true">?</div>';
+        return;
+      }
+      visual.textContent = challenge.visual;
+    }
+
+    function createQuizOption(challenge, option) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'games-page__option games-page__quiz-option';
+      if (challenge.option_visuals && challenge.option_visuals[option]) {
+        button.setAttribute('aria-label', option);
+        var pattern = document.createElement('span');
+        pattern.className = 'games-page__pattern-option games-page__pattern--' + challenge.option_visuals[option];
+        button.appendChild(pattern);
+      } else {
+        button.textContent = option;
+      }
+      return button;
+    }
+
+    function disableQuizOptions(optionsNode) {
+      optionsNode.querySelectorAll('button').forEach(function (button) { button.disabled = true; });
+    }
+
+    function showMemoryStep(challenge) {
+      var seconds = challenge.memory_seconds;
+      question.hidden = true;
+      options.hidden = true;
+      if (countdown) {
+        countdown.hidden = false;
+        countdown.textContent = 'Desaparece en ' + seconds + ' segundos';
+      }
+      var timer = window.setInterval(function () {
+        seconds -= 1;
+        if (countdown) countdown.textContent = 'Desaparece en ' + seconds + ' segundos';
+        if (seconds <= 0) {
+          window.clearInterval(timer);
+          visual.textContent = '••••';
+          question.hidden = false;
+          options.hidden = false;
+          if (countdown) countdown.hidden = true;
+        }
+      }, 1000);
+    }
+
+    speakButton.addEventListener('click', function () {
+      var challenge = state.current();
+      speak(challenge.prompt + '. ' + challenge.visual + '. ' + challenge.question);
+    });
+    hintButton.addEventListener('click', function () { hintText.hidden = false; });
+    render();
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var root = document.querySelector('[data-game-root]');
     if (!root) return;
@@ -368,5 +686,6 @@
     if (type === 'memory') initMemory(root, challenges);
     if (type === 'letter_detective') initChoiceGame(root, challenges, {options: '[data-detective-options]', speak: '[data-detective-speak]'});
     if (type === 'reading_path') initReadingPath(root, challenges);
+    if (type === 'dyslexia_quiz') initDyslexiaQuiz(root, randomizeQuizChallenges(challenges));
   });
 })();

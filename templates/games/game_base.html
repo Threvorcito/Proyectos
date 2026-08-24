@@ -37,13 +37,24 @@
         </div>
         <div class="games-page__actions">
           <button class="games-page__button" type="button" data-game-restart>Jugar otra vez</button>
+          <button class="games-page__button games-page__button--soft" type="button" data-game-results-open>Ver resultados</button>
           <a class="games-page__button games-page__button--soft" href="{% url 'games:index' %}">Elegir otro juego</a>
           <a class="games-page__button games-page__button--soft" href="{% url 'games:index' %}">Volver a Juegos</a>
         </div>
       </section>
     </div>
+    <dialog class="games-page__results-dialog" data-game-results-dialog aria-labelledby="game-results-title">
+      <div class="games-page__dialog-head">
+        <div>
+          <span class="games-page__eyebrow">Resultados</span>
+          <h2 id="game-results-title">Resumen de respuestas</h2>
+        </div>
+        <button class="games-page__dialog-close" type="button" data-game-results-close aria-label="Cerrar resultados">×</button>
+      </div>
+      <div data-game-results-body></div>
+    </dialog>
   </section>
 </main>
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/games/common.js' %}"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/games/common.js' %}?v=20260824-random-quiz"></script>{% endblock %}

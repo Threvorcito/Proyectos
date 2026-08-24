@@ -20,6 +20,7 @@ TEMPLATE_BY_TYPE = {
     Game.GameType.MEMORY: 'games/memory.html',
     Game.GameType.LETTER_DETECTIVE: 'games/letter_detective.html',
     Game.GameType.READING_PATH: 'games/reading_path.html',
+    Game.GameType.DYSLEXIA_QUIZ: 'games/dyslexia_quiz.html',
 }
 
 

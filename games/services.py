@@ -1,4 +1,5 @@
 from django.db.models import Count, Max
+from unicodedata import combining, normalize
 
 from learning.models import Level, Subject
 from progress.models import StudentDifficulty
@@ -7,16 +8,24 @@ from .content import GAME_DEFINITIONS
 from .models import Game, GameAttempt
 
 
+def normalize_subject_name(name):
+    cleaned = normalize('NFKD', name or '')
+    return ''.join(character for character in cleaned if not combining(character)).lower()
+
+
 def ensure_games():
     levels = {level.number: level for level in Level.objects.all()}
-    language_subject = Subject.objects.filter(name='Lengua y Literatura').first()
+    subjects = {normalize_subject_name(subject.name): subject for subject in Subject.objects.all()}
+    language_subject = subjects.get('lengua y literatura')
     games = []
     for definition in GAME_DEFINITIONS:
         data = definition.copy()
         level_number = data.pop('level_number')
+        subject_name = data.pop('subject_name', 'Lengua y Literatura')
+        subject = subjects.get(normalize_subject_name(subject_name), language_subject)
         game, _ = Game.objects.update_or_create(
             slug=data['slug'],
-            defaults={**data, 'level': levels.get(level_number), 'subject': language_subject, 'grade': str(min(level_number, 3))},
+            defaults={**data, 'level': levels.get(level_number), 'subject': subject, 'grade': str(min(level_number, 3))},
         )
         games.append(game)
     return games
@@ -49,9 +58,9 @@ def get_recommended_games(student):
     if level_number <= 1:
         slugs = ('cazador-de-letras', 'memoria-de-palabras', 'construye-la-palabra')
     elif level_number == 2:
-        slugs = ('escucha-y-encuentra', 'detective-de-letras', 'construye-la-palabra')
+        slugs = ('quiz-agilidad-lectora', 'escucha-y-encuentra', 'detective-de-letras')
     else:
-        slugs = ('camino-de-lectura', 'escucha-y-encuentra', 'memoria-de-palabras')
+        slugs = ('camino-de-lectura', 'quiz-agilidad-lectora', 'escucha-y-encuentra')
     return [games[slug] for slug in slugs if slug in games]
 
 

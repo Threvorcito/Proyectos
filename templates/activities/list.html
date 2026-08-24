@@ -41,23 +41,46 @@
       </div>
     {% endif %}
 
-    <div class="row g-4 mt-2">
+    <section class="activity-learning-compass mt-4" aria-label="Como usar estas actividades">
+      <div class="activity-learning-compass__main">
+        <span class="eyebrow">Ruta sugerida</span>
+        <h2>Practica en pasos cortos</h2>
+        <p>Elige una actividad, lee con calma y repite si lo necesitas. Cada tarjeta combina lectura accesible, apoyo visual y una meta concreta para que el estudiante avance sin presion.</p>
+      </div>
+      <div class="activity-learning-compass__tips">
+        <article><strong>1</strong><span>Observa</span><small>Identifica imagenes, palabras o numeros clave.</small></article>
+        <article><strong>2</strong><span>Practica</span><small>Resuelve una tarea breve con instrucciones simples.</small></article>
+        <article><strong>3</strong><span>Refuerza</span><small>Repite los errores frecuentes con apoyo del docente.</small></article>
+      </div>
+    </section>
+
+    <section class="activity-results-showcase mt-4" aria-label="Actividades disponibles">
+      <div class="activity-results-showcase__heading">
+        <div>
+          <span class="eyebrow">Actividades disponibles</span>
+          <h2>Elige una práctica para continuar</h2>
+        </div>
+      </div>
+      <div class="activity-result-grid">
       {% for activity in activities %}
-        <div class="col-md-6 col-lg-4">
-          <a class="card-link" href="{% url 'activities:detail' activity.pk %}">
-            <div class="feature-card level-green activity-result-card">
-              <small>{{ activity.get_grade_display }} · {% if activity.subject %}{{ activity.subject.name }}{% else %}Sin materia{% endif %} · Nivel {{ activity.level.number }}</small>
-              <h3>{{ activity.title }}</h3>
-              <p>{{ activity.description }}</p>
+          <a class="activity-result-card" href="{% url 'activities:detail' activity.pk %}">
+            <div class="activity-result-card__top">
+              <span class="activity-result-card__icon">{% if activity.subject.name == 'Matemática' %}🔢{% elif activity.subject.name == 'Ciencias Naturales' %}🌿{% elif activity.subject.name == 'English' %}🌟{% elif activity.subject.name == 'Estudios Sociales' %}🏘️{% elif activity.subject.name == 'Educación Artística y Cultural' %}🎨{% else %}📖{% endif %}</span>
+              <span class="activity-result-card__level">Nivel {{ activity.level.number }}</span>
+            </div>
+            <small>{{ activity.get_grade_display }} · {% if activity.subject %}{{ activity.subject.name }}{% else %}Sin materia{% endif %}</small>
+            <h3>{{ activity.title }}</h3>
+            <p>{{ activity.description }}</p>
+            <div class="activity-result-card__footer">
+              <span>Iniciar práctica</span>
+              <strong>→</strong>
             </div>
           </a>
-        </div>
       {% empty %}
-        <div class="col-12">
           <div class="empty-state-card">No hay actividades para esta combinación. Prueba otro grado o materia.</div>
-        </div>
       {% endfor %}
-    </div>
+      </div>
+    </section>
   </div>
 </div>
 {% endblock %}

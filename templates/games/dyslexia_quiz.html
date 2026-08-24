@@ -1,0 +1,21 @@
+{% extends 'games/game_base.html' %}
+{% block game_title %}⭐ Quiz de agilidad lectora{% endblock %}
+{% block game_board %}
+<section class="games-page__board games-page__quiz" data-dyslexia-quiz>
+  <div class="games-page__quiz-topline">
+    <span data-quiz-category>Reto</span>
+    <button class="games-page__audio-button" type="button" data-quiz-speak>🔊 Escuchar</button>
+  </div>
+  <p class="games-page__quiz-prompt" data-quiz-prompt></p>
+  <div class="games-page__quiz-visual" data-quiz-visual aria-live="polite"></div>
+  <p class="games-page__quiz-countdown" data-quiz-countdown hidden></p>
+  <div class="games-page__quiz-answer-panel">
+    <h2 data-quiz-question></h2>
+    <div class="games-page__option-grid games-page__quiz-options" data-quiz-options></div>
+    <div class="games-page__quiz-help">
+      <button class="games-page__button games-page__button--soft" type="button" data-quiz-hint>Mostrar pista</button>
+      <p data-quiz-hint-text hidden></p>
+    </div>
+  </div>
+</section>
+{% endblock %}
