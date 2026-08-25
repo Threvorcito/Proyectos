@@ -62,20 +62,28 @@
         </div>
       </div>
       <div class="activity-result-grid">
-      {% for activity in activities %}
-          <a class="activity-result-card" href="{% url 'activities:detail' activity.pk %}">
-            <div class="activity-result-card__top">
-              <span class="activity-result-card__icon">{% if activity.subject.name == 'Matemática' %}🔢{% elif activity.subject.name == 'Ciencias Naturales' %}🌿{% elif activity.subject.name == 'English' %}🌟{% elif activity.subject.name == 'Estudios Sociales' %}🏘️{% elif activity.subject.name == 'Educación Artística y Cultural' %}🎨{% else %}📖{% endif %}</span>
-              <span class="activity-result-card__level">Nivel {{ activity.level.number }}</span>
-            </div>
-            <small>{{ activity.get_grade_display }} · {% if activity.subject %}{{ activity.subject.name }}{% else %}Sin materia{% endif %}</small>
-            <h3>{{ activity.title }}</h3>
-            <p>{{ activity.description }}</p>
-            <div class="activity-result-card__footer">
-              <span>Iniciar práctica</span>
-              <strong>→</strong>
-            </div>
-          </a>
+      {% regroup activities by subject.name as subject_groups %}
+      {% for group in subject_groups %}
+        <section class="activity-subject-group">
+          <h3>{{ group.grouper|default:'Sin materia' }}</h3>
+          <div class="activity-subject-group__cards">
+            {% for activity in group.list %}
+              <a class="activity-result-card" href="{% url 'activities:detail' activity.pk %}">
+                <div class="activity-result-card__top">
+                  <span class="activity-result-card__icon">{% if activity.subject.name == 'Matemática' %}🔢{% elif activity.subject.name == 'Ciencias Naturales' %}🌿{% elif activity.subject.name == 'English' %}🌟{% elif activity.subject.name == 'Estudios Sociales' %}🏘️{% elif activity.subject.name == 'Educación Artística y Cultural' %}🎨{% else %}📖{% endif %}</span>
+                  <span class="activity-result-card__level">Nivel {{ activity.level.number }}</span>
+                </div>
+                <small>{{ activity.get_grade_display }} · {% if activity.subject %}{{ activity.subject.name }}{% else %}Sin materia{% endif %}</small>
+                <h3>{{ activity.title }}</h3>
+                <p>{{ activity.description }}</p>
+                <div class="activity-result-card__footer">
+                  <span>Iniciar práctica</span>
+                  <strong>→</strong>
+                </div>
+              </a>
+            {% endfor %}
+          </div>
+        </section>
       {% empty %}
           <div class="empty-state-card">No hay actividades para esta combinación. Prueba otro grado o materia.</div>
       {% endfor %}

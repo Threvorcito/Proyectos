@@ -82,17 +82,63 @@
     return first + second;
   }
 
-  function shuffledWithAnswer(options, answer) {
-    return shuffleItems(options.filter(function (option, index) { return options.indexOf(option) === index || option === answer; }));
+  function uniqueItems(items) {
+    var seen = {};
+    return items.filter(function (item) {
+      if (seen[item]) return false;
+      seen[item] = true;
+      return true;
+    });
   }
 
-  function randomizeQuizChallenge(challenge) {
+  function shuffledWithAnswer(options) {
+    return shuffleItems(uniqueItems(options));
+  }
+
+  function getDistractorPool(challenge) {
+    if (challenge.option_visuals) return [];
+    if (challenge.category === 'Matematica' || challenge.category === 'Secuencia de numeros' || challenge.category === 'Conteo') return ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    if (challenge.category === 'English' || challenge.category === 'Animals' || challenge.category === 'Colors' || challenge.category === 'Numbers' || challenge.category === 'School') return ['CAT', 'DOG', 'BOOK', 'BLUE', 'RED', 'SUN', 'TREE', 'FISH', '3', '4'];
+    if (challenge.category === 'Ciencias Naturales' || challenge.category === 'Animales' || challenge.category === 'Plantas' || challenge.category === 'Ambiente') return ['RANA', 'PEZ', 'PERRO', 'AVE', 'ARBOL', 'FLOR', 'AGUA', 'SOL', 'ZAFACON'];
+    if (challenge.category === 'Estudios Sociales' || challenge.category === 'Comunidad' || challenge.category === 'Familia' || challenge.category === 'Convivencia' || challenge.category === 'Ubicacion') return ['ESCUELA', 'CASA', 'PARQUE', 'FAMILIA', 'CALLE', 'TIENDA', 'DERECHA', 'IZQUIERDA', 'ARRIBA'];
+    if (challenge.category === 'Educacion Artistica y Cultural' || challenge.category === 'Figuras' || challenge.category === 'Colores' || challenge.category === 'Patrones') return ['▲', '●', '■', 'ROJO', 'AZUL', 'VERDE', 'CIRCULO', 'CUADRADO', 'TRIANGULO'];
+    return ['LUNA', 'MESA', 'PATO', 'CASA', 'SOL', 'FLOR', 'LIBRO', 'MAMA', 'MO', 'LECHE'];
+  }
+
+  function applyDifficultyToOptions(challenge, difficulty) {
+    if (!challenge.options) return challenge;
+    var targetCount = difficulty === 'hard' ? 5 : difficulty === 'medium' ? 4 : 3;
+    var options = uniqueItems(challenge.options.slice());
+    var pool = shuffleItems(getDistractorPool(challenge));
+    pool.forEach(function (item) {
+      if (options.length < targetCount && item !== challenge.answer && options.indexOf(item) === -1) options.push(item);
+    });
+    if (difficulty === 'easy') options = options.filter(function (item) { return item === challenge.answer || options.indexOf(item) < 3; });
+    if (options.indexOf(challenge.answer) === -1) options.push(challenge.answer);
+    challenge.options = shuffledWithAnswer(options.slice(0, Math.max(targetCount, Math.min(options.length, targetCount))));
+    if (challenge.options.indexOf(challenge.answer) === -1) {
+      challenge.options.pop();
+      challenge.options.push(challenge.answer);
+      challenge.options = shuffledWithAnswer(challenge.options);
+    }
+    return challenge;
+  }
+
+  function applyDifficultyTiming(challenge, difficulty) {
+    if (!challenge.memory_seconds) return challenge;
+    challenge.memory_seconds = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 4 : 5;
+    return challenge;
+  }
+
+  function randomizeQuizChallenge(challenge, difficulty) {
     var copy = Object.assign({}, challenge);
+    difficulty = difficulty || 'easy';
     if (copy.option_visuals) copy.option_visuals = Object.assign({}, copy.option_visuals);
 
     if (copy.category === 'Matematica' && copy.prompt.indexOf('Memoriza esta secuencia') !== -1) {
       var digits = [];
-      while (digits.length < 4) digits.push(randomDigit(digits));
+      var sequenceLength = difficulty === 'hard' ? 6 : difficulty === 'medium' ? 5 : 4;
+      while (digits.length < sequenceLength) digits.push(randomDigit(digits));
       var position = Math.floor(Math.random() * digits.length);
       var ordinal = position + 1 + '.º';
       copy.visual = digits.join(' ');
@@ -100,7 +146,7 @@
       copy.answer = digits[position];
       copy.options = digits.concat([randomDigit(digits)]);
       copy.hint = 'Cuenta las posiciones desde la izquierda hasta el ' + ordinal + ' digito.';
-      copy.memory_seconds = 4;
+      copy.memory_seconds = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 4 : 5;
     }
 
     if (copy.category === 'Matematica' && copy.prompt.indexOf('Memoriza este numero') !== -1) {
@@ -109,9 +155,11 @@
       copy.visual = number;
       copy.question = '¿Que numero viste?';
       copy.answer = number;
-      copy.options = [reversed, number, randomTwoDigitNumber()];
+      var distractor = randomTwoDigitNumber();
+      while (distractor === number || distractor === reversed) distractor = randomTwoDigitNumber();
+      copy.options = [reversed, number, distractor];
       copy.hint = 'Observa el orden: primero va el ' + number.charAt(0) + ' y despues va el ' + number.charAt(1) + '.';
-      copy.memory_seconds = 4;
+      copy.memory_seconds = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 4 : 5;
     }
 
     if (copy.category === 'Matematica' && copy.prompt.indexOf('Cuenta los puntos') !== -1) {
@@ -119,7 +167,7 @@
       copy.visual = Array(total + 1).join('● ').trim();
       copy.question = '¿Cuantos puntos hay?';
       copy.answer = String(total);
-      copy.options = [String(total - 1), String(total), String(total + 1)];
+      copy.options = difficulty === 'easy' ? [String(total - 1), String(total), String(total + 1)] : [String(total - 2), String(total - 1), String(total), String(total + 1)];
       copy.hint = 'Puedes contarlos uno por uno hasta llegar a ' + total + '.';
     }
 
@@ -130,7 +178,7 @@
       copy.visual = start + ' - ' + (start + step) + ' - ' + (start + step + step) + ' - ?';
       copy.question = '¿Que numero sigue?';
       copy.answer = String(next);
-      copy.options = [String(next - 1), String(next), String(next + 1)];
+      copy.options = difficulty === 'easy' ? [String(next - 1), String(next), String(next + 1)] : [String(next - 2), String(next - 1), String(next), String(next + 1)];
       copy.hint = 'La serie avanza de ' + step + ' en ' + step + '.';
     }
 
@@ -146,7 +194,7 @@
       copy.answer = word.visual;
       copy.options = word.options;
       copy.hint = word.hint;
-      copy.memory_seconds = 4;
+      copy.memory_seconds = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 4 : 5;
     }
 
     if (copy.category === 'English' && copy.prompt.indexOf('word') !== -1) {
@@ -161,7 +209,7 @@
       copy.answer = english.answer;
       copy.options = english.options;
       copy.hint = english.hint;
-      copy.memory_seconds = 4;
+      copy.memory_seconds = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 4 : 5;
     }
 
     if (copy.category === 'Ciencias Naturales' && copy.prompt.indexOf('animal') !== -1) {
@@ -175,7 +223,7 @@
       copy.answer = animal.answer;
       copy.options = animal.options;
       copy.hint = animal.hint;
-      copy.memory_seconds = 4;
+      copy.memory_seconds = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 4 : 5;
     }
 
     if (copy.category === 'Educacion Artistica y Cultural' && copy.prompt.indexOf('Memoriza la figura') !== -1) {
@@ -189,7 +237,7 @@
       copy.answer = figure.answer;
       copy.options = figure.options;
       copy.hint = figure.hint;
-      copy.memory_seconds = 4;
+      copy.memory_seconds = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 4 : 5;
     }
 
     if (copy.category === 'Estudios Sociales' && copy.prompt.indexOf('Observa el lugar') !== -1) {
@@ -203,15 +251,15 @@
       copy.answer = place.answer;
       copy.options = place.options;
       copy.hint = place.hint;
-      copy.memory_seconds = 4;
+      copy.memory_seconds = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 4 : 5;
     }
 
-    if (copy.options) copy.options = shuffledWithAnswer(copy.options, copy.answer);
-    return copy;
+    applyDifficultyTiming(copy, difficulty);
+    return applyDifficultyToOptions(copy, difficulty);
   }
 
-  function randomizeQuizChallenges(challenges) {
-    return shuffleItems(challenges.map(randomizeQuizChallenge));
+  function randomizeQuizChallenges(challenges, difficulty) {
+    return shuffleItems(challenges.map(function (challenge) { return randomizeQuizChallenge(challenge, difficulty); }));
   }
 
   function GameState(root, challenges) {
@@ -293,6 +341,8 @@
   GameState.prototype.renderResults = function () {
     if (!this.resultsBody || !this.results.length) return;
     this.resultsBody.innerHTML = '';
+    this.resultsBody.appendChild(this.buildSubjectProgress());
+    this.resultsBody.appendChild(this.buildRecommendations());
     var list = document.createElement('div');
     list.className = 'games-page__result-list';
     this.results.forEach(function (result, index) {
@@ -304,6 +354,51 @@
     this.resultsBody.appendChild(list);
     if (this.resultsOpen) this.resultsOpen.hidden = false;
     this.openResults();
+  };
+
+  GameState.prototype.getSubjectProgress = function () {
+    var progress = {};
+    this.results.forEach(function (result) {
+      if (!progress[result.category]) progress[result.category] = {correct: 0, total: 0};
+      progress[result.category].total += 1;
+      if (result.correct) progress[result.category].correct += 1;
+    });
+    return progress;
+  };
+
+  GameState.prototype.buildSubjectProgress = function () {
+    var progress = this.getSubjectProgress();
+    var panel = document.createElement('section');
+    panel.className = 'games-page__subject-progress';
+    panel.innerHTML = '<h3>Progreso por materia</h3>';
+    Object.keys(progress).sort().forEach(function (subject) {
+      var item = progress[subject];
+      var row = document.createElement('article');
+      var percent = Math.round((item.correct / item.total) * 100);
+      row.innerHTML = '<div><strong>' + subject + '</strong><span>' + item.correct + '/' + item.total + '</span></div><progress max="100" value="' + percent + '">' + percent + '%</progress>';
+      panel.appendChild(row);
+    });
+    return panel;
+  };
+
+  GameState.prototype.buildRecommendations = function () {
+    var progress = this.getSubjectProgress();
+    var panel = document.createElement('section');
+    panel.className = 'games-page__recommendations';
+    panel.innerHTML = '<h3>Recomendaciones automaticas</h3>';
+    var messages = [];
+    Object.keys(progress).sort().forEach(function (subject) {
+      var item = progress[subject];
+      if (item.correct === item.total) messages.push('Excelente en ' + subject + ': subir un poco la dificultad o usar retos mas largos.');
+      else if (item.correct / item.total < 0.6) messages.push('Reforzar ' + subject + ' con ejercicios cortos, apoyo visual y repeticion guiada.');
+    });
+    if (!messages.length) messages.push('Buen avance general: mantener sesiones breves y alternar materias para evitar cansancio.');
+    messages.forEach(function (message) {
+      var item = document.createElement('p');
+      item.textContent = message;
+      panel.appendChild(item);
+    });
+    return panel;
   };
 
   GameState.prototype.openResults = function () {
@@ -324,7 +419,22 @@
       method: 'POST',
       credentials: 'same-origin',
       headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
-      body: JSON.stringify({correct_answers: this.correct, total_questions: total, completed: true})
+      body: JSON.stringify({
+        correct_answers: this.correct,
+        total_questions: total,
+        completed: true,
+        answers: this.results.map(function (result, index) {
+          return {
+            subject: result.category,
+            question: result.question,
+            correct_answer: result.answer,
+            selected_answer: result.selectedAnswer || '',
+            is_correct: result.correct,
+            attempts_used: result.attemptsUsed || 1,
+            order: index + 1
+          };
+        })
+      })
     }).catch(function () {});
   };
 
@@ -548,7 +658,7 @@
     render();
   }
 
-  function initDyslexiaQuiz(root, challenges) {
+  function initDyslexiaQuiz(root, challenges, selectedDifficulty) {
     var state = new GameState(root, challenges);
     var category = root.querySelector('[data-quiz-category]');
     var prompt = root.querySelector('[data-quiz-prompt]');
@@ -559,6 +669,9 @@
     var speakButton = root.querySelector('[data-quiz-speak]');
     var hintButton = root.querySelector('[data-quiz-hint]');
     var hintText = root.querySelector('[data-quiz-hint-text]');
+    var difficulty = root.querySelector('[data-quiz-difficulty]');
+    var selectedAnswer = '';
+    if (difficulty) difficulty.value = selectedDifficulty || 'easy';
 
     function resetFeedback() {
       state.feedback.hidden = false;
@@ -570,6 +683,7 @@
       state.updateProgress();
       resetFeedback();
       var challenge = state.current();
+      selectedAnswer = '';
       state.board.classList.toggle('games-page__quiz--pattern-layout', challenge.visual_type === 'missing_grid');
       category.textContent = challenge.category;
       prompt.textContent = challenge.prompt;
@@ -584,10 +698,11 @@
       challenge.options.forEach(function (option) {
         var button = createQuizOption(challenge, option);
         button.addEventListener('click', function () {
+          selectedAnswer = option;
           if (option === challenge.answer) {
             this.classList.add('is-correct');
             disableQuizOptions(options);
-            state.results.push({category: challenge.category, question: challenge.question, answer: challenge.answer, correct: true});
+            state.results.push({category: challenge.category, question: challenge.question, answer: challenge.answer, selectedAnswer: selectedAnswer, correct: true, attemptsUsed: state.tries + 1});
             state.next(true, render);
           } else {
             state.tries += 1;
@@ -602,7 +717,7 @@
               options.querySelectorAll('button').forEach(function (button) {
                 if ((button.getAttribute('aria-label') || button.textContent) === challenge.answer) button.classList.add('is-hint');
               });
-              state.results.push({category: challenge.category, question: challenge.question, answer: challenge.answer, correct: false});
+              state.results.push({category: challenge.category, question: challenge.question, answer: challenge.answer, selectedAnswer: selectedAnswer, correct: false, attemptsUsed: state.tries});
               window.setTimeout(function () { state.next(false, render); }, 1100);
             }
           }
@@ -666,9 +781,15 @@
 
     speakButton.addEventListener('click', function () {
       var challenge = state.current();
-      speak(challenge.prompt + '. ' + challenge.visual + '. ' + challenge.question);
+      speak('Observa con calma. ' + challenge.prompt + '. Luego responde: ' + challenge.question);
     });
     hintButton.addEventListener('click', function () { hintText.hidden = false; });
+    if (difficulty) {
+      difficulty.addEventListener('change', function () {
+        window.location.hash = 'dificultad-' + difficulty.value;
+        window.location.reload();
+      });
+    }
     render();
   }
 
@@ -686,6 +807,10 @@
     if (type === 'memory') initMemory(root, challenges);
     if (type === 'letter_detective') initChoiceGame(root, challenges, {options: '[data-detective-options]', speak: '[data-detective-speak]'});
     if (type === 'reading_path') initReadingPath(root, challenges);
-    if (type === 'dyslexia_quiz') initDyslexiaQuiz(root, randomizeQuizChallenges(challenges));
+    if (type === 'dyslexia_quiz') {
+      var difficulty = window.location.hash.replace('#dificultad-', '') || 'easy';
+      if (['easy', 'medium', 'hard'].indexOf(difficulty) === -1) difficulty = 'easy';
+      initDyslexiaQuiz(root, randomizeQuizChallenges(challenges, difficulty), difficulty);
+    }
   });
 })();

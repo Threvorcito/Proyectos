@@ -14,7 +14,7 @@ def activity_list(request):
     level_id = request.GET.get('level')
     subject_id = request.GET.get('subject')
     grade = request.GET.get('grade')
-    activities = Activity.objects.filter(is_active=True).select_related('level', 'subject').order_by('grade', 'subject__name', 'level__order')
+    activities = Activity.objects.filter(is_active=True).select_related('level', 'subject').order_by('subject__name', 'grade', 'level__order')
     if level_id:
         activities = activities.filter(level_id=level_id)
     if subject_id:

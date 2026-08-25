@@ -1,21 +1,62 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-5">
-  <div class="activity-shell">
-    <div class="activity-header">
-      <span>Actividad</span>
-      <h1>{{ activity.title }}</h1>
-      <p class="text-muted mb-2">{{ activity.get_grade_display }} · {% if activity.subject %}{{ activity.subject.name }}{% else %}Sin materia{% endif %} · Apoyo para dislexia</p>
-      <p>{{ activity.instructions }}</p>
-    </div>
-    <div class="activity-options">
-      {% for option in activity.options.all %}
-        <form method="post" action="{% url 'activities:submit_answer' activity.pk %}" class="option-form">{% csrf_token %}
-          <input type="hidden" name="option_id" value="{{ option.pk }}">
-          <button class="option-btn" type="submit">{{ option.text }}</button>
-        </form>
-      {% endfor %}
-    </div>
+<main class="activity-detail-page">
+  <div class="container py-5">
+    <article class="activity-play-card">
+      <a class="activity-play-card__back" href="{% url 'activities:list' %}">← Volver a actividades</a>
+      <header class="activity-play-card__header">
+        <div class="activity-play-card__icon">{% if activity.subject.name == 'Matemática' %}🔢{% elif activity.subject.name == 'Ciencias Naturales' %}🌿{% elif activity.subject.name == 'English' %}🌟{% elif activity.subject.name == 'Estudios Sociales' %}🏘️{% elif activity.subject.name == 'Educación Artística y Cultural' %}🎨{% else %}📖{% endif %}</div>
+        <div>
+          <span class="eyebrow">Actividad guiada</span>
+          <h1>{{ activity.title }}</h1>
+          <p>{{ activity.get_grade_display }} · {% if activity.subject %}{{ activity.subject.name }}{% else %}Sin materia{% endif %} · Nivel {{ activity.level.number }}</p>
+        </div>
+      </header>
+
+      <section class="activity-play-card__instruction">
+        <div>
+          <span>Paso 1</span>
+          <h2>Escucha, observa y elige</h2>
+          <p>{{ activity.instructions }}</p>
+        </div>
+        <button class="activity-audio-button" type="button" data-activity-speak="{{ activity.instructions|escape }}">🔊 Escuchar instrucción</button>
+      </section>
+
+      <section class="activity-choice-panel" aria-label="Opciones de respuesta">
+        <div class="activity-choice-panel__heading">
+          <span>Paso 2</span>
+          <h2>Selecciona tu respuesta</h2>
+        </div>
+        <div class="activity-options activity-options--play">
+          {% for option in activity.options.all %}
+            <form method="post" action="{% url 'activities:submit_answer' activity.pk %}" class="option-form">{% csrf_token %}
+              <input type="hidden" name="option_id" value="{{ option.pk }}">
+              <button class="option-btn activity-option-card" type="submit">
+                <span>{{ forloop.counter }}</span>
+                <strong>{{ option.text }}</strong>
+              </button>
+            </form>
+          {% endfor %}
+        </div>
+      </section>
+    </article>
   </div>
-</div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var button = document.querySelector('[data-activity-speak]');
+    if (!button) return;
+    button.addEventListener('click', function () {
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(button.getAttribute('data-activity-speak'));
+      utterance.lang = 'es-MX';
+      utterance.rate = 0.85;
+      window.speechSynthesis.speak(utterance);
+    });
+  });
+</script>
 {% endblock %}

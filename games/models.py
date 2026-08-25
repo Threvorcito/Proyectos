@@ -45,3 +45,20 @@ class GameAttempt(models.Model):
 
     def __str__(self):
         return f'{self.student} - {self.game}'
+
+
+class GameAttemptAnswer(models.Model):
+    attempt = models.ForeignKey(GameAttempt, on_delete=models.CASCADE, related_name='answers')
+    subject = models.CharField(max_length=80)
+    question = models.CharField(max_length=240)
+    correct_answer = models.CharField(max_length=120)
+    selected_answer = models.CharField(max_length=120, blank=True)
+    is_correct = models.BooleanField(default=False)
+    attempts_used = models.PositiveSmallIntegerField(default=1)
+    order = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        ordering = ['order', 'id']
+
+    def __str__(self):
+        return f'{self.subject} - {self.correct_answer}'

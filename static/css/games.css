@@ -454,6 +454,25 @@
   padding: .55rem .9rem;
 }
 
+.games-page .games-page__difficulty-control {
+  align-items: center;
+  color: #475569;
+  display: inline-flex;
+  font-weight: 700;
+  gap: .45rem;
+  margin-left: auto;
+}
+
+.games-page .games-page__difficulty-control select {
+  background: #fff;
+  border: 1px solid #dbe6ef;
+  border-radius: 12px;
+  color: #172033;
+  font-weight: 700;
+  min-height: 42px;
+  padding: .45rem .7rem;
+}
+
 .games-page .games-page__quiz-prompt {
   color: #516176;
   font-size: 1.05rem;
@@ -744,6 +763,42 @@
   gap: .75rem;
   margin-top: 0;
   text-align: left;
+}
+
+.games-page .games-page__subject-progress,
+.games-page .games-page__recommendations {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  display: grid;
+  gap: .75rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.games-page .games-page__subject-progress h3,
+.games-page .games-page__recommendations h3 {
+  margin: 0;
+}
+
+.games-page .games-page__subject-progress article div {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: .35rem;
+}
+
+.games-page .games-page__subject-progress progress {
+  accent-color: #2b8ea8;
+  width: 100%;
+}
+
+.games-page .games-page__recommendations p {
+  background: #fff;
+  border-radius: 14px;
+  color: #334155;
+  margin: 0;
+  padding: .75rem;
 }
 
 .games-page .games-page__result-list h3 {

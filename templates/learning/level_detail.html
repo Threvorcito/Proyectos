@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block content %}
+<main class="levels-page">
+  <div class="container py-5">
+    <a class="level-detail-back" href="{% url 'learning:levels' %}">← Volver a niveles</a>
+    <section class="course-room-hero course-room-hero--{{ level.number }}">
+      <div>
+        <span class="eyebrow">Curso activo</span>
+        <h1>Nivel {{ level.number }}: {{ level.name }}</h1>
+        <p>{{ level.description }}</p>
+        {% if student %}<strong>{{ assigned_plan_count }} plan{{ assigned_plan_count|pluralize:'es' }} asignado{{ assigned_plan_count|pluralize:'s' }} por el profesor</strong>{% endif %}
+      </div>
+      <div class="course-room-hero__badge" aria-hidden="true">{% if level.number == 1 %}🔤{% elif level.number == 2 %}🧩{% else %}📚{% endif %}</div>
+    </section>
+
+    <nav class="course-tabs" aria-label="Secciones del nivel" data-course-tabs>
+      <button class="is-active" type="button" data-course-tab="materias">Materias</button>
+      <button type="button" data-course-tab="planes">Planes</button>
+      <button type="button" data-course-tab="calificaciones">Calificaciones</button>
+      <button type="button" data-course-tab="recursos">Recursos</button>
+    </nav>
+
+    <section class="course-section is-active" id="materias" data-course-panel="materias">
+      <header><h2>Materias del nivel</h2><p>Toca una materia para ver sus actividades, juegos y lecturas.</p></header>
+      <div class="level-subject-board" aria-label="Materias del nivel {{ level.number }}">
+      {% for row in subject_rows %}
+        <details class="level-subject-card level-subject-card--simple">
+          <summary class="level-subject-card__top">
+            <span>{% if row.subject.name == 'Matemática' %}🔢{% elif row.subject.name == 'Ciencias Naturales' %}🌿{% elif row.subject.name == 'English' %}🌟{% elif row.subject.name == 'Estudios Sociales' %}🏘️{% elif row.subject.name == 'Educación Artística y Cultural' %}🎨{% else %}📖{% endif %}</span>
+            <div>
+              <h3>{{ row.subject.name }}</h3>
+              <small>{{ row.total_resources }} recurso{{ row.total_resources|pluralize }} disponible{{ row.total_resources|pluralize }}</small>
+            </div>
+            <strong>Ver</strong>
+          </summary>
+
+          <div class="level-subject-card__body">
+            <p>Elige cómo quieres practicar esta materia.</p>
+            <div class="level-subject-card__actions">
+              <a href="{% url 'activities:list' %}?grade={{ grade }}&subject={{ row.subject.pk }}"><span>{{ row.activities_count }}</span> Actividades</a>
+              <a href="{% url 'readings:list' %}?grade={{ grade }}&subject={{ row.subject.pk }}"><span>{{ row.readings_count }}</span> Lecturas</a>
+              <a href="{% url 'games:index' %}?grade={{ grade }}&subject={{ row.subject.pk }}"><span>{{ row.games_count }}</span> Juegos</a>
+            </div>
+          </div>
+        </details>
+      {% endfor %}
+      </div>
+    </section>
+
+    <section class="course-section" id="planes" data-course-panel="planes" hidden>
+      <header><h2>Planes del profesor</h2><p>Organizados por materia para saber qué toca practicar.</p></header>
+      <div class="course-module-list">
+        {% for row in subject_rows %}
+          <details class="course-module" {% if row.plans %}open{% endif %}>
+            <summary><span>{{ row.subject.name }}</span><strong>{{ row.plans|length }} planes</strong></summary>
+            {% for plan in row.plans %}
+              <article class="course-module-item">
+                <span>📝</span>
+                <div><strong>{{ plan.title }}</strong><small>{{ plan.topic }} · {{ plan.get_status_display }}</small></div>
+              </article>
+            {% empty %}
+              <p class="course-module-empty">No hay planes asignados todavía para esta materia.</p>
+            {% endfor %}
+          </details>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="course-section" id="calificaciones" data-course-panel="calificaciones" hidden>
+      <header><h2>Mis avances por materia</h2><p>Se calcula con los resultados de juegos y prácticas guardadas.</p></header>
+      <div class="gradebook-panel">
+        {% for row in subject_rows %}
+          <article>
+            <div><strong>{{ row.subject.name }}</strong><span>{{ row.correct_answers }}/{{ row.total_answers }}</span></div>
+            <progress max="100" value="{% if row.total_answers %}{% widthratio row.correct_answers row.total_answers 100 %}{% else %}0{% endif %}"></progress>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="course-section" id="recursos" data-course-panel="recursos" hidden>
+      <header><h2>Recursos rápidos</h2><p>Accesos directos filtrados por este nivel.</p></header>
+      <div class="quick-resource-grid">
+        <a href="{% url 'activities:list' %}?grade={{ grade }}">Ver actividades del nivel</a>
+        <a href="{% url 'readings:list' %}?grade={{ grade }}">Ver lecturas del nivel</a>
+        <a href="{% url 'games:index' %}?grade={{ grade }}">Ver juegos del nivel</a>
+      </div>
+    </section>
+  </div>
+</main>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var tabs = document.querySelectorAll('[data-course-tab]');
+    var panels = document.querySelectorAll('[data-course-panel]');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var target = tab.getAttribute('data-course-tab');
+        tabs.forEach(function (item) { item.classList.toggle('is-active', item === tab); });
+        panels.forEach(function (panel) {
+          var isTarget = panel.getAttribute('data-course-panel') === target;
+          panel.hidden = !isTarget;
+          panel.classList.toggle('is-active', isTarget);
+        });
+      });
+    });
+  });
+</script>
+{% endblock %}

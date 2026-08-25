@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 from learning.models import Subject
 
 from .content import GAME_CHALLENGES
-from .models import Game, GameAttempt
+from .models import Game, GameAttempt, GameAttemptAnswer
 from .services import ensure_games, get_game_progress, get_recommended_games, get_started_games, get_student_for_user
 
 
@@ -88,7 +88,7 @@ def save_attempt(request, slug):
     total_questions = max(int(payload.get('total_questions', 0)), 0)
     correct_answers = max(int(payload.get('correct_answers', 0)), 0)
     score = round((correct_answers / total_questions) * 100) if total_questions else 0
-    GameAttempt.objects.create(
+    attempt = GameAttempt.objects.create(
         student=student,
         game=game,
         score=score,
@@ -97,4 +97,22 @@ def save_attempt(request, slug):
         completed=bool(payload.get('completed', True)),
         completed_at=timezone.now(),
     )
+    answers = payload.get('answers', [])
+    answer_rows = []
+    if isinstance(answers, list):
+        for index, answer in enumerate(answers, start=1):
+            if not isinstance(answer, dict):
+                continue
+            answer_rows.append(GameAttemptAnswer(
+                attempt=attempt,
+                subject=str(answer.get('subject') or answer.get('category') or '')[:80],
+                question=str(answer.get('question') or '')[:240],
+                correct_answer=str(answer.get('correct_answer') or answer.get('answer') or '')[:120],
+                selected_answer=str(answer.get('selected_answer') or '')[:120],
+                is_correct=bool(answer.get('is_correct') if 'is_correct' in answer else answer.get('correct')),
+                attempts_used=max(int(answer.get('attempts_used') or answer.get('tries') or 1), 1),
+                order=index,
+            ))
+    if answer_rows:
+        GameAttemptAnswer.objects.bulk_create(answer_rows)
     return JsonResponse({'saved': True, 'score': score})

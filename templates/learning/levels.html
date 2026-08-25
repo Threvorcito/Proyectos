@@ -1,13 +1,63 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-5">
-  <h1>Niveles</h1>
-  <div class="row g-4 mt-1">
-    {% for level in levels %}
-      <div class="col-md-4"><div class="feature-card level-blue"><h3>Nivel {{ level.number }}</h3><p>{{ level.name }}</p><p>{{ level.description }}</p></div></div>
-    {% empty %}
-      <p>No hay niveles todavía.</p>
-    {% endfor %}
+<main class="levels-page">
+  <div class="container py-5">
+    <section class="kid-dashboard-hero">
+      <div>
+        <span class="eyebrow">Dashboard</span>
+        <h1>Hola{% if student %}, {{ student.display_name }}{% elif teacher %}, profe {{ teacher.name }}{% endif %}</h1>
+        <p>Elige un nivel para aprender con materias, juegos, lecturas y planes del profesor.</p>
+      </div>
+      <div class="kid-dashboard-hero__mascot" aria-hidden="true">🌈</div>
+    </section>
+
+    <section class="course-overview-panel" aria-label="Resumen de niveles">
+      <div class="course-overview-panel__bar">
+        <h2>Mis niveles</h2>
+        <span>{{ level_cards|length }} cursos</span>
+      </div>
+      <div class="course-card-grid">
+        {% for item in level_cards %}
+          <a class="course-card course-card--{{ item.level.number }}" href="{% url 'learning:level_detail' item.level.number %}">
+            <div class="course-card__cover">
+              <span>Nivel {{ item.level.number }}</span>
+              <strong>{% if item.level.number == 1 %}🔤{% elif item.level.number == 2 %}🧩{% else %}📚{% endif %}</strong>
+            </div>
+            <div class="course-card__body">
+              <h3>{{ item.level.name }}</h3>
+              <p>{{ item.level.description }}</p>
+              <div class="course-card__meta">
+                <span>{{ item.activities_count }} actividades</span>
+                <span>{{ item.games_count }} juegos</span>
+                <span>{{ item.plans_count }} planes</span>
+              </div>
+            </div>
+          </a>
+        {% empty %}
+          <div class="empty-state-card">No hay niveles todavía.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="kid-timeline-panel mt-3" aria-label="Planes recientes">
+      <div class="course-overview-panel__bar">
+        <h2>Para continuar</h2>
+        <span>Planes y tareas</span>
+      </div>
+      {% for item in upcoming_plans %}
+        <article class="kid-timeline-item">
+          {% if student %}
+            <strong>{{ item.plan.title }}</strong>
+            <span>{{ item.plan.subject.name }} · Nivel {{ item.plan.level.number }} · {{ item.get_status_display }}</span>
+          {% else %}
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.subject.name }} · Nivel {{ item.level.number }} · {{ item.get_status_display }}</span>
+          {% endif %}
+        </article>
+      {% empty %}
+        <div class="kid-timeline-empty">No hay planes pendientes. Puedes entrar a un nivel y empezar con juegos o actividades.</div>
+      {% endfor %}
+    </section>
   </div>
-</div>
+</main>
 {% endblock %}
