@@ -4,6 +4,9 @@ from django.utils import timezone
 from learning.models import CurriculumCompetency, Level, StudentProfile, Subject
 
 
+GAME_GRADE_CHOICES = [('', 'General')] + list(StudentProfile.Grade.choices)
+
+
 class Game(models.Model):
     class GameType(models.TextChoices):
         LETTER_HUNTER = 'letter_hunter', 'Cazador de letras'
@@ -22,7 +25,7 @@ class Game(models.Model):
     level = models.ForeignKey(Level, on_delete=models.SET_NULL, null=True, blank=True, related_name='games')
     subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, blank=True, null=True, related_name='games')
     competency = models.ForeignKey(CurriculumCompetency, on_delete=models.SET_NULL, blank=True, null=True, related_name='games')
-    grade = models.CharField(max_length=1, choices=StudentProfile.Grade.choices, default=StudentProfile.Grade.FIRST)
+    grade = models.CharField(max_length=1, choices=GAME_GRADE_CHOICES, blank=True, default=StudentProfile.Grade.FIRST)
     icon = models.CharField(max_length=10, default='🎮')
     is_active = models.BooleanField(default=True)
 

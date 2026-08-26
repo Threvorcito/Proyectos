@@ -10,7 +10,7 @@ from learning.models import Subject
 
 from .content import GAME_CHALLENGES
 from .models import Game, GameAttempt, GameAttemptAnswer
-from .services import ensure_games, get_game_progress, get_recommended_games, get_started_games, get_student_for_user
+from .services import ensure_games, games_for_student, get_game_progress, get_recommended_games, get_started_games, get_student_for_user
 
 
 TEMPLATE_BY_TYPE = {
@@ -24,16 +24,26 @@ TEMPLATE_BY_TYPE = {
 }
 
 
+def parse_positive_int(value, default=0):
+    try:
+        return max(int(value), 0)
+    except (TypeError, ValueError):
+        return default
+
+
 def games_index(request):
     ensure_games()
     student = get_student_for_user(request.user)
     subject_id = request.GET.get('subject')
     grade = request.GET.get('grade')
     games_qs = Game.objects.filter(is_active=True).select_related('level', 'subject').order_by('grade', 'subject__name', 'id')
+    if student is not None:
+        games_qs = games_for_student(games_qs, student)
+        grade = student.grade
+    elif grade:
+        games_qs = games_qs.filter(grade=grade)
     if subject_id:
         games_qs = games_qs.filter(subject_id=subject_id)
-    if grade:
-        games_qs = games_qs.filter(grade=grade)
     games = list(games_qs)
     progress = get_game_progress(student, games)
     game_cards = [{'game': game, 'progress': progress.get(game.id)} for game in games]
@@ -58,7 +68,10 @@ def games_index(request):
 
 def game_detail(request, slug):
     ensure_games()
-    game = get_object_or_404(Game.objects.select_related('level', 'subject'), slug=slug, is_active=True)
+    games = Game.objects.select_related('level', 'subject').filter(is_active=True)
+    student = get_student_for_user(request.user)
+    games = games_for_student(games, student)
+    game = get_object_or_404(games, slug=slug)
     challenges = GAME_CHALLENGES.get(slug, [])
     template = TEMPLATE_BY_TYPE.get(game.game_type, 'games/play.html')
     return render(
@@ -67,7 +80,6 @@ def game_detail(request, slug):
         {
             'game': game,
             'challenges': challenges,
-            'challenges_json': json.dumps(challenges, ensure_ascii=False),
         },
     )
 
@@ -75,18 +87,18 @@ def game_detail(request, slug):
 @login_required
 @require_POST
 def save_attempt(request, slug):
-    game = get_object_or_404(Game, slug=slug, is_active=True)
     student = get_student_for_user(request.user)
     if not student:
         return JsonResponse({'saved': False, 'reason': 'Solo estudiantes autenticados pueden guardar progreso.'}, status=403)
+    game = get_object_or_404(games_for_student(Game.objects.filter(is_active=True), student), slug=slug)
 
     try:
         payload = json.loads(request.body.decode('utf-8'))
     except json.JSONDecodeError:
         return JsonResponse({'saved': False, 'reason': 'Datos invalidos.'}, status=400)
 
-    total_questions = max(int(payload.get('total_questions', 0)), 0)
-    correct_answers = max(int(payload.get('correct_answers', 0)), 0)
+    total_questions = parse_positive_int(payload.get('total_questions'))
+    correct_answers = min(parse_positive_int(payload.get('correct_answers')), total_questions)
     score = round((correct_answers / total_questions) * 100) if total_questions else 0
     attempt = GameAttempt.objects.create(
         student=student,
@@ -110,7 +122,7 @@ def save_attempt(request, slug):
                 correct_answer=str(answer.get('correct_answer') or answer.get('answer') or '')[:120],
                 selected_answer=str(answer.get('selected_answer') or '')[:120],
                 is_correct=bool(answer.get('is_correct') if 'is_correct' in answer else answer.get('correct')),
-                attempts_used=max(int(answer.get('attempts_used') or answer.get('tries') or 1), 1),
+                attempts_used=max(parse_positive_int(answer.get('attempts_used') or answer.get('tries'), 1), 1),
                 order=index,
             ))
     if answer_rows:

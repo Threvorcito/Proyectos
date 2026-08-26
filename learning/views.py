@@ -1,5 +1,6 @@
 from activities.models import Activity
 from games.models import Game
+from games.services import games_for_student
 from readings.models import Reading
 
 from django.shortcuts import get_object_or_404, render
@@ -14,6 +15,7 @@ def level_list(request):
     level_cards = []
     for level in levels:
         grade = str(min(level.number, 3))
+        resource_grade = student.grade if student else grade
         assigned_count = 0
         if student:
             assigned_count = LessonPlanAssignment.objects.filter(student=student, plan__level=level).count()
@@ -22,9 +24,9 @@ def level_list(request):
         level_cards.append({
             'level': level,
             'grade': grade,
-            'activities_count': Activity.objects.filter(is_active=True, level=level).count(),
-            'readings_count': Reading.objects.filter(is_active=True, level=level).count(),
-            'games_count': Game.objects.filter(is_active=True, level=level).count(),
+            'activities_count': Activity.objects.filter(is_active=True, level=level, grade=resource_grade).count(),
+            'readings_count': Reading.objects.filter(is_active=True, level=level, grade=resource_grade).count(),
+            'games_count': games_for_student(Game.objects.filter(is_active=True, level=level), student).count() if student else Game.objects.filter(is_active=True, level=level, grade=resource_grade).count(),
             'plans_count': assigned_count,
         })
     upcoming_plans = []
@@ -71,9 +73,11 @@ def level_detail(request, number):
                 is_active=True,
             ).select_related('teacher', 'subject', 'level')[:2]
 
-        activity_count = Activity.objects.filter(is_active=True, level=level, subject=subject).count()
-        reading_count = Reading.objects.filter(is_active=True, level=level, subject=subject).count()
-        game_count = Game.objects.filter(is_active=True, level=level, subject=subject).count()
+        resource_grade = student.grade if student else grade
+        activity_count = Activity.objects.filter(is_active=True, level=level, subject=subject, grade=resource_grade).count()
+        reading_count = Reading.objects.filter(is_active=True, level=level, subject=subject, grade=resource_grade).count()
+        game_queryset = Game.objects.filter(is_active=True, level=level, subject=subject)
+        game_count = games_for_student(game_queryset, student).count() if student else game_queryset.filter(grade=resource_grade).count()
         correct_answers = 0
         total_answers = 0
         if student:

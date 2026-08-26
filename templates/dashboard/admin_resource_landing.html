@@ -96,6 +96,24 @@
   }
   .resource-table tbody tr:last-child td { border-bottom: 0; }
   .resource-table tbody tr:hover { background: #fbfcff; }
+  .resource-table th:last-child,
+  .resource-table td:last-child {
+    background: inherit;
+    box-shadow: -10px 0 18px rgba(16, 24, 40, .06);
+    position: sticky;
+    right: 0;
+    z-index: 2;
+  }
+  .resource-table thead th:last-child {
+    background: #f8fafc;
+    z-index: 3;
+  }
+  .resource-table tbody td:last-child {
+    background: #fff;
+  }
+  .resource-table tbody tr:hover td:last-child {
+    background: #fbfcff;
+  }
   .resource-title-cell strong,
   .resource-title-cell span { display: block; }
   .resource-title-cell strong {
@@ -150,6 +168,27 @@
     padding: 2rem;
     text-align: center;
   }
+  .resource-scroll-tools {
+    align-items: center;
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+    margin: 0 0 .75rem;
+  }
+  .resource-scroll-tools span {
+    color: #667085;
+    font-size: .9rem;
+    font-weight: 700;
+  }
+  .resource-scroll-btn {
+    align-items: center;
+    border-radius: 999px;
+    display: inline-flex;
+    font-weight: 900;
+    height: 36px;
+    justify-content: center;
+    width: 36px;
+  }
   @media (max-width: 900px) {
     .admin-content { padding: 1.25rem .9rem; }
     .resource-page-head { flex-direction: column; }
@@ -160,21 +199,21 @@
 </style>
 {% endblock %}
 {% block content %}
-<div class="admin-console">
-  {% include 'dashboard/partials/admin_sidebar.html' %}
-  <section class="admin-main">
-    {% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}
+<div class="{% if teacher_resource_page %}teacher-dashboard{% else %}admin-console{% endif %}">
+  {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_sidebar.html' %}{% endif %}
+  <section class="{% if teacher_resource_page %}container py-5{% else %}admin-main{% endif %}">
+    {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}{% endif %}
     <div class="admin-content">
       <div class="resource-page-head">
         <div>
           <h1>{{ config.title }}</h1>
-          <p>Administra los registros de {{ config.title|lower }} desde una vista clara y ordenada.</p>
+          <p>{% if teacher_resource_page %}Gestiona {{ config.title|lower }} según tus permisos docentes.{% else %}Administra los registros de {{ config.title|lower }} desde una vista clara y ordenada.{% endif %}</p>
         </div>
         <div class="resource-actions">
           {% if create_form %}
             <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createResourceModal">Agregar {{ config.singular }}</button>
           {% else %}
-            <a class="btn btn-primary" href="{% url 'dashboard:admin_resource_create' resource %}">Agregar {{ config.singular }}</a>
+            <a class="btn btn-primary" href="{% url resource_create_route resource %}">Agregar {{ config.singular }}</a>
           {% endif %}
           <a class="btn btn-outline-primary" href="{% url 'dashboard:redirect' %}">Volver</a>
         </div>
@@ -186,7 +225,12 @@
       </div>
 
       <div class="resource-table-card">
-        <div class="resource-table-wrap">
+        <div class="resource-scroll-tools" aria-label="Desplazar tabla">
+          <span>Ver más columnas</span>
+          <button class="btn btn-outline-secondary resource-scroll-btn" type="button" data-resource-scroll="left" aria-label="Mover tabla a la izquierda">‹</button>
+          <button class="btn btn-outline-secondary resource-scroll-btn" type="button" data-resource-scroll="right" aria-label="Mover tabla a la derecha">›</button>
+        </div>
+        <div class="resource-table-wrap" data-resource-table-wrap>
           <table class="table resource-table align-middle">
             <thead>
               <tr>
@@ -214,7 +258,7 @@
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#permissionsModal{{ item.pk }}">Permisos</button>
               {% endif %}
               <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#editResourceModal{{ item.pk }}">Editar</button>
-              <form method="post" action="{% url 'dashboard:admin_resource_delete' resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
+              <form method="post" action="{% url resource_delete_route resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
                 {% csrf_token %}
                 <button class="btn btn-sm btn-outline-danger" type="submit">{% if resource == 'profesores' %}Desactivar{% else %}Eliminar{% endif %}</button>
               </form>
@@ -230,7 +274,7 @@
               <td><span class="resource-badge">{{ config.singular|capfirst }}</span></td>
               <td><span class="resource-status">Registrado</span></td>
               <td class="text-end">
-                <form method="post" action="{% url 'dashboard:admin_resource_delete' resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
+                <form method="post" action="{% url resource_delete_route resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
                   {% csrf_token %}
                   <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
                 </form>
@@ -247,6 +291,17 @@
     </div>
   </section>
 </div>
+
+<script>
+  document.querySelectorAll('[data-resource-scroll]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const tableWrap = document.querySelector('[data-resource-table-wrap]');
+      if (!tableWrap) return;
+      const direction = button.dataset.resourceScroll === 'left' ? -1 : 1;
+      tableWrap.scrollBy({ left: direction * 360, behavior: 'smooth' });
+    });
+  });
+</script>
 
 {% for row in edit_rows %}
   {% with item=row.object %}
@@ -298,7 +353,7 @@
     <div class="modal fade admin-dialog" id="editResourceModal{{ item.pk }}" tabindex="-1" aria-labelledby="editResourceModalTitle{{ item.pk }}" aria-hidden="true" data-bs-backdrop="static">
       <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' or resource == 'competencias' %}modal-xl{% else %}modal-lg{% endif %}">
         <div class="modal-content">
-          <form method="post" action="{% url 'dashboard:admin_resource_update' resource item.pk %}" enctype="multipart/form-data">
+          <form method="post" action="{% url resource_update_route resource item.pk %}" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="modal-header"><div><h2 class="modal-title" id="editResourceModalTitle{{ item.pk }}">Editar {{ config.singular }}</h2><p>{% if resource == 'usuarios' %}Administra el acceso de esta cuenta. Desactivar conserva el historial; reactivar restaura el perfil correspondiente si hace falta.{% elif resource == 'profesores' %}Administra el perfil docente. Desactivar conserva sus planes, reportes y evidencias académicas.{% else %}Actualiza la información de este registro. Haz clic en guardar cuando termines.{% endif %}</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
             <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
@@ -357,7 +412,7 @@
   <div class="modal fade admin-dialog {% if resource == 'profesores' %}admin-dialog--teacher{% endif %}" id="createResourceModal" tabindex="-1" aria-labelledby="createResourceModalTitle" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' %}modal-xl{% else %}modal-lg{% endif %}">
       <div class="modal-content">
-        <form id="createResourceForm" method="post" action="{% url 'dashboard:admin_resource_create' resource %}" enctype="multipart/form-data" data-submit-once>
+        <form id="createResourceForm" method="post" action="{% url resource_create_route resource %}" enctype="multipart/form-data" data-submit-once>
           {% csrf_token %}
           <input type="hidden" name="_from_modal" value="1">
           <div class="modal-header">

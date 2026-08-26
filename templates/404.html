@@ -217,14 +217,14 @@
 <section class="kid-error-page">
   <div class="kid-error-card">
     <div class="kid-error-copy">
-      <span class="eyebrow">Ruta no encontrada</span>
-      <h1>Oops, esta página se escondió <span>404</span></h1>
-      <p>No pasa nada. A veces las letras, los caminos y los enlaces se confunden. Volvamos juntos a una actividad clara, corta y fácil de seguir.</p>
-      <div class="kid-error-tip"><span>💡</span> Consejo: lee despacio, respira y elige una opción para continuar.</div>
+      <span class="eyebrow">Página no disponible</span>
+      <h1>Ups, esta página no está disponible para ti <span>404</span></h1>
+      <p>No pasa nada. Volvamos a un lugar seguro para seguir aprendiendo paso a paso.</p>
+      <div class="kid-error-tip"><span>💡</span> Escoge un botón grande para continuar.</div>
       <div class="kid-error-actions">
-        <a class="btn btn-primary" href="{% url 'core:home' %}">Volver al inicio</a>
-        <a class="btn btn-outline-primary" href="{% url 'learning:levels' %}">Ir a aprender</a>
-        <a class="btn btn-outline-success" href="{% url 'games:index' %}">Jugar un reto</a>
+        <a class="btn btn-primary" href="{% url 'dashboard:redirect' %}">Volver a mi panel</a>
+        <a class="btn btn-outline-primary" href="{% url 'activities:list' %}">Mis actividades</a>
+        <a class="btn btn-outline-success" href="{% url 'learning:levels' %}">Seguir aprendiendo</a>
       </div>
     </div>
 

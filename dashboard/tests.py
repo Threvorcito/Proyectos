@@ -1,11 +1,12 @@
 from django.test import TestCase
 from django.urls import reverse
+from unittest.mock import patch
 
 from accounts.models import CustomUser
 from dashboard.forms import QuickStudentCreationForm
 from activities.models import Activity
-from games.models import Game
-from learning.models import LessonPlan, LessonPlanAssignment, Level, StudentProfile, Subject, TeacherProfile
+from games.models import Game, GameAttempt, GameAttemptAnswer
+from learning.models import LessonPlan, LessonPlanAssignment, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
 
 
 class DashboardProfileGuardTests(TestCase):
@@ -51,7 +52,8 @@ class QuickStudentCreationFormTests(TestCase):
         self.assertEqual(user.email, 'sofia_perez@estudiante.local')
         self.assertEqual(user.role, CustomUser.Role.STUDENT)
         self.assertEqual(user.student_profile.school, 'public')
-        self.assertEqual(len(password), 8)
+        self.assertEqual(len(password), 4)
+        self.assertTrue(password.isdigit())
         self.assertTrue(user.check_password(password))
 
 
@@ -135,6 +137,29 @@ class LessonPlanImplementationTests(TestCase):
         self.assertContains(plan_response, 'Mi clase con apoyo')
         self.assertContains(plan_response, 'Vamos paso a paso')
 
+    def test_student_report_shows_quiz_progress_by_subject(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        subject = Subject.objects.create(name='Matemática')
+        user = CustomUser.objects.create_user(
+            username='alumnoquizreporte',
+            email='alumnoquizreporte@example.com',
+            password='Demo12345!',
+            role=CustomUser.Role.STUDENT,
+        )
+        student = StudentProfile.objects.create(user=user, name='Alumno Quiz Reporte', grade='1', reading_level=level, current_level=level)
+        game = Game.objects.create(level=level, subject=subject, grade='1', name='Quiz', slug='quiz-reporte', description='Quiz', skill='Agilidad', game_type=Game.GameType.DYSLEXIA_QUIZ)
+        attempt = GameAttempt.objects.create(student=student, game=game, score=50, correct_answers=1, total_questions=2)
+        GameAttemptAnswer.objects.create(attempt=attempt, subject='Matemática', question='¿Cuánto es 1 + 1?', correct_answer='2', selected_answer='2', is_correct=True)
+        GameAttemptAnswer.objects.create(attempt=attempt, subject='Matemática', question='¿Cuánto es 2 + 1?', correct_answer='3', selected_answer='4', is_correct=False)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
+
+        self.assertContains(response, 'Progreso del quiz por materia')
+        self.assertContains(response, 'Matemática')
+        self.assertContains(response, '1/2')
+        self.assertContains(response, '50%')
+
 
 class TeacherPermissionEnforcementTests(TestCase):
     def setUp(self):
@@ -197,6 +222,221 @@ class TeacherPermissionEnforcementTests(TestCase):
         self.assertNotContains(response, 'Planes que has creado')
         self.assertNotContains(response, 'Actividades recientes')
         self.assertNotContains(response, 'Lecturas activas')
+
+    def test_teacher_resource_cards_link_to_teacher_pages(self):
+        self.teacher.can_create_students = True
+        self.teacher.can_manage_activities = True
+        self.teacher.can_manage_lessons = True
+        self.teacher.can_manage_readings = True
+        self.teacher.save(update_fields=['can_create_students', 'can_manage_activities', 'can_manage_lessons', 'can_manage_readings'])
+
+        response = self.client.get(reverse('dashboard:teacher'))
+
+        self.assertContains(response, reverse('dashboard:teacher_students'))
+        self.assertContains(response, reverse('dashboard:teacher_resource', args=['actividades']))
+        self.assertContains(response, reverse('dashboard:teacher_resource', args=['clases']))
+        self.assertContains(response, reverse('dashboard:teacher_resource', args=['lecturas']))
+        self.assertNotContains(response, reverse('dashboard:admin_resource', args=['actividades']))
+
+    def test_teacher_resource_page_uses_teacher_layout(self):
+        self.teacher.can_manage_activities = True
+        self.teacher.save(update_fields=['can_manage_activities'])
+
+        response = self.client.get(reverse('dashboard:teacher_resource', args=['actividades']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Gestiona actividades según tus permisos docentes.')
+        self.assertNotContains(response, 'Panel de control')
+
+    def test_teacher_resource_actions_return_to_teacher_resource_page(self):
+        self.teacher.can_manage_activities = True
+        self.teacher.save(update_fields=['can_manage_activities'])
+        activity = Activity.objects.create(
+            level=self.level,
+            subject=self.subject,
+            grade='1',
+            title='Actividad docente',
+            activity_type=Activity.ActivityType.READING,
+        )
+
+        response = self.client.post(reverse('dashboard:teacher_resource_delete', args=['actividades', activity.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:teacher_resource', args=['actividades']))
+
+    def test_teacher_students_page_lists_students_and_add_button(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        student_user = CustomUser.objects.create_user(
+            username='alumnopagina',
+            email='alumnopagina@example.com',
+            password='Demo12345!',
+            role=CustomUser.Role.STUDENT,
+        )
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Página', grade='1', reading_level=self.level, current_level=self.level)
+        self.teacher.students.add(student)
+
+        response = self.client.get(reverse('dashboard:teacher_students'))
+
+        self.assertContains(response, 'Mis alumnos')
+        self.assertContains(response, 'Alumno Página')
+        self.assertContains(response, reverse('dashboard:quick_student_create'))
+        self.assertContains(response, reverse('dashboard:teacher_student_update', args=[student.pk]))
+        self.assertContains(response, reverse('dashboard:teacher_student_delete', args=[student.pk]))
+
+    def test_teacher_can_update_linked_student(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        student_user = CustomUser.objects.create_user(username='alumnoeditar', email='alumnoeditar@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Editar', grade='1', reading_level=self.level, current_level=self.level)
+        self.teacher.students.add(student)
+
+        response = self.client.post(reverse('dashboard:teacher_student_update', args=[student.pk]), data={
+            'name': 'Alumno Editado',
+            'alias': 'Editado',
+            'grade': '2',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+            'current_level': self.level.pk,
+        })
+        student.refresh_from_db()
+
+        self.assertRedirects(response, reverse('dashboard:teacher_students'))
+        self.assertEqual(student.name, 'Alumno Editado')
+        self.assertEqual(student.alias, 'Editado')
+
+    def test_teacher_can_start_linked_student_session(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        student_user = CustomUser.objects.create_user(username='alumnoentrar', email='alumnoentrar@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Entrar', grade='1', reading_level=self.level, current_level=self.level)
+        self.teacher.students.add(student)
+
+        response = self.client.post(reverse('dashboard:teacher_student_login', args=[student.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:student'))
+        self.assertEqual(int(self.client.session['_auth_user_id']), student_user.pk)
+
+    def test_teacher_cannot_start_unlinked_student_session(self):
+        student_user = CustomUser.objects.create_user(username='alumnoentrarajeno', email='alumnoentrarajeno@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Entrar Ajeno', grade='1', reading_level=self.level, current_level=self.level)
+
+        response = self.client.post(reverse('dashboard:teacher_student_login', args=[student.pk]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.user.pk)
+
+    def test_teacher_cannot_update_unlinked_student(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        student_user = CustomUser.objects.create_user(username='alumnoajenoupdate', email='alumnoajenoupdate@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Ajeno Update', grade='1', reading_level=self.level, current_level=self.level)
+
+        response = self.client.get(reverse('dashboard:teacher_student_update', args=[student.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_teacher_cannot_link_parent_to_unlinked_student(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        parent_user = CustomUser.objects.create_user(username='tutorajeno', email='tutorajeno@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
+        parent = ParentProfile.objects.create(user=parent_user, name='Tutor Ajeno')
+        student_user = CustomUser.objects.create_user(username='alumnoajenotutor', email='alumnoajenotutor@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Ajeno Tutor', grade='1', reading_level=self.level, current_level=self.level)
+
+        response = self.client.post(reverse('dashboard:teacher_student_update', args=[student.pk]), data={
+            'name': student.name,
+            'alias': '',
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+            'current_level': self.level.pk,
+            'parents': [parent.pk],
+        })
+
+        self.assertEqual(response.status_code, 404)
+        self.assertFalse(parent.students.filter(pk=student.pk).exists())
+
+    def test_teacher_delete_unlinked_student_returns_404(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        student_user = CustomUser.objects.create_user(username='alumnoajenodelete', email='alumnoajenodelete@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Ajeno Delete', grade='1', reading_level=self.level, current_level=self.level)
+
+        response = self.client.post(reverse('dashboard:teacher_student_delete', args=[student.pk]))
+
+        self.assertEqual(response.status_code, 404)
+        self.assertTrue(StudentProfile.objects.filter(pk=student.pk).exists())
+
+    def test_teacher_delete_student_with_history_deactivates_and_unlinks(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        student_user = CustomUser.objects.create_user(username='alumnohistorial', email='alumnohistorial@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Historial', grade='1', reading_level=self.level, current_level=self.level)
+        self.teacher.students.add(student)
+        plan = LessonPlan.objects.create(teacher=self.teacher, subject=self.subject, level=self.level, grade='1', title='Plan historial', topic='Historial', objective='Conservar historial.')
+        LessonPlanAssignment.objects.create(plan=plan, student=student)
+
+        response = self.client.post(reverse('dashboard:teacher_student_delete', args=[student.pk]))
+        student_user.refresh_from_db()
+
+        self.assertRedirects(response, reverse('dashboard:teacher_students'))
+        self.assertFalse(student_user.is_active)
+        self.assertFalse(self.teacher.students.filter(pk=student.pk).exists())
+
+    def test_linked_teacher_can_regenerate_student_visual_key(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        student_user = CustomUser.objects.create_user(username='alumnodibujos', email='alumnodibujos@example.com', password='2468', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Dibujos', grade='1', reading_level=self.level, current_level=self.level)
+        student.set_visual_key(['dog', 'star', 'car'])
+        student.save(update_fields=['visual_key_hash'])
+        old_hash = student.visual_key_hash
+        self.teacher.students.add(student)
+
+        with patch('learning.models.secrets.SystemRandom.sample', return_value=['book', 'sun', 'fish']):
+            response = self.client.post(reverse('dashboard:teacher_student_visual_key_regenerate', args=[student.pk]), {'had_visual_key': '1'})
+        student.refresh_from_db()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tarjeta de acceso')
+        self.assertNotEqual(student.visual_key_hash, old_hash)
+        self.assertFalse(student.check_visual_key(['dog', 'star', 'car']))
+        self.assertTrue(student.check_visual_key(['book', 'sun', 'fish']))
+
+    def test_unlinked_teacher_cannot_regenerate_student_visual_key(self):
+        other_teacher_user = CustomUser.objects.create_user(username='docenteajeno', email='docenteajeno@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        TeacherProfile.objects.create(user=other_teacher_user, name='Docente Ajeno', can_create_students=True)
+        student_user = CustomUser.objects.create_user(username='alumnodibujosajeno', email='alumnodibujosajeno@example.com', password='2468', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Dibujos Ajeno', grade='1', reading_level=self.level, current_level=self.level)
+        student.set_visual_key(['dog', 'star', 'car'])
+        student.save(update_fields=['visual_key_hash'])
+        old_hash = student.visual_key_hash
+
+        response = self.client.post(reverse('dashboard:teacher_student_visual_key_regenerate', args=[student.pk]), {'had_visual_key': '1'})
+        student.refresh_from_db()
+
+        self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+        self.assertEqual(student.visual_key_hash, old_hash)
+
+    def test_old_student_without_visual_key_can_receive_one(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        student_user = CustomUser.objects.create_user(username='alumnoantiguo', email='alumnoantiguo@example.com', password='2468', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Antiguo', grade='1', reading_level=self.level, current_level=self.level)
+        self.teacher.students.add(student)
+        self.assertEqual(student.visual_key_hash, '')
+
+        with patch('learning.models.secrets.SystemRandom.sample', return_value=['apple', 'house', 'car']):
+            response = self.client.post(reverse('dashboard:teacher_student_visual_key_regenerate', args=[student.pk]), {'had_visual_key': '0'})
+        student.refresh_from_db()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Guarda esta tarjeta en un lugar seguro')
+        self.assertTrue(student.check_visual_key(['apple', 'house', 'car']))
 
 
 class AdminResourceDeleteTests(TestCase):
@@ -513,3 +753,211 @@ class AdminResourceDeleteTests(TestCase):
         response = self.client.get(reverse('dashboard:parents'))
 
         self.assertRedirects(response, reverse('accounts:profile'))
+
+
+class AcademicRelationshipPermissionTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial', order=1)
+        self.subject = Subject.objects.create(name='Lengua y Literatura')
+        self.teacher_user = CustomUser.objects.create_user(
+            username='docentevinculado',
+            email='docentevinculado@example.com',
+            password='Docente123!',
+            role=CustomUser.Role.TEACHER,
+        )
+        self.teacher = TeacherProfile.objects.create(
+            user=self.teacher_user,
+            name='Docente Vinculado',
+            can_create_students=True,
+            can_create_lesson_plans=True,
+            can_view_student_reports=True,
+        )
+        self.linked_user = CustomUser.objects.create_user(
+            username='alumnovinculado',
+            email='alumnovinculado@example.com',
+            password='Demo12345!',
+            role=CustomUser.Role.STUDENT,
+        )
+        self.linked_student = StudentProfile.objects.create(
+            user=self.linked_user,
+            name='Alumno Vinculado',
+            grade='1',
+            reading_level=self.level,
+            current_level=self.level,
+        )
+        self.other_user = CustomUser.objects.create_user(
+            username='alumnoajeno',
+            email='alumnoajeno@example.com',
+            password='Demo12345!',
+            role=CustomUser.Role.STUDENT,
+        )
+        self.other_student = StudentProfile.objects.create(
+            user=self.other_user,
+            name='Alumno Ajeno',
+            grade='1',
+            reading_level=self.level,
+            current_level=self.level,
+        )
+        self.teacher.students.add(self.linked_student)
+
+    def test_teacher_dashboard_shows_only_linked_students(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(reverse('dashboard:teacher'))
+
+        self.assertContains(response, 'Alumno Vinculado')
+        self.assertNotContains(response, 'Alumno Ajeno')
+
+    def test_teacher_cannot_view_unlinked_student_report_by_pk(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[self.other_student.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+
+    def test_teacher_can_view_linked_student_report(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[self.linked_student.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Alumno Vinculado')
+
+    def test_quick_student_creation_links_student_to_teacher(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:quick_student_create'), data={
+            'name': 'Nuevo Alumno',
+            'alias': 'Nuevo',
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        student = StudentProfile.objects.get(name='Nuevo Alumno')
+        self.assertTrue(self.teacher.students.filter(pk=student.pk).exists())
+
+    def test_quick_student_creation_links_existing_parent(self):
+        parent_user = CustomUser.objects.create_user(username='tutorexistente', email='tutorexistente@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
+        parent = ParentProfile.objects.create(user=parent_user, name='Tutor Existente')
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:quick_student_create'), data={
+            'name': 'Alumno Con Tutor',
+            'alias': 'Tutor',
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+            'parents': [parent.pk],
+        })
+
+        self.assertEqual(response.status_code, 200)
+        student = StudentProfile.objects.get(name='Alumno Con Tutor')
+        self.assertTrue(parent.students.filter(pk=student.pk).exists())
+
+    def test_quick_student_creation_creates_and_links_new_parent(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:quick_student_create'), data={
+            'name': 'Alumno Tutor Nuevo',
+            'alias': 'Nuevo',
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+            'new_parent_first_name': 'Maria',
+            'new_parent_last_name': 'Tutor',
+            'new_parent_email': 'maria.tutor@example.com',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        student = StudentProfile.objects.get(name='Alumno Tutor Nuevo')
+        parent = ParentProfile.objects.get(user__email='maria.tutor@example.com')
+        self.assertTrue(parent.students.filter(pk=student.pk).exists())
+
+    def test_teacher_cannot_assign_unlinked_student_to_lesson_plan(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:lesson_plan_create'), data={
+            'subject': self.subject.pk,
+            'level': self.level.pk,
+            'grade': '1',
+            'title': 'Plan seguro',
+            'topic': 'Seguridad',
+            'objective': 'Validar estudiantes vinculados.',
+            'assigned_students': [self.linked_student.pk, self.other_student.pk],
+            'status': LessonPlan.Status.ACTIVE,
+            'is_active': 'on',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Escoja una opción válida')
+        self.assertFalse(LessonPlan.objects.filter(title='Plan seguro').exists())
+
+    def test_parent_dashboard_shows_only_linked_students(self):
+        parent_user = CustomUser.objects.create_user(
+            username='padrevinculado',
+            email='padrevinculado@example.com',
+            password='Padre12345!',
+            role=CustomUser.Role.PARENT,
+        )
+        parent = ParentProfile.objects.create(user=parent_user, name='Padre Vinculado')
+        parent.students.add(self.linked_student)
+        self.client.force_login(parent_user)
+
+        response = self.client.get(reverse('dashboard:parents'))
+
+        self.assertContains(response, 'Alumno Vinculado')
+        self.assertNotContains(response, 'Alumno Ajeno')
+
+    def test_parent_can_view_only_linked_student_report(self):
+        parent_user = CustomUser.objects.create_user(
+            username='padreinforme',
+            email='padreinforme@example.com',
+            password='Padre12345!',
+            role=CustomUser.Role.PARENT,
+        )
+        parent = ParentProfile.objects.create(user=parent_user, name='Padre Informe')
+        parent.students.add(self.linked_student)
+        self.client.force_login(parent_user)
+
+        linked_response = self.client.get(reverse('dashboard:student_report', args=[self.linked_student.pk]))
+        unlinked_response = self.client.get(reverse('dashboard:student_report', args=[self.other_student.pk]))
+
+        self.assertEqual(linked_response.status_code, 200)
+        self.assertRedirects(unlinked_response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+
+    def test_plain_staff_user_cannot_view_student_report_without_admin_role(self):
+        staff_user = CustomUser.objects.create_user(
+            username='staffsinrol',
+            email='staffsinrol@example.com',
+            password='Staff12345!',
+            role=CustomUser.Role.TEACHER,
+            is_staff=True,
+        )
+        self.client.force_login(staff_user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[self.linked_student.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+
+    def test_admin_role_keeps_global_student_report_access(self):
+        admin = CustomUser.objects.create_user(
+            username='adminreportes',
+            email='adminreportes@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        self.client.force_login(admin)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[self.other_student.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Alumno Ajeno')

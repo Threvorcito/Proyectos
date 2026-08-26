@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block title %}Tarjeta visual de {{ student.display_name }} | {{ site_name }}{% endblock %}
+{% block extra_css %}
+<style>
+  .visual-card-page { background: linear-gradient(135deg, #eef8ff, #fff8e8); min-height: 78vh; padding: 2rem 1rem; }
+  .visual-card { background: #fff; border: 3px solid #2563eb; border-radius: 28px; box-shadow: 0 20px 50px rgba(15, 23, 42, .12); margin: 0 auto; max-width: 720px; padding: 2rem; text-align: center; }
+  .visual-card h1 { color: #14213d; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 900; letter-spacing: -.04em; margin: .5rem 0; }
+  .visual-card__subtitle { color: #475569; font-size: 1.15rem; margin-bottom: 1.4rem; }
+  .visual-card__symbols { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin: 1.5rem 0; }
+  .visual-card__symbol { align-items: center; background: #f8fafc; border: 2px solid #dbeafe; border-radius: 24px; display: flex; flex-direction: column; font-size: clamp(3rem, 10vw, 5rem); font-weight: 900; justify-content: center; min-height: 150px; min-width: 150px; padding: 1rem; }
+  .visual-card__symbol small { color: #334155; font-size: 1rem; margin-top: .4rem; }
+  .visual-card__pin { background: #dcfce7; border: 2px solid #86efac; border-radius: 20px; color: #14532d; display: inline-block; font-size: 1.4rem; font-weight: 900; margin-top: .7rem; padding: .75rem 1rem; }
+  .visual-card__note { color: #334155; font-size: 1.05rem; font-weight: 800; margin-top: 1.4rem; }
+  .visual-card-actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin-top: 1.5rem; }
+  @media print {
+    .site-navbar, .site-footer, .accessibility-fab, .system-messages, .visual-card-actions { display: none !important; }
+    .visual-card-page { background: #fff; padding: 0; }
+    .visual-card { box-shadow: none; max-width: none; }
+  }
+</style>
+{% endblock %}
+{% block content %}
+<section class="visual-card-page">
+  <div class="visual-card">
+    <span class="eyebrow">Tarjeta de acceso</span>
+    <h1>{{ student.display_name }}</h1>
+    <p class="visual-card__subtitle">Mis dibujos secretos</p>
+
+    <div class="visual-card__symbols" aria-label="Dibujos secretos en orden">
+      {% for item in visual_key %}
+        <div class="visual-card__symbol">
+          <span aria-hidden="true">{{ item.icon }}</span>
+          <small>{{ item.label }}</small>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if pin %}
+      <div class="visual-card__pin">PIN: {{ pin }}</div>
+    {% endif %}
+
+    <p class="visual-card__note">Guarda esta tarjeta en un lugar seguro.</p>
+  </div>
+  <div class="visual-card-actions">
+    <button class="btn btn-primary btn-lg" type="button" onclick="window.print()">Imprimir tarjeta</button>
+    <a class="btn btn-outline-primary btn-lg" href="{% url back_url %}">Volver</a>
+  </div>
+</section>
+{% endblock %}

@@ -6,23 +6,22 @@ from .models import CustomUser
 
 class EmailAuthenticationForm(AuthenticationForm):
     error_messages = {
-        'invalid_login': 'No pudimos iniciar sesión con ese correo y contraseña.',
+        'invalid_login': 'No pudimos iniciar sesión con ese usuario/correo y PIN o contraseña.',
         'inactive': 'Esta cuenta está inactiva.',
     }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['username'].label = 'Correo electrónico'
+        self.fields['username'].label = 'Usuario o correo'
         self.fields['username'].widget.attrs.update({
             'class': 'login-page__input',
-            'placeholder': 'correo@ejemplo.com',
-            'autocomplete': 'email',
-            'inputmode': 'email',
+            'placeholder': 'usuario del estudiante o correo',
+            'autocomplete': 'username',
         })
-        self.fields['password'].label = 'Contraseña'
+        self.fields['password'].label = 'PIN o contraseña'
         self.fields['password'].widget.attrs.update({
             'class': 'login-page__input',
-            'placeholder': 'Escribe tu contraseña',
+            'placeholder': 'PIN del estudiante o contraseña',
             'autocomplete': 'current-password',
         })
 

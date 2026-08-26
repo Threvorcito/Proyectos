@@ -1,3 +1,5 @@
+import secrets
+
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
 from django.db import models
@@ -51,6 +53,17 @@ class Syllable(models.Model):
 
 
 class StudentProfile(models.Model):
+    VISUAL_KEY_CHOICES = (
+        ('dog', '🐶', 'perro'),
+        ('star', '⭐', 'estrella'),
+        ('car', '🚗', 'carro'),
+        ('book', '📘', 'libro'),
+        ('sun', '☀️', 'sol'),
+        ('house', '🏠', 'casa'),
+        ('apple', '🍎', 'manzana'),
+        ('fish', '🐟', 'pez'),
+    )
+
     class Grade(models.TextChoices):
         FIRST = '1', 'Primer grado'
         SECOND = '2', 'Segundo grado'
@@ -91,6 +104,7 @@ class StudentProfile(models.Model):
     experience = models.PositiveIntegerField(default=0)
     learning_streak = models.PositiveIntegerField(default=0)
     last_activity_at = models.DateTimeField(blank=True, null=True)
+    visual_key_hash = models.CharField(max_length=128, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def display_name(self):
@@ -98,6 +112,38 @@ class StudentProfile(models.Model):
 
     def __str__(self):
         return self.display_name()
+
+    @classmethod
+    def visual_key_codes(cls):
+        return [choice[0] for choice in cls.VISUAL_KEY_CHOICES]
+
+    @classmethod
+    def visual_key_items(cls):
+        return [
+            {'code': code, 'icon': icon, 'label': label}
+            for code, icon, label in cls.VISUAL_KEY_CHOICES
+        ]
+
+    @classmethod
+    def visual_key_items_for_codes(cls, codes):
+        items = {item['code']: item for item in cls.visual_key_items()}
+        return [items[code] for code in codes if code in items]
+
+    @classmethod
+    def visual_key_secret(cls, codes):
+        return '|'.join(codes)
+
+    def set_visual_key(self, codes):
+        self.visual_key_hash = make_password(self.visual_key_secret(codes))
+
+    def check_visual_key(self, codes):
+        return bool(self.visual_key_hash and check_password(self.visual_key_secret(codes), self.visual_key_hash))
+
+    def generate_visual_key(self):
+        codes = secrets.SystemRandom().sample(self.visual_key_codes(), 3)
+        self.set_visual_key(codes)
+        self.save(update_fields=['visual_key_hash'])
+        return self.visual_key_items_for_codes(codes)
 
 
 class TeacherProfile(models.Model):
@@ -107,6 +153,7 @@ class TeacherProfile(models.Model):
     email = models.EmailField(blank=True)
     password = models.CharField(max_length=128, blank=True)
     name = models.CharField(max_length=150)
+    students = models.ManyToManyField(StudentProfile, blank=True, related_name='teachers')
     bio = models.TextField(blank=True)
     is_active = models.BooleanField(default=True, verbose_name='Docente activo')
     can_create_students = models.BooleanField(default=False, verbose_name='Puede crear estudiantes')
@@ -300,6 +347,7 @@ class LessonPlanAssignment(models.Model):
 class ParentProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='parent_profile')
     name = models.CharField(max_length=150)
+    students = models.ManyToManyField(StudentProfile, blank=True, related_name='parents')
 
 
 class AccessibilityPreference(models.Model):

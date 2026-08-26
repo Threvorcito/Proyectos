@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .forms import ProfileUpdateForm
-from learning.models import TeacherProfile
+from learning.models import Level, ParentProfile, StudentProfile, TeacherProfile
 
 from .models import CustomUser
 
@@ -89,3 +89,118 @@ class ProfileUpdateFormTests(TestCase):
         })
 
         self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+
+
+class StudentVisualAccessTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial', order=1)
+        self.teacher_user = CustomUser.objects.create_user(
+            username='docentevisual',
+            email='docentevisual@example.com',
+            password='Docente123!',
+            role=CustomUser.Role.TEACHER,
+        )
+        self.teacher = TeacherProfile.objects.create(user=self.teacher_user, name='Docente Visual', is_active=True)
+        self.student_user = CustomUser.objects.create_user(
+            username='alumnovisual',
+            email='alumnovisual@example.com',
+            password='2468',
+            role=CustomUser.Role.STUDENT,
+        )
+        self.student = StudentProfile.objects.create(
+            user=self.student_user,
+            name='Alumno Visual',
+            grade='1',
+            reading_level=self.level,
+            current_level=self.level,
+        )
+        self.student.set_visual_key(['dog', 'star', 'car'])
+        self.student.save(update_fields=['visual_key_hash'])
+        self.teacher.students.add(self.student)
+        self.parent_user = CustomUser.objects.create_user(
+            username='tutorvisual',
+            email='tutorvisual@example.com',
+            password='Tutor12345!',
+            role=CustomUser.Role.PARENT,
+        )
+        self.parent = ParentProfile.objects.create(user=self.parent_user, name='Tutor Visual')
+        self.parent.students.add(self.student)
+
+    def test_student_visual_access_logs_in_same_student_profile(self):
+        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
+        self.client.post(reverse('accounts:student_access_parents'), {'parent_id': self.parent.pk})
+
+        response = self.client.post(reverse('accounts:student_access_key'), {
+            'symbol_1': 'dog',
+            'symbol_2': 'star',
+            'symbol_3': 'car',
+        })
+
+        self.assertRedirects(response, reverse('dashboard:student'))
+        self.assertEqual(int(self.client.session['_auth_user_id']), self.student_user.pk)
+
+    def test_student_visual_access_rejects_student_not_linked_to_teacher(self):
+        other_user = CustomUser.objects.create_user(username='otroalumno', email='otroalumno@example.com', password='2468', role=CustomUser.Role.STUDENT)
+        other_student = StudentProfile.objects.create(user=other_user, name='Otro Alumno', grade='1', reading_level=self.level, current_level=self.level)
+        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+
+        response = self.client.post(reverse('accounts:student_access_students'), {'student_id': other_student.pk})
+
+        self.assertRedirects(response, reverse('accounts:student_access_students'))
+        self.assertNotIn('student_access_student_id', self.client.session)
+
+    def test_student_visual_access_rejects_parent_not_linked_to_student(self):
+        other_parent_user = CustomUser.objects.create_user(username='otrotutor', email='otrotutor@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
+        other_parent = ParentProfile.objects.create(user=other_parent_user, name='Otro Tutor')
+        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
+
+        response = self.client.post(reverse('accounts:student_access_parents'), {'parent_id': other_parent.pk})
+
+        self.assertRedirects(response, reverse('accounts:student_access_parents'))
+        self.assertNotIn('student_access_parent_id', self.client.session)
+
+    def test_student_visual_access_shows_linked_parent(self):
+        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
+
+        response = self.client.get(reverse('accounts:student_access_parents'))
+
+        self.assertContains(response, 'Tutor Visual')
+        self.assertNotContains(response, 'Falta vincular un tutor')
+
+    def test_student_visual_access_shows_two_linked_parents(self):
+        second_parent_user = CustomUser.objects.create_user(username='tutorvisualdos', email='tutorvisualdos@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
+        second_parent = ParentProfile.objects.create(user=second_parent_user, name='Tutor Visual Dos')
+        second_parent.students.add(self.student)
+        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
+
+        response = self.client.get(reverse('accounts:student_access_parents'))
+
+        self.assertContains(response, 'Tutor Visual')
+        self.assertContains(response, 'Tutor Visual Dos')
+
+    def test_student_visual_access_without_parent_shows_help_message(self):
+        self.parent.students.remove(self.student)
+        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
+
+        response = self.client.get(reverse('accounts:student_access_parents'))
+
+        self.assertContains(response, 'Falta vincular un tutor')
+
+    def test_student_visual_access_rejects_wrong_visual_key(self):
+        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
+        self.client.post(reverse('accounts:student_access_parents'), {'parent_id': self.parent.pk})
+
+        response = self.client.post(reverse('accounts:student_access_key'), {
+            'symbol_1': 'car',
+            'symbol_2': 'star',
+            'symbol_3': 'dog',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn('_auth_user_id', self.client.session)

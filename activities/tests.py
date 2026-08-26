@@ -88,3 +88,42 @@ class ActivitySubmissionTests(TestCase):
 
         self.assertIn(letter_activity, recommendations)
         self.assertTrue(all(activity.activity_type in ('FIND_LETTER', 'SIMILAR_LETTERS') for activity in recommendations))
+
+
+class ActivityGradeFilterTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial')
+        self.students = {}
+        for grade in ('1', '2', '3'):
+            user = CustomUser.objects.create_user(
+                username=f'estudiante{grade}',
+                email=f'estudiante{grade}@example.com',
+                password='Demo12345!',
+                role=CustomUser.Role.STUDENT,
+            )
+            self.students[grade] = StudentProfile.objects.create(user=user, name=f'Estudiante {grade}', grade=grade, reading_level=self.level, current_level=self.level)
+            Activity.objects.create(level=self.level, title=f'Actividad grado {grade}', activity_type=Activity.ActivityType.READING, grade=grade)
+
+    def test_students_only_see_activities_for_their_grade(self):
+        for grade, student in self.students.items():
+            self.client.force_login(student.user)
+            response = self.client.get(reverse('activities:list'), {'grade': '3' if grade != '3' else '1'})
+            self.assertContains(response, f'Actividad grado {grade}')
+            for other_grade in {'1', '2', '3'} - {grade}:
+                self.assertNotContains(response, f'Actividad grado {other_grade}')
+
+    def test_student_cannot_open_activity_from_other_grade(self):
+        self.client.force_login(self.students['1'].user)
+        other_activity = Activity.objects.get(title='Actividad grado 2')
+
+        response = self.client.get(reverse('activities:detail', args=[other_activity.pk]))
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_recommendations_do_not_fallback_to_other_grades_without_general_marker(self):
+        level = Level.objects.create(number=2, name='Intermedio')
+        user = CustomUser.objects.create_user(username='singeneral', email='singeneral@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=user, name='Sin General', grade='1', reading_level=level, current_level=level)
+        Activity.objects.create(level=level, title='Solo segundo', activity_type=Activity.ActivityType.READING, grade='2')
+
+        self.assertEqual(list(get_recommended_activities(student)), [])

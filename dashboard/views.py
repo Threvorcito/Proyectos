@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
@@ -11,19 +12,20 @@ from activities.models import Activity
 from activities.services import get_recommended_activities
 from core.models import AuditLog
 from gamification.services import evaluate_achievements
-from games.models import Game
+from games.models import Game, GameAttemptAnswer
+from games.services import games_for_student
 from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, LessonPlanAssignment, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading
 
-from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
+from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherStudentUpdateForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
 
 
 ADMIN_RESOURCES = {
     'usuarios': {'title': 'Usuarios y roles', 'singular': 'usuario', 'model': CustomUser, 'form': AdminUserCreationForm, 'update_form': AdminUserUpdateForm, 'fields': None},
-    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'update_form': TeacherUpdateForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'bio', 'is_active', 'can_create_students', 'can_view_student_reports', 'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games')},
+    'profesores': {'title': 'Profesores', 'singular': 'profesor', 'model': TeacherProfile, 'create_form': TeacherCreationForm, 'update_form': TeacherUpdateForm, 'fields': ('first_name', 'last_name', 'email', 'name', 'students', 'bio', 'is_active', 'can_create_students', 'can_view_student_reports', 'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans', 'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games')},
     'alumnos': {'title': 'Alumnos', 'singular': 'alumno', 'model': StudentProfile, 'create_form': QuickStudentCreationForm, 'fields': ('user', 'name', 'alias', 'birth_date', 'grade', 'school', 'modality', 'zone', 'reading_level', 'current_level', 'points', 'stars')},
-    'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name')},
+    'padres': {'title': 'Padres o tutores', 'singular': 'tutor', 'model': ParentProfile, 'fields': ('user', 'name', 'students')},
     'niveles': {'title': 'Niveles', 'singular': 'nivel', 'model': Level, 'fields': ('number', 'name', 'description', 'order', 'is_active')},
     'materias': {'title': 'Materias', 'singular': 'materia', 'model': Subject, 'fields': ('name', 'description', 'is_active')},
     'estrategias': {'title': 'Estrategias MINED', 'singular': 'estrategia', 'model': MinedStrategy, 'fields': ('name', 'description', 'focus', 'is_active')},
@@ -45,6 +47,10 @@ def is_teacher(user):
 
 def is_admin_user(user):
     return user.is_authenticated and (user.role == 'ADMIN' or user.is_staff or user.is_superuser)
+
+
+def is_report_admin_user(user):
+    return user.is_authenticated and (user.role == 'ADMIN' or user.is_superuser)
 
 
 def is_parent(user):
@@ -76,6 +82,37 @@ def teacher_has_permission(user, permission):
         return True
     teacher = getattr(user, 'teacher_profile', None)
     return user.is_authenticated and user.role == 'TEACHER' and teacher is not None and teacher.is_active and getattr(teacher, permission, False)
+
+
+def teacher_can_access_student(user, student):
+    teacher = getattr(user, 'teacher_profile', None)
+    return bool(
+        user.is_authenticated
+        and user.role == 'TEACHER'
+        and teacher is not None
+        and teacher.is_active
+        and teacher.students.filter(pk=student.pk).exists()
+    )
+
+
+def parent_can_access_student(user, student):
+    parent = getattr(user, 'parent_profile', None)
+    return bool(
+        user.is_authenticated
+        and user.role == 'PARENT'
+        and parent is not None
+        and parent.students.filter(pk=student.pk).exists()
+    )
+
+
+def user_can_view_student_report(user, student):
+    own_report = getattr(user, 'student_profile', None) == student
+    teacher_report = teacher_has_permission(user, 'can_view_student_reports') and teacher_can_access_student(user, student)
+    return own_report or is_report_admin_user(user) or teacher_report or parent_can_access_student(user, student)
+
+
+def user_can_manage_student_visual_key(user, student):
+    return is_report_admin_user(user) or teacher_can_access_student(user, student)
 
 
 def require_teacher_permission(request, permission, message):
@@ -145,6 +182,31 @@ def deactivate_resource(instance):
         instance.save(update_fields=['is_active'])
 
 
+def is_teacher_resource_request(request):
+    return request.resolver_match and request.resolver_match.url_name in {
+        'teacher_resource',
+        'teacher_resource_create',
+        'teacher_resource_update',
+        'teacher_resource_delete',
+    }
+
+
+def resource_redirect_name(request):
+    return 'dashboard:teacher_resource' if is_teacher_resource_request(request) else 'dashboard:admin_resource'
+
+
+def resource_create_route(request):
+    return 'dashboard:teacher_resource_create' if is_teacher_resource_request(request) else 'dashboard:admin_resource_create'
+
+
+def resource_update_route(request):
+    return 'dashboard:teacher_resource_update' if is_teacher_resource_request(request) else 'dashboard:admin_resource_update'
+
+
+def resource_delete_route(request):
+    return 'dashboard:teacher_resource_delete' if is_teacher_resource_request(request) else 'dashboard:admin_resource_delete'
+
+
 @login_required
 def redirect_after_login(request):
     role = getattr(request.user, 'role', 'STUDENT')
@@ -187,6 +249,7 @@ def admin_dashboard(request):
 
 @login_required
 def admin_resource_landing(request, resource):
+    teacher_resource_page = is_teacher_resource_request(request)
     config = ADMIN_RESOURCES.get(resource)
     if not config:
         messages.error(request, 'El recurso solicitado no existe.')
@@ -213,11 +276,16 @@ def admin_resource_landing(request, resource):
         'objects': objects,
         'edit_rows': edit_rows,
         'create_form': create_form,
+        'teacher_resource_page': teacher_resource_page,
+        'resource_create_route': resource_create_route(request),
+        'resource_update_route': resource_update_route(request),
+        'resource_delete_route': resource_delete_route(request),
     })
 
 
 @login_required
 def admin_resource_create(request, resource):
+    redirect_name = resource_redirect_name(request)
     config = ADMIN_RESOURCES.get(resource)
     if not config:
         messages.error(request, 'El recurso solicitado no existe.')
@@ -237,15 +305,16 @@ def admin_resource_create(request, resource):
         if request.POST.get('_from_modal'):
             if credentials:
                 messages.success(request, f"Credenciales creadas - Usuario: {credentials['username']} / Contraseña: {credentials['password']}")
-            return redirect('dashboard:admin_resource', resource=resource)
+            return redirect(redirect_name, resource=resource)
         if credentials is None:
-            return redirect('dashboard:admin_resource', resource=resource)
+            return redirect(redirect_name, resource=resource)
         form = form_class()
-    return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': False, 'credentials': credentials})
+    return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': False, 'credentials': credentials, 'teacher_resource_page': is_teacher_resource_request(request), 'resource_list_route': redirect_name})
 
 
 @login_required
 def admin_resource_update(request, resource, pk):
+    redirect_name = resource_redirect_name(request)
     config = ADMIN_RESOURCES.get(resource)
     if not config:
         messages.error(request, 'El recurso solicitado no existe.')
@@ -255,24 +324,25 @@ def admin_resource_update(request, resource, pk):
         return redirect('dashboard:redirect')
     if config.get('form') and not config.get('update_form'):
         messages.info(request, 'Este recurso debe editarse desde el administrador avanzado.')
-        return redirect('dashboard:admin_resource', resource=resource)
+        return redirect(redirect_name, resource=resource)
     instance = get_object_or_404(config['model'], pk=pk)
     if isinstance(instance, CustomUser) and instance.is_superuser:
         messages.error(request, 'El superusuario no se edita desde esta pantalla.')
-        return redirect('dashboard:admin_resource', resource=resource)
+        return redirect(redirect_name, resource=resource)
     form_class = config.get('update_form') or build_admin_model_form(config['model'], config['fields'])
     form = style_admin_form(form_class(request.POST or None, request.FILES or None, instance=instance))
     if request.method == 'POST' and form.is_valid():
         instance = form.save()
         write_audit(request, 'update', instance, {'resource': resource})
         messages.success(request, f"Se actualizó correctamente el {config['singular']}.")
-        return redirect('dashboard:admin_resource', resource=resource)
-    return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': True, 'object': instance})
+        return redirect(redirect_name, resource=resource)
+    return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': True, 'object': instance, 'teacher_resource_page': is_teacher_resource_request(request), 'resource_list_route': redirect_name})
 
 
 @login_required
 @require_POST
 def admin_resource_delete(request, resource, pk):
+    redirect_name = resource_redirect_name(request)
     config = ADMIN_RESOURCES.get(resource)
     if not config:
         messages.error(request, 'El recurso solicitado no existe.')
@@ -284,7 +354,7 @@ def admin_resource_delete(request, resource, pk):
     instance = get_object_or_404(config['model'], pk=pk)
     if isinstance(instance, CustomUser) and instance == request.user:
         messages.error(request, 'No puedes eliminar tu propia cuenta de administrador desde aquí.')
-        return redirect('dashboard:admin_resource', resource=resource)
+        return redirect(redirect_name, resource=resource)
 
     label = str(instance)
     action_message = f'Se eliminó correctamente {label}.'
@@ -308,7 +378,7 @@ def admin_resource_delete(request, resource, pk):
             user = instance.user
             if user == request.user:
                 messages.error(request, 'No puedes eliminar tu propia cuenta desde aquí.')
-                return redirect('dashboard:admin_resource', resource=resource)
+                return redirect(redirect_name, resource=resource)
             if resource_has_history(instance):
                 user.is_active = False
                 user.save(update_fields=['is_active'])
@@ -337,7 +407,7 @@ def admin_resource_delete(request, resource, pk):
         messages.error(request, f'No se puede eliminar {label} porque está relacionado con otros registros.')
     else:
         messages.success(request, action_message)
-    return redirect('dashboard:admin_resource', resource=resource)
+    return redirect(redirect_name, resource=resource)
 
 
 @login_required
@@ -377,13 +447,14 @@ def lesson_plan_list(request):
     if permission_response:
         return permission_response
     plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings')
+    teacher = None
     if not is_admin_user(request.user):
         teacher = getattr(request.user, 'teacher_profile', None)
         if teacher is None:
             messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
             return redirect('dashboard:teacher')
         plans = plans.filter(teacher=teacher)
-    return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans, 'create_form': LessonPlanForm()})
+    return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans, 'create_form': LessonPlanForm(teacher=teacher)})
 
 
 @login_required
@@ -392,7 +463,8 @@ def lesson_plan_create(request):
     permission_response = require_teacher_permission(request, 'can_create_lesson_plans', 'No tienes permiso para crear planes de clase.')
     if permission_response:
         return permission_response
-    form = LessonPlanForm(request.POST or None)
+    teacher = None if is_admin_user(request.user) else getattr(request.user, 'teacher_profile', None)
+    form = LessonPlanForm(request.POST or None, teacher=teacher)
     if request.method == 'POST' and form.is_valid():
         plan = form.save(commit=False)
         if is_admin_user(request.user):
@@ -402,7 +474,6 @@ def lesson_plan_create(request):
                 return redirect('dashboard:lesson_plans')
             plan.teacher = teacher
         else:
-            teacher = getattr(request.user, 'teacher_profile', None)
             if teacher is None:
                 messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
                 return redirect('dashboard:teacher')
@@ -436,7 +507,7 @@ def lesson_plan_update(request, pk):
     if not is_admin_user(request.user) and plan.teacher != teacher:
         messages.error(request, 'No tienes permiso para editar este plan de clase.')
         return redirect('dashboard:lesson_plans')
-    form = LessonPlanForm(request.POST or None, instance=plan)
+    form = LessonPlanForm(request.POST or None, instance=plan, teacher=None if is_admin_user(request.user) else teacher)
     if request.method == 'POST' and form.is_valid():
         plan = form.save()
         form.save_assignments(plan)
@@ -583,9 +654,13 @@ def quick_student_create(request):
     if permission_response:
         return permission_response
     credentials = None
+    teacher = getattr(request.user, 'teacher_profile', None)
+    if teacher is None:
+        messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
+        return redirect('dashboard:teacher')
     form = QuickStudentCreationForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        user, password = form.save()
+        user, password = form.save(teacher=teacher)
         credentials = {'username': user.username, 'password': password}
         messages.success(request, 'Alumno creado correctamente. Entrega estos datos al estudiante o tutor.')
         form = QuickStudentCreationForm()
@@ -595,9 +670,7 @@ def quick_student_create(request):
 @login_required
 def student_report(request, pk):
     student = get_object_or_404(StudentProfile.objects.select_related('user', 'current_level', 'reading_level'), pk=pk)
-    own_report = getattr(request.user, 'student_profile', None) == student
-    can_view_report = own_report or is_admin_user(request.user) or teacher_has_permission(request.user, 'can_view_student_reports')
-    if not can_view_report:
+    if not user_can_view_student_report(request.user, student):
         messages.error(request, 'No tienes permiso para ver este reporte.')
         return redirect('dashboard:redirect')
     progress_items = StudentProgress.objects.filter(student=student).select_related('activity', 'activity__level').order_by('-last_activity_date')[:10]
@@ -606,6 +679,20 @@ def student_report(request, pk):
     completed_count = student.progress_items.filter(completed=True).count()
     total_progress = student.progress_items.count()
     completion_percentage = round((completed_count / total_progress) * 100) if total_progress else 0
+    quiz_subject_progress = []
+    answer_rows = GameAttemptAnswer.objects.filter(attempt__student=student).values('subject').annotate(
+        total=Count('id'),
+        correct=Count('id', filter=Q(is_correct=True)),
+    ).order_by('subject')
+    for row in answer_rows:
+        total = row['total'] or 0
+        correct = row['correct'] or 0
+        quiz_subject_progress.append({
+            'subject': row['subject'] or 'Sin materia',
+            'total': total,
+            'correct': correct,
+            'percentage': round((correct / total) * 100) if total else 0,
+        })
     return render(request, 'dashboard/student_report.html', {
         'student': student,
         'progress_items': progress_items,
@@ -613,6 +700,7 @@ def student_report(request, pk):
         'attempts_count': attempts_count,
         'completed_count': completed_count,
         'completion_percentage': completion_percentage,
+        'quiz_subject_progress': quiz_subject_progress,
     })
 
 
@@ -641,14 +729,116 @@ def student_lesson_plan(request, pk):
         student=student,
     )
     plan = assignment.plan
-    suggested_games = Game.objects.filter(is_active=True, level=plan.level, grade=plan.grade).select_related('subject', 'level')[:4]
+    suggested_games = games_for_student(Game.objects.filter(is_active=True, level=plan.level), student).select_related('subject', 'level')[:4]
     return render(request, 'dashboard/student_lesson_plan.html', {'assignment': assignment, 'plan': plan, 'suggested_games': suggested_games})
 
 
 @login_required
 @user_passes_test(is_teacher)
+def teacher_students(request):
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    if teacher_profile is None:
+        messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
+        return redirect('accounts:profile')
+    students = teacher_profile.students.select_related('user', 'current_level').annotate(
+        completed_activities=Count('progress_items', filter=Q(progress_items__completed=True), distinct=True),
+        total_attempts=Count('attempts', distinct=True),
+        detected_difficulties=Count('difficulties', distinct=True),
+    ).order_by('name')
+    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students})
+
+
+@login_required
+@user_passes_test(is_teacher)
+@require_POST
+def teacher_student_login(request, pk):
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    if teacher_profile is None:
+        messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
+        return redirect('accounts:profile')
+    student = get_object_or_404(teacher_profile.students.select_related('user'), pk=pk)
+    if not student.user.is_active:
+        messages.error(request, 'Este estudiante no tiene una cuenta activa.')
+        return redirect('dashboard:teacher_students')
+    login(request, student.user, backend='django.contrib.auth.backends.ModelBackend')
+    messages.success(request, f'Entraste al modo estudiante de {student.display_name()}.')
+    return redirect('dashboard:student')
+
+
+@login_required
+@require_POST
+def teacher_student_visual_key_regenerate(request, pk):
+    student = get_object_or_404(StudentProfile.objects.select_related('user', 'current_level'), pk=pk)
+    if not user_can_manage_student_visual_key(request.user, student):
+        messages.error(request, 'No tienes permiso para crear dibujos secretos de este alumno.')
+        return redirect('dashboard:redirect')
+    visual_key = student.generate_visual_key()
+    action = 'regeneró' if request.POST.get('had_visual_key') == '1' else 'creó'
+    write_audit(request, f'{action}_student_visual_key', student)
+    messages.success(request, 'Dibujos secretos listos. Guarda esta tarjeta en un lugar seguro.')
+    return render(request, 'dashboard/student_visual_key_card.html', {
+        'student': student,
+        'visual_key': visual_key,
+        'pin': request.POST.get('pin', ''),
+        'back_url': 'dashboard:teacher_students' if request.user.role == 'TEACHER' else 'dashboard:redirect',
+    })
+
+
+@login_required
+@user_passes_test(is_teacher)
+def teacher_student_update(request, pk):
+    permission_response = require_teacher_permission(request, 'can_create_students', 'No tienes permiso para editar estudiantes.')
+    if permission_response:
+        return permission_response
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    if teacher_profile is None:
+        messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
+        return redirect('accounts:profile')
+    student = get_object_or_404(teacher_profile.students.select_related('user'), pk=pk)
+    form = TeacherStudentUpdateForm(request.POST or None, request.FILES or None, instance=student)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        write_audit(request, 'update_teacher_student', student, {'teacher_id': teacher_profile.pk})
+        messages.success(request, 'Alumno actualizado correctamente.')
+        return redirect('dashboard:teacher_students')
+    return render(request, 'dashboard/teacher_student_form.html', {'form': form, 'student': student})
+
+
+@login_required
+@user_passes_test(is_teacher)
+@require_POST
+def teacher_student_delete(request, pk):
+    permission_response = require_teacher_permission(request, 'can_create_students', 'No tienes permiso para eliminar estudiantes.')
+    if permission_response:
+        return permission_response
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    if teacher_profile is None:
+        messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
+        return redirect('accounts:profile')
+    student = get_object_or_404(teacher_profile.students.select_related('user'), pk=pk)
+    label = student.display_name()
+    if resource_has_history(student):
+        student.user.is_active = False
+        student.user.save(update_fields=['is_active'])
+        teacher_profile.students.remove(student)
+        write_audit(request, 'deactivate_teacher_student', student, {'teacher_id': teacher_profile.pk})
+        messages.success(request, f'Se quitó {label} de tus alumnos y se conservó su historial académico.')
+    else:
+        user = student.user
+        write_audit(request, 'delete_teacher_student', student, {'teacher_id': teacher_profile.pk, 'user_id': user.pk})
+        user.delete()
+        messages.success(request, f'Se eliminó correctamente el alumno {label}.')
+    return redirect('dashboard:teacher_students')
+
+
+@login_required
+@user_passes_test(is_teacher)
 def teacher_dashboard(request):
-    students = StudentProfile.objects.select_related('user', 'current_level').annotate(
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    if teacher_profile is None:
+        messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
+        return redirect('accounts:profile')
+    students = teacher_profile.students.select_related('user', 'current_level').annotate(
         completed_activities=Count('progress_items', filter=Q(progress_items__completed=True), distinct=True),
         total_attempts=Count('attempts', distinct=True),
         detected_difficulties=Count('difficulties', distinct=True),
@@ -659,8 +849,7 @@ def teacher_dashboard(request):
         'attempts': sum(student.total_attempts for student in students),
         'difficulties': sum(student.detected_difficulties for student in students),
     }
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-    lesson_plan_queryset = LessonPlan.objects.filter(teacher=teacher_profile).select_related('subject', 'level').prefetch_related('activities', 'readings') if teacher_profile else LessonPlan.objects.none()
+    lesson_plan_queryset = LessonPlan.objects.filter(teacher=teacher_profile).select_related('subject', 'level').prefetch_related('activities', 'readings')
     summary['lesson_plans'] = lesson_plan_queryset.count()
     lesson_plans = lesson_plan_queryset[:5]
     return render(request, 'dashboard/teacher_dashboard.html', {
@@ -678,4 +867,9 @@ def parent_dashboard(request):
     if parent is None:
         messages.error(request, 'Tu cuenta familiar no tiene un perfil asignado.')
         return redirect('accounts:profile')
-    return render(request, 'dashboard/parent_dashboard.html', {'parent': parent})
+    students = parent.students.select_related('current_level', 'reading_level').annotate(
+        completed_activities=Count('progress_items', filter=Q(progress_items__completed=True), distinct=True),
+        total_attempts=Count('attempts', distinct=True),
+        detected_difficulties=Count('difficulties', distinct=True),
+    ).order_by('name')
+    return render(request, 'dashboard/parent_dashboard.html', {'parent': parent, 'students': students})

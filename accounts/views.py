@@ -1,3 +1,5 @@
+import secrets
+
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.views import LoginView, LogoutView
@@ -13,6 +15,127 @@ from learning.models import Lesson, LessonPlan
 
 from .forms import EmailAuthenticationForm, ProfileUpdateForm, RegistrationForm, StudentProfileForm
 from .models import CustomUser
+
+
+def _clear_student_access_session(request):
+    for key in ('student_access_teacher_id', 'student_access_student_id', 'student_access_parent_id', 'student_access_attempts'):
+        request.session.pop(key, None)
+
+
+def _student_access_teacher(request):
+    teacher_id = request.session.get('student_access_teacher_id')
+    if not teacher_id:
+        return None
+    return TeacherProfile.objects.filter(pk=teacher_id, is_active=True, students__user__is_active=True).distinct().first()
+
+
+def _student_access_student(request, teacher):
+    student_id = request.session.get('student_access_student_id')
+    if not student_id or teacher is None:
+        return None
+    return teacher.students.select_related('user').filter(pk=student_id, user__is_active=True).first()
+
+
+def _student_access_parent(request, student):
+    parent_id = request.session.get('student_access_parent_id')
+    if not parent_id or student is None:
+        return None
+    return ParentProfile.objects.filter(pk=parent_id, students=student, user__is_active=True).first()
+
+
+def student_access_teachers(request):
+    if request.method == 'POST':
+        teacher = TeacherProfile.objects.filter(
+            pk=request.POST.get('teacher_id'),
+            is_active=True,
+            students__user__is_active=True,
+        ).distinct().first()
+        if teacher is None:
+            messages.error(request, 'Escoge una profe o un profe de la lista.')
+            return redirect('accounts:student_access')
+        _clear_student_access_session(request)
+        request.session['student_access_teacher_id'] = teacher.pk
+        return redirect('accounts:student_access_students')
+
+    teachers = TeacherProfile.objects.filter(is_active=True, students__user__is_active=True).distinct().order_by('name')
+    return render(request, 'accounts/student_access_teachers.html', {'teachers': teachers})
+
+
+def student_access_students(request):
+    teacher = _student_access_teacher(request)
+    if teacher is None:
+        return redirect('accounts:student_access')
+
+    if request.method == 'POST':
+        student = teacher.students.select_related('user').filter(pk=request.POST.get('student_id'), user__is_active=True).first()
+        if student is None:
+            messages.error(request, 'Escoge tu tarjeta de la lista.')
+            return redirect('accounts:student_access_students')
+        request.session['student_access_student_id'] = student.pk
+        request.session.pop('student_access_parent_id', None)
+        request.session['student_access_attempts'] = 0
+        return redirect('accounts:student_access_parents')
+
+    students = list(teacher.students.select_related('user', 'current_level').filter(user__is_active=True).order_by('name'))
+    name_counts = {}
+    for student in students:
+        name_counts[student.display_name()] = name_counts.get(student.display_name(), 0) + 1
+    duplicate_names = {name for name, count in name_counts.items() if count > 1}
+    return render(request, 'accounts/student_access_students.html', {'teacher': teacher, 'students': students, 'duplicate_names': duplicate_names})
+
+
+def student_access_parents(request):
+    teacher = _student_access_teacher(request)
+    student = _student_access_student(request, teacher)
+    if teacher is None or student is None:
+        return redirect('accounts:student_access')
+
+    if request.method == 'POST':
+        parent = ParentProfile.objects.filter(pk=request.POST.get('parent_id'), students=student, user__is_active=True).first()
+        if parent is None:
+            messages.error(request, 'Escoge quién te acompaña en casa.')
+            return redirect('accounts:student_access_parents')
+        request.session['student_access_parent_id'] = parent.pk
+        return redirect('accounts:student_access_key')
+
+    parents = ParentProfile.objects.filter(students=student, user__is_active=True).select_related('user').order_by('name')
+    return render(request, 'accounts/student_access_parents.html', {'teacher': teacher, 'student': student, 'parents': parents})
+
+
+def student_access_key(request):
+    teacher = _student_access_teacher(request)
+    student = _student_access_student(request, teacher)
+    parent = _student_access_parent(request, student)
+    if teacher is None or student is None or parent is None:
+        return redirect('accounts:student_access')
+    if not student.visual_key_hash:
+        messages.error(request, 'Pide a tu docente que cree tus dibujos secretos.')
+        return redirect('accounts:student_access_students')
+
+    if request.method == 'POST':
+        selected_codes = [request.POST.get(f'symbol_{index}', '') for index in range(1, 4)]
+        if student.check_visual_key(selected_codes):
+            _clear_student_access_session(request)
+            login(request, student.user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(request, '¡Muy bien! Vamos a aprender.')
+            return redirect('dashboard:student')
+        attempts = int(request.session.get('student_access_attempts', 0)) + 1
+        request.session['student_access_attempts'] = attempts
+        if attempts >= 5:
+            _clear_student_access_session(request)
+            messages.error(request, 'Vamos a intentarlo de nuevo desde el inicio.')
+            return redirect('accounts:student_access')
+        messages.error(request, 'Intenta otra vez con tus dibujos secretos.')
+
+    choices = StudentProfile.visual_key_items()
+    random_choices = secrets.SystemRandom().sample(choices, len(choices))
+    return render(request, 'accounts/student_access_key.html', {
+        'teacher': teacher,
+        'student': student,
+        'parent': parent,
+        'choices': random_choices,
+        'steps': (1, 2, 3),
+    })
 
 
 class UserLoginView(LoginView):

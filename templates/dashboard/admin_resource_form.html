@@ -10,10 +10,10 @@
 </style>
 {% endblock %}
 {% block content %}
-<div class="admin-console">
-  {% include 'dashboard/partials/admin_sidebar.html' %}
-  <section class="admin-main">
-    {% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}
+<div class="{% if teacher_resource_page %}teacher-dashboard{% else %}admin-console{% endif %}">
+  {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_sidebar.html' %}{% endif %}
+  <section class="{% if teacher_resource_page %}container py-5{% else %}admin-main{% endif %}">
+    {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}{% endif %}
     <div class="admin-content">
       <div class="mx-auto" style="max-width: 860px;">
         <span class="eyebrow">{{ config.title }}</span>
@@ -30,7 +30,7 @@
           {{ form.as_p }}
           <div class="d-flex flex-wrap gap-2 mt-3">
             <button class="btn btn-primary" type="submit">Guardar</button>
-            <a class="btn btn-outline-primary" href="{% url 'dashboard:admin_resource' resource %}">Cancelar</a>
+            <a class="btn btn-outline-primary" href="{% url resource_list_route resource %}">Cancelar</a>
           </div>
         </form>
       </div>

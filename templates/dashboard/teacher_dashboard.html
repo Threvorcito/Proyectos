@@ -26,11 +26,12 @@
     </section>
 
     <section class="teacher-action-panel" aria-label="Accesos de gestión">
+      {% if teacher_profile.can_create_students %}<a href="{% url 'dashboard:teacher_students' %}"><strong>Alumnos</strong><span>Ver y agregar estudiantes</span></a>{% endif %}
       {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans %}<a href="{% url 'dashboard:lesson_plans' %}"><strong>Planes</strong><span>Ver reportes y crear planificación</span></a>{% endif %}
-      {% if teacher_profile.can_manage_activities %}<a href="{% url 'dashboard:admin_resource' 'actividades' %}"><strong>Actividades</strong><span>Gestionar práctica guiada</span></a>{% endif %}
-      {% if teacher_profile.can_manage_lessons %}<a href="{% url 'dashboard:admin_resource' 'clases' %}"><strong>Clases</strong><span>Administrar secuencia didáctica</span></a>{% endif %}
-      {% if teacher_profile.can_manage_readings %}<a href="{% url 'dashboard:admin_resource' 'lecturas' %}"><strong>Lecturas</strong><span>Actualizar biblioteca de apoyo</span></a>{% endif %}
-      {% if teacher_profile.can_manage_games %}<a href="{% url 'dashboard:admin_resource' 'juegos' %}"><strong>Juegos</strong><span>Administrar recursos lúdicos</span></a>{% endif %}
+      {% if teacher_profile.can_manage_activities %}<a href="{% url 'dashboard:teacher_resource' 'actividades' %}"><strong>Actividades</strong><span>Gestionar práctica guiada</span></a>{% endif %}
+      {% if teacher_profile.can_manage_lessons %}<a href="{% url 'dashboard:teacher_resource' 'clases' %}"><strong>Clases</strong><span>Administrar secuencia didáctica</span></a>{% endif %}
+      {% if teacher_profile.can_manage_readings %}<a href="{% url 'dashboard:teacher_resource' 'lecturas' %}"><strong>Lecturas</strong><span>Actualizar biblioteca de apoyo</span></a>{% endif %}
+      {% if teacher_profile.can_manage_games %}<a href="{% url 'dashboard:teacher_resource' 'juegos' %}"><strong>Juegos</strong><span>Administrar recursos lúdicos</span></a>{% endif %}
     </section>
 
     <section class="teacher-metric-grid" aria-label="Resumen del aula">
@@ -93,7 +94,7 @@
                   <td>{{ student.last_activity_at|date:'d/m/Y H:i'|default:'Sin actividad' }}</td>
                 </tr>
               {% empty %}
-                <tr><td colspan="6" class="teacher-table__empty">Todavía no hay alumnos registrados.</td></tr>
+                <tr><td colspan="6" class="teacher-table__empty">Todavía no tienes alumnos vinculados.</td></tr>
               {% endfor %}
             </tbody>
           </table>

@@ -1,0 +1,28 @@
+{% extends 'accounts/student_access_base.html' %}
+{% block title %}Escoge tu tarjeta | {{ site_name }}{% endblock %}
+{% block kid_access_content %}
+<div class="kid-access__header">
+  <div>
+    <span class="eyebrow">{{ teacher.name }}</span>
+    <h1>¿Cuál eres tú?</h1>
+    <p>Busca tu nombre y toca tu tarjeta.</p>
+  </div>
+  <button class="btn btn-outline-primary kid-access__listen" type="button" data-speak-text="¿Cuál eres tú? Busca tu nombre y toca tu tarjeta.">Escuchar</button>
+</div>
+<div class="kid-access__grid">
+  {% for student in students %}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="student_id" value="{{ student.pk }}">
+      <button class="kid-card" type="submit" data-speak-text="{{ student.display_name }}">
+        <span class="kid-card__avatar">{% if student.avatar %}<img src="{{ student.avatar.url }}" alt="">{% else %}{{ student.display_name|slice:':1' }}{% endif %}</span>
+        <strong>{{ student.display_name }}</strong>
+        <span>{{ student.get_grade_display }}{% if student.display_name in duplicate_names and student.current_level %} · Nivel {{ student.current_level.number }}{% endif %}</span>
+      </button>
+    </form>
+  {% empty %}
+    <div class="kid-card"><strong>No hay estudiantes.</strong><span>Pide ayuda a tu profe.</span></div>
+  {% endfor %}
+</div>
+<div class="kid-access__actions"><a class="btn btn-outline-primary kid-access__back" href="{% url 'accounts:student_access' %}">Atrás</a></div>
+{% endblock %}

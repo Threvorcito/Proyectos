@@ -1,0 +1,32 @@
+{% extends 'accounts/student_access_base.html' %}
+{% block title %}Dibujos secretos | {{ site_name }}{% endblock %}
+{% block kid_access_content %}
+<div class="kid-access__header">
+  <div>
+    <span class="eyebrow">{{ student.display_name }}</span>
+    <h1>Escoge tus dibujos secretos</h1>
+    <p>Toca tus 3 dibujos en el orden correcto.</p>
+  </div>
+  <button class="btn btn-outline-primary kid-access__listen" type="button" data-speak-text="Escoge tus dibujos secretos. Toca tus tres dibujos en el orden correcto.">Escuchar</button>
+</div>
+<form method="post">
+  {% csrf_token %}
+  {% for step in steps %}
+    <section class="visual-key-row">
+      <h2>Dibujo {{ step }}</h2>
+      <div class="visual-key-options">
+        {% for item in choices %}
+          <label class="visual-key-option">
+            <input type="radio" name="symbol_{{ step }}" value="{{ item.code }}" required>
+            <span>{{ item.icon }}<small>{{ item.label }}</small></span>
+          </label>
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+  <div class="kid-access__actions">
+    <button class="btn btn-primary btn-lg kid-access__back" type="submit">Entrar</button>
+    <a class="btn btn-outline-primary kid-access__back" href="{% url 'accounts:student_access_parents' %}">Atrás</a>
+  </div>
+</form>
+{% endblock %}

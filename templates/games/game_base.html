@@ -6,7 +6,7 @@
 {% block content %}
 <main class="games-page">
   <section class="container games-page__play-shell" data-game-root data-game-type="{{ game.game_type }}" data-save-url="{% url 'games:save_attempt' game.slug %}">
-    <script type="application/json" id="game-data">{{ challenges_json|safe }}</script>
+    {{ challenges|json_script:"game-data" }}
     <div class="games-page__play-card">
       <header class="games-page__play-header">
         <a class="games-page__back-link" href="{% url 'games:index' %}">← Volver a Juegos</a>

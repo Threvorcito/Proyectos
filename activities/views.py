@@ -14,7 +14,11 @@ def activity_list(request):
     level_id = request.GET.get('level')
     subject_id = request.GET.get('subject')
     grade = request.GET.get('grade')
+    student = getattr(request.user, 'student_profile', None)
     activities = Activity.objects.filter(is_active=True).select_related('level', 'subject').order_by('subject__name', 'grade', 'level__order')
+    if student is not None:
+        activities = activities.filter(grade=student.grade)
+        grade = student.grade
     if level_id:
         activities = activities.filter(level_id=level_id)
     if subject_id:
@@ -36,7 +40,11 @@ def activity_list(request):
 
 
 def activity_detail(request, pk):
-    activity = get_object_or_404(Activity.objects.prefetch_related('options'), pk=pk, is_active=True)
+    activities = Activity.objects.prefetch_related('options').filter(is_active=True)
+    student = getattr(request.user, 'student_profile', None)
+    if student is not None:
+        activities = activities.filter(grade=student.grade)
+    activity = get_object_or_404(activities, pk=pk)
     return render(request, 'activities/detail.html', {'activity': activity})
 
 

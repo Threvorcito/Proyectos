@@ -7,8 +7,6 @@ def get_recommended_activities(student: StudentProfile):
     if current_level is None:
         return []
     queryset = current_level.activities.filter(is_active=True, grade=student.grade).order_by('id')
-    if not queryset.exists():
-        queryset = current_level.activities.filter(is_active=True).order_by('id')
     difficulties = StudentDifficulty.objects.filter(student=student).order_by('-error_count')
     if difficulties.exists():
         top = difficulties.first()

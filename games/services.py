@@ -1,4 +1,4 @@
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Q
 from unicodedata import combining, normalize
 
 from learning.models import Level, Subject
@@ -23,12 +23,23 @@ def ensure_games():
         level_number = data.pop('level_number')
         subject_name = data.pop('subject_name', 'Lengua y Literatura')
         subject = subjects.get(normalize_subject_name(subject_name), language_subject)
+        grade = data.pop('grade', str(min(level_number, 3)))
         game, _ = Game.objects.update_or_create(
             slug=data['slug'],
-            defaults={**data, 'level': levels.get(level_number), 'subject': subject, 'grade': str(min(level_number, 3))},
+            defaults={**data, 'level': levels.get(level_number), 'subject': subject, 'grade': grade},
         )
         games.append(game)
     return games
+
+
+def student_game_grade_filter(student):
+    return Q(grade='') | Q(grade=student.grade)
+
+
+def games_for_student(queryset, student):
+    if student is None:
+        return queryset
+    return queryset.filter(student_game_grade_filter(student))
 
 
 def get_student_for_user(user):
@@ -39,9 +50,11 @@ def get_student_for_user(user):
 
 def get_recommended_games(student):
     ensure_games()
-    games = {game.slug: game for game in Game.objects.filter(is_active=True)}
     if not student:
+        games = {game.slug: game for game in Game.objects.filter(is_active=True)}
         return [games[slug] for slug in ('cazador-de-letras', 'memoria-de-palabras', 'construye-la-palabra') if slug in games]
+
+    games = {game.slug: game for game in games_for_student(Game.objects.filter(is_active=True), student)}
 
     difficulty = StudentDifficulty.objects.filter(student=student).order_by('-error_count', '-last_error_date').first()
     if difficulty:
@@ -78,4 +91,4 @@ def get_game_progress(student, games):
 def get_started_games(student):
     if not student:
         return []
-    return Game.objects.filter(attempts__student=student, attempts__completed=False, is_active=True).distinct()[:3]
+    return games_for_student(Game.objects.filter(attempts__student=student, attempts__completed=False, is_active=True), student).distinct()[:3]

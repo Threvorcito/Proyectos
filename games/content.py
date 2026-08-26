@@ -61,6 +61,7 @@ GAME_DEFINITIONS = [
         'description': 'Practica Lengua, Matematica, Ciencias, Artistica, English y Sociales con retos cortos.',
         'skill': 'Memoria visual, materias escolares y aprendizaje multisensorial',
         'level_number': 2,
+        'grade': '',
     },
     {
         'slug': 'quiz-matematica-numeros',

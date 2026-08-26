@@ -194,7 +194,7 @@ class TeacherUpdateForm(forms.ModelForm):
     class Meta:
         model = TeacherProfile
         fields = (
-            'first_name', 'last_name', 'email', 'password', 'bio', 'is_active',
+            'first_name', 'last_name', 'email', 'password', 'students', 'bio', 'is_active',
             'can_create_students', 'can_view_student_reports',
             'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans',
             'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games',
@@ -207,6 +207,8 @@ class TeacherUpdateForm(forms.ModelForm):
         self.fields['first_name'].label = 'Nombres'
         self.fields['last_name'].label = 'Apellidos'
         self.fields['email'].label = 'Correo institucional'
+        self.fields['students'].label = 'Estudiantes vinculados'
+        self.fields['students'].queryset = StudentProfile.objects.select_related('current_level').order_by('name')
         self.fields['bio'].label = 'Perfil docente'
         self.fields['is_active'].label = 'Docente activo'
         self.fields['is_active'].help_text = 'Desactivar conserva sus planes, reportes y evidencias, pero bloquea su acceso docente.'
@@ -238,6 +240,7 @@ class TeacherUpdateForm(forms.ModelForm):
                 user.last_name = teacher.last_name
                 user.role = CustomUser.Role.TEACHER
                 user.save(update_fields=['is_active', 'email', 'first_name', 'last_name', 'role'])
+            self.save_m2m()
         return teacher
 
 
@@ -249,11 +252,44 @@ class QuickStudentCreationForm(forms.Form):
     modality = forms.ChoiceField(label='Modalidad educativa', choices=StudentProfile.Modality.choices, initial=StudentProfile.Modality.REGULAR)
     zone = forms.ChoiceField(label='Zona', choices=StudentProfile.Zone.choices, initial=StudentProfile.Zone.URBAN)
     reading_level = forms.ModelChoiceField(label='Nivel lector inicial', queryset=Level.objects.none())
+    parents = forms.ModelMultipleChoiceField(
+        label='Tutores existentes',
+        queryset=ParentProfile.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    new_parent_first_name = forms.CharField(label='Nombre del nuevo tutor', max_length=80, required=False)
+    new_parent_last_name = forms.CharField(label='Apellido del nuevo tutor', max_length=100, required=False)
+    new_parent_email = forms.EmailField(label='Correo del nuevo tutor', required=False)
+    new_parent_username = forms.CharField(label='Usuario del nuevo tutor', max_length=150, required=False)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['reading_level'].queryset = Level.objects.filter(is_active=True).order_by('order')
+        self.fields['parents'].queryset = ParentProfile.objects.select_related('user').order_by('name')
         style_admin_form(self)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        first_name = (cleaned_data.get('new_parent_first_name') or '').strip()
+        last_name = (cleaned_data.get('new_parent_last_name') or '').strip()
+        email = (cleaned_data.get('new_parent_email') or '').strip().lower()
+        username = (cleaned_data.get('new_parent_username') or '').strip()
+        wants_new_parent = bool(first_name or last_name or email or username)
+        if wants_new_parent:
+            if not first_name:
+                self.add_error('new_parent_first_name', 'Escribe el nombre del tutor.')
+            if not last_name:
+                self.add_error('new_parent_last_name', 'Escribe el apellido del tutor.')
+            if not email:
+                self.add_error('new_parent_email', 'Escribe el correo del tutor.')
+            if email and CustomUser.objects.filter(email__iexact=email).exists():
+                self.add_error('new_parent_email', 'Ya existe un usuario con este correo.')
+            if username and CustomUser.objects.filter(username__iexact=username).exists():
+                self.add_error('new_parent_username', 'Ya existe un usuario con este nombre.')
+        cleaned_data['new_parent_email'] = email
+        cleaned_data['new_parent_username'] = username
+        return cleaned_data
 
     def _build_username(self):
         base_source = self.cleaned_data['name']
@@ -265,9 +301,42 @@ class QuickStudentCreationForm(forms.Form):
             candidate = f'{base[:135]}_{counter}'
         return candidate
 
-    def save(self):
+    def _build_parent_username(self):
+        if self.cleaned_data.get('new_parent_username'):
+            return self.cleaned_data['new_parent_username']
+        email_base = (self.cleaned_data.get('new_parent_email') or '').split('@', 1)[0]
+        name_base = f"{self.cleaned_data.get('new_parent_first_name', '')} {self.cleaned_data.get('new_parent_last_name', '')}"
+        base = slugify(email_base or name_base).replace('-', '_') or 'tutor'
+        candidate = base[:140]
+        counter = 1
+        while CustomUser.objects.filter(username__iexact=candidate).exists():
+            counter += 1
+            candidate = f'{base[:135]}_{counter}'
+        return candidate
+
+    def save_parent_links(self, student):
+        parents = list(self.cleaned_data.get('parents') or [])
+        if self.cleaned_data.get('new_parent_first_name') and self.cleaned_data.get('new_parent_last_name') and self.cleaned_data.get('new_parent_email'):
+            username = self._build_parent_username()
+            parent_user = CustomUser.objects.create_user(
+                username=username,
+                email=self.cleaned_data['new_parent_email'],
+                password=get_random_string(10),
+                first_name=self.cleaned_data['new_parent_first_name'],
+                last_name=self.cleaned_data['new_parent_last_name'],
+                role=CustomUser.Role.PARENT,
+            )
+            parent = ParentProfile.objects.create(
+                user=parent_user,
+                name=f"{parent_user.first_name} {parent_user.last_name}".strip(),
+            )
+            parents.append(parent)
+        for parent in parents:
+            parent.students.add(student)
+
+    def save(self, teacher=None):
         username = self._build_username()
-        password = get_random_string(8, allowed_chars='23456789ABCDEFGHJKLMNPQRSTUVWXYZ')
+        password = get_random_string(4, allowed_chars='23456789')
         name_parts = self.cleaned_data['name'].split(' ', 1)
         user = CustomUser.objects.create(
             username=username,
@@ -279,7 +348,7 @@ class QuickStudentCreationForm(forms.Form):
         user.set_password(password)
         user.save(update_fields=['password'])
         level = self.cleaned_data['reading_level']
-        StudentProfile.objects.create(
+        student = StudentProfile.objects.create(
             user=user,
             name=self.cleaned_data['name'],
             alias=self.cleaned_data.get('alias', ''),
@@ -290,8 +359,105 @@ class QuickStudentCreationForm(forms.Form):
             reading_level=level,
             current_level=level,
         )
-        self.created_credentials = {'username': user.username, 'password': password}
+        visual_items = student.generate_visual_key()
+        if teacher is not None:
+            teacher.students.add(student)
+        self.save_parent_links(student)
+        self.created_credentials = {'username': user.username, 'password': password, 'visual_key': visual_items}
         return user, password
+
+
+class TeacherStudentUpdateForm(forms.ModelForm):
+    parents = forms.ModelMultipleChoiceField(
+        label='Tutores vinculados',
+        queryset=ParentProfile.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+    new_parent_first_name = forms.CharField(label='Nombre del nuevo tutor', max_length=80, required=False)
+    new_parent_last_name = forms.CharField(label='Apellido del nuevo tutor', max_length=100, required=False)
+    new_parent_email = forms.EmailField(label='Correo del nuevo tutor', required=False)
+    new_parent_username = forms.CharField(label='Usuario del nuevo tutor', max_length=150, required=False)
+
+    class Meta:
+        model = StudentProfile
+        fields = ('name', 'alias', 'birth_date', 'grade', 'school', 'modality', 'zone', 'reading_level', 'current_level')
+        widgets = {
+            'birth_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].label = 'Nombre completo'
+        self.fields['alias'].label = 'Nombre corto o alias'
+        self.fields['birth_date'].label = 'Fecha de nacimiento'
+        self.fields['grade'].label = 'Grado'
+        self.fields['school'].label = 'Colegio / centro educativo'
+        self.fields['modality'].label = 'Modalidad educativa'
+        self.fields['zone'].label = 'Zona'
+        self.fields['reading_level'].label = 'Nivel lector inicial'
+        self.fields['current_level'].label = 'Nivel actual'
+        self.fields['reading_level'].queryset = Level.objects.filter(is_active=True).order_by('order')
+        self.fields['current_level'].queryset = Level.objects.filter(is_active=True).order_by('order')
+        self.fields['parents'].queryset = ParentProfile.objects.select_related('user').order_by('name')
+        if self.instance and self.instance.pk:
+            self.fields['parents'].initial = self.instance.parents.values_list('pk', flat=True)
+        style_admin_form(self)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        first_name = (cleaned_data.get('new_parent_first_name') or '').strip()
+        last_name = (cleaned_data.get('new_parent_last_name') or '').strip()
+        email = (cleaned_data.get('new_parent_email') or '').strip().lower()
+        username = (cleaned_data.get('new_parent_username') or '').strip()
+        wants_new_parent = bool(first_name or last_name or email or username)
+        if wants_new_parent:
+            if not first_name:
+                self.add_error('new_parent_first_name', 'Escribe el nombre del tutor.')
+            if not last_name:
+                self.add_error('new_parent_last_name', 'Escribe el apellido del tutor.')
+            if not email:
+                self.add_error('new_parent_email', 'Escribe el correo del tutor.')
+            if email and CustomUser.objects.filter(email__iexact=email).exists():
+                self.add_error('new_parent_email', 'Ya existe un usuario con este correo.')
+            if username and CustomUser.objects.filter(username__iexact=username).exists():
+                self.add_error('new_parent_username', 'Ya existe un usuario con este nombre.')
+        cleaned_data['new_parent_email'] = email
+        cleaned_data['new_parent_username'] = username
+        return cleaned_data
+
+    def _build_parent_username(self):
+        if self.cleaned_data.get('new_parent_username'):
+            return self.cleaned_data['new_parent_username']
+        email_base = (self.cleaned_data.get('new_parent_email') or '').split('@', 1)[0]
+        name_base = f"{self.cleaned_data.get('new_parent_first_name', '')} {self.cleaned_data.get('new_parent_last_name', '')}"
+        base = slugify(email_base or name_base).replace('-', '_') or 'tutor'
+        candidate = base[:140]
+        counter = 1
+        while CustomUser.objects.filter(username__iexact=candidate).exists():
+            counter += 1
+            candidate = f'{base[:135]}_{counter}'
+        return candidate
+
+    def save(self, commit=True):
+        student = super().save(commit=commit)
+        if commit:
+            parents = list(self.cleaned_data.get('parents') or [])
+            if self.cleaned_data.get('new_parent_first_name') and self.cleaned_data.get('new_parent_last_name') and self.cleaned_data.get('new_parent_email'):
+                parent_user = CustomUser.objects.create_user(
+                    username=self._build_parent_username(),
+                    email=self.cleaned_data['new_parent_email'],
+                    password=get_random_string(10),
+                    first_name=self.cleaned_data['new_parent_first_name'],
+                    last_name=self.cleaned_data['new_parent_last_name'],
+                    role=CustomUser.Role.PARENT,
+                )
+                parents.append(ParentProfile.objects.create(
+                    user=parent_user,
+                    name=f"{parent_user.first_name} {parent_user.last_name}".strip(),
+                ))
+            student.parents.set(parents)
+        return student
 
 
 class LessonPlanForm(forms.ModelForm):
@@ -316,7 +482,8 @@ class LessonPlanForm(forms.ModelForm):
             'readings': forms.CheckboxSelectMultiple(),
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, teacher=None, **kwargs):
+        self.teacher = teacher
         super().__init__(*args, **kwargs)
         level = self.data.get('level') or getattr(self.instance, 'level_id', None)
         subject = self.data.get('subject') or getattr(self.instance, 'subject_id', None)
@@ -352,6 +519,8 @@ class LessonPlanForm(forms.ModelForm):
         if grade:
             self.fields['competency'].queryset = self.fields['competency'].queryset.filter(grade=grade)
         self.fields['assigned_students'].queryset = StudentProfile.objects.select_related('current_level').order_by('name')
+        if self.teacher is not None:
+            self.fields['assigned_students'].queryset = self.teacher.students.select_related('current_level').order_by('name')
         if grade:
             self.fields['assigned_students'].queryset = self.fields['assigned_students'].queryset.filter(grade=grade)
         if self.instance and self.instance.pk:
@@ -370,6 +539,12 @@ class LessonPlanForm(forms.ModelForm):
             cleaned_data['achievement_indicator'] = cleaned_data.get('achievement_indicator') or competency.achievement_indicator
             cleaned_data['content'] = cleaned_data.get('content') or competency.competency
             cleaned_data['methodology'] = cleaned_data.get('methodology') or competency.dyslexia_adaptation
+        selected_students = cleaned_data.get('assigned_students')
+        if self.teacher is not None and selected_students is not None:
+            allowed_ids = set(self.teacher.students.values_list('id', flat=True))
+            invalid_students = [student for student in selected_students if student.id not in allowed_ids]
+            if invalid_students:
+                self.add_error('assigned_students', 'Solo puedes asignar estudiantes vinculados a tu perfil docente.')
         cleaned_data['status'] = cleaned_data.get('status') or LessonPlan.Status.ACTIVE
         return cleaned_data
 

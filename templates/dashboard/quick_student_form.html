@@ -4,19 +4,77 @@
   <div class="mx-auto" style="max-width: 760px;">
     <span class="eyebrow">Docente</span>
     <h1>Registrar estudiante</h1>
-    <p class="text-muted">Registra estudiantes de primaria sin solicitar correo. El sistema generará un usuario interno y un PIN seguro al finalizar.</p>
-    {% if credentials %}
-      <div class="alert alert-success mt-3">
-        Usuario: <strong>{{ credentials.username }}</strong><br>
-        Contraseña/PIN: <strong>{{ credentials.password }}</strong>
-      </div>
-    {% endif %}
+    <p class="text-muted">Registra estudiantes de primaria sin solicitar correo. El sistema generará una tarjeta sencilla de acceso para el aula.</p>
     <form method="post" class="feature-card mt-4">
       {% csrf_token %}
-      {{ form.as_p }}
+      <h2 class="h5">Datos del estudiante</h2>
+      <div class="row g-3">
+        <div class="col-md-6">{{ form.name.label_tag }}{{ form.name }}{{ form.name.errors }}</div>
+        <div class="col-md-6">{{ form.alias.label_tag }}{{ form.alias }}{{ form.alias.errors }}</div>
+        <div class="col-md-6">{{ form.grade.label_tag }}{{ form.grade }}{{ form.grade.errors }}</div>
+        <div class="col-md-6">{{ form.reading_level.label_tag }}{{ form.reading_level }}{{ form.reading_level.errors }}</div>
+        <div class="col-md-6">{{ form.school.label_tag }}{{ form.school }}{{ form.school.errors }}</div>
+        <div class="col-md-6">{{ form.modality.label_tag }}{{ form.modality }}{{ form.modality.errors }}</div>
+        <div class="col-md-6">{{ form.zone.label_tag }}{{ form.zone }}{{ form.zone.errors }}</div>
+      </div>
+      <hr>
+      <h2 class="h5">Padre, madre o tutor</h2>
+      <p class="text-muted small">Selecciona tutores existentes o crea uno nuevo para que aparezca en el acceso infantil.</p>
+      <div class="mb-3">{{ form.parents.label_tag }}{{ form.parents }}{{ form.parents.errors }}</div>
+      <h3 class="h6">Crear nuevo tutor</h3>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">{{ form.new_parent_first_name.label_tag }}{{ form.new_parent_first_name }}{{ form.new_parent_first_name.errors }}</div>
+        <div class="col-md-6">{{ form.new_parent_last_name.label_tag }}{{ form.new_parent_last_name }}{{ form.new_parent_last_name.errors }}</div>
+        <div class="col-md-6">{{ form.new_parent_email.label_tag }}{{ form.new_parent_email }}{{ form.new_parent_email.errors }}</div>
+        <div class="col-md-6">{{ form.new_parent_username.label_tag }}{{ form.new_parent_username }}{{ form.new_parent_username.errors }}</div>
+      </div>
       <button class="btn btn-primary" type="submit">Crear alumno</button>
       <a class="btn btn-outline-primary" href="{% url 'dashboard:redirect' %}">Volver</a>
     </form>
   </div>
 </div>
+
+{% if credentials %}
+  <div class="modal fade" id="studentCredentialsModal" tabindex="-1" aria-labelledby="studentCredentialsModalTitle" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <span class="eyebrow">Estudiante creado</span>
+            <h2 class="modal-title h4" id="studentCredentialsModalTitle">Tarjeta de acceso</h2>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">Entrega estos datos al estudiante o tutor para entrar con ayuda.</p>
+          <div class="feature-card mb-3 text-center">
+            <strong class="fs-4 d-block mb-2">{{ credentials.username }}</strong>
+            <div class="d-flex flex-wrap gap-2 justify-content-center mb-3">
+              {% for item in credentials.visual_key %}
+                <span class="badge text-bg-light border p-3" style="font-size: 2.4rem;" aria-label="{{ item.label }}">{{ item.icon }}</span>
+              {% endfor %}
+            </div>
+            <strong class="fs-2 d-block">PIN: {{ credentials.password }}</strong>
+          </div>
+          <p class="small text-muted mb-0">Guarda esta tarjeta en un lugar seguro. El niño no necesita correo electrónico.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" onclick="window.print()">Imprimir</button>
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+  {% if credentials %}
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('studentCredentialsModal');
+        if (modal) bootstrap.Modal.getOrCreateInstance(modal).show();
+      });
+    </script>
+  {% endif %}
 {% endblock %}

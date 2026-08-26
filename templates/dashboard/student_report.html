@@ -45,6 +45,27 @@
     </section>
   </div>
 
+  <section class="feature-card mt-4">
+    <h2 class="h4">Progreso del quiz por materia</h2>
+    <p class="text-muted mb-3">Resumen de aciertos guardados en el Quiz de agilidad lectora.</p>
+    <div class="table-responsive">
+      <table class="table align-middle mb-0">
+        <thead><tr><th>Materia</th><th>Aciertos</th><th>Resultado</th></tr></thead>
+        <tbody>
+          {% for row in quiz_subject_progress %}
+            <tr>
+              <td>{{ row.subject }}</td>
+              <td>{{ row.correct }}/{{ row.total }}</td>
+              <td><progress max="100" value="{{ row.percentage }}"></progress> {{ row.percentage }}%</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="3">Todavía no hay respuestas de quiz guardadas.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
   <div class="d-flex flex-wrap gap-2 mt-4">
     {% if request.user.role == 'TEACHER' %}<a class="btn btn-outline-primary" href="{% url 'dashboard:teacher' %}">Volver al panel docente</a>{% endif %}
     <a class="btn btn-outline-secondary" href="{% url 'dashboard:redirect' %}">Mi panel</a>
