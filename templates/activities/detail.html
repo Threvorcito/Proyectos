@@ -31,13 +31,24 @@
           {% for option in activity.options.all %}
             <form method="post" action="{% url 'activities:submit_answer' activity.pk %}" class="option-form">{% csrf_token %}
               <input type="hidden" name="option_id" value="{{ option.pk }}">
-              <button class="option-btn activity-option-card" type="submit">
+              <button class="option-btn activity-option-card {% if answer_feedback and answer_feedback.option.pk == option.pk %}{% if answer_feedback.is_correct %}is-correct{% else %}is-try{% endif %}{% endif %}" type="submit">
                 <span>{{ forloop.counter }}</span>
                 <strong>{{ option.text }}</strong>
               </button>
             </form>
           {% endfor %}
         </div>
+        {% if answer_feedback %}
+          <div class="activity-answer-feedback {% if answer_feedback.is_correct %}is-correct{% else %}is-try{% endif %}" role="status" aria-live="polite">
+            {% if answer_feedback.is_correct %}
+              <strong>¡Muy bien!</strong>
+              <span>Ganaste {{ answer_feedback.points }} punto{{ answer_feedback.points|pluralize }}{% if answer_feedback.stars %} y {{ answer_feedback.stars }} estrella{{ answer_feedback.stars|pluralize }}{% endif %}.</span>
+            {% else %}
+              <strong>Inténtalo otra vez.</strong>
+              <span>Mira con calma y vuelve a elegir.</span>
+            {% endif %}
+          </div>
+        {% endif %}
       </section>
     </article>
   </div>

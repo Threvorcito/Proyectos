@@ -41,3 +41,37 @@ class ReadingAnswer(models.Model):
 
     def __str__(self):
         return self.answer
+
+
+class ReadingProgress(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='reading_progress')
+    reading = models.ForeignKey(Reading, on_delete=models.CASCADE, related_name='student_progress')
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+    completed = models.BooleanField(default=False)
+    comprehension_percentage = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['student', 'reading'], name='unique_reading_progress_per_student'),
+        ]
+
+    def __str__(self):
+        return f'{self.student} - {self.reading}'
+
+
+class ReadingComprehensionAnswer(models.Model):
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='reading_answers')
+    reading = models.ForeignKey(Reading, on_delete=models.CASCADE, related_name='student_answers')
+    question = models.ForeignKey(ReadingQuestion, on_delete=models.CASCADE, related_name='student_answers')
+    selected_answer = models.CharField(max_length=255)
+    is_correct = models.BooleanField(default=False)
+    answered_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['student', 'question'], name='unique_reading_answer_per_student_question'),
+        ]
+
+    def __str__(self):
+        return f'{self.student} - {self.question}'

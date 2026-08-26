@@ -46,6 +46,29 @@ class GameAttemptSaveTests(TestCase):
         self.assertEqual(attempt.score, 0)
 
 
+class GameStudentExperienceTests(TestCase):
+    def test_student_games_page_hides_grade_filters(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        subject = Subject.objects.create(name='Lengua y Literatura')
+        user = CustomUser.objects.create_user(
+            username='estudiantejuegos',
+            email='estudiantejuegos@example.com',
+            password='Demo12345!',
+            role=CustomUser.Role.STUDENT,
+        )
+        StudentProfile.objects.create(user=user, name='Estudiante Juegos', grade='1', current_level=level, reading_level=level)
+        Game.objects.create(level=level, subject=subject, grade='1', name='Juego grado 1', slug='juego-grado-1', description='Juego', skill='Lectura', game_type=Game.GameType.DYSLEXIA_QUIZ)
+        Game.objects.create(level=level, subject=subject, grade='2', name='Juego grado 2', slug='juego-grado-2', description='Juego', skill='Lectura', game_type=Game.GameType.DYSLEXIA_QUIZ)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('games:index'), {'grade': '2'})
+
+        self.assertContains(response, 'Juegos para tu grado')
+        self.assertContains(response, 'Juego grado 1')
+        self.assertNotContains(response, 'Juego grado 2')
+        self.assertNotContains(response, 'activity-filter-board')
+
+
 class GameGradeFilterTests(TestCase):
     def setUp(self):
         self.level = Level.objects.create(number=1, name='Inicial', order=1)

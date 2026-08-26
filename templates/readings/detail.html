@@ -18,18 +18,110 @@
       {% endfor %}
     </article>
     <hr>
-    <h2>Comprensión</h2>
-    <p class="text-muted">Lee con calma. Puedes escuchar de nuevo antes de responder.</p>
-    {% for question in reading.questions.all %}
-      <div class="question-box">
-        <h3>{{ question.question }}</h3>
-        <div class="d-flex flex-wrap gap-2">
-          {% for answer in question.answers.all %}
-            <button class="btn btn-soft" type="button" data-answer="{{ answer.answer }}" data-correct="{{ answer.is_correct|yesno:'1,0' }}">{{ answer.answer }}</button>
-          {% endfor %}
+    <section class="reading-comprehension" data-reading-comprehension data-save-url="{% url 'readings:save_comprehension_answer' reading.pk %}">
+      <h2>Comprensión</h2>
+      <p class="text-muted">Responde una pregunta a la vez.</p>
+      <div class="reading-comprehension__progress" aria-live="polite" data-reading-progress></div>
+      {% for question in reading.questions.all %}
+        <div class="question-box reading-question-step" data-reading-question-step data-question-id="{{ question.pk }}" {% if not forloop.first %}hidden{% endif %}>
+          <h3>{{ question.question }}</h3>
+          <div class="reading-answer-grid">
+            {% for answer in question.answers.all %}
+              <button class="btn btn-soft reading-answer-button" type="button" data-answer-id="{{ answer.pk }}" data-answer="{{ answer.answer }}" data-correct="{{ answer.is_correct|yesno:'1,0' }}">{{ answer.answer }}</button>
+            {% endfor %}
+          </div>
+          <p class="reading-question-feedback" data-reading-question-feedback aria-live="polite"></p>
         </div>
-      </div>
-    {% endfor %}
+      {% empty %}
+        <p>No hay preguntas para esta lectura todavía.</p>
+      {% endfor %}
+      {% if reading.questions.all %}
+        <div class="reading-comprehension__actions">
+          <button class="btn btn-primary btn-lg" type="button" data-reading-next hidden>Siguiente pregunta</button>
+        </div>
+        <div class="reading-comprehension__result" data-reading-result hidden></div>
+      {% endif %}
+    </section>
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var root = document.querySelector('[data-reading-comprehension]');
+    if (!root) return;
+    var steps = Array.prototype.slice.call(root.querySelectorAll('[data-reading-question-step]'));
+    var progress = root.querySelector('[data-reading-progress]');
+    var next = root.querySelector('[data-reading-next]');
+    var result = root.querySelector('[data-reading-result]');
+    var saveUrl = root.getAttribute('data-save-url');
+    var index = 0;
+    var correct = 0;
+
+    function getCsrfToken() {
+      var match = document.cookie.match(/csrftoken=([^;]+)/);
+      return match ? match[1] : '';
+    }
+
+    function saveAnswer(step, button, completed) {
+      if (!saveUrl) return;
+      fetch(saveUrl, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
+        body: JSON.stringify({
+          question_id: step.getAttribute('data-question-id'),
+          answer_id: button.getAttribute('data-answer-id'),
+          completed: completed
+        })
+      }).catch(function () {});
+    }
+
+    function updateProgress() {
+      if (progress && steps.length) progress.textContent = 'Pregunta ' + (index + 1) + ' de ' + steps.length;
+    }
+
+    function showStep(nextIndex) {
+      index = nextIndex;
+      steps.forEach(function (step, stepIndex) { step.hidden = stepIndex !== index; });
+      if (next) next.hidden = true;
+      updateProgress();
+    }
+
+    steps.forEach(function (step) {
+      var feedback = step.querySelector('[data-reading-question-feedback]');
+      step.querySelectorAll('[data-correct]').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var isCorrect = button.getAttribute('data-correct') === '1';
+          step.querySelectorAll('[data-correct]').forEach(function (item) { item.disabled = true; });
+          button.classList.add(isCorrect ? 'is-correct' : 'is-try');
+          if (isCorrect) correct += 1;
+          if (feedback) feedback.textContent = isCorrect ? '¡Muy bien!' : 'Inténtalo en la próxima.';
+          saveAnswer(step, button, index + 1 >= steps.length);
+          if (next) {
+            next.hidden = false;
+            next.textContent = index + 1 >= steps.length ? 'Ver resultado' : 'Siguiente pregunta';
+          }
+        });
+      });
+    });
+
+    if (next) {
+      next.addEventListener('click', function () {
+        if (index + 1 < steps.length) showStep(index + 1);
+        else {
+          steps.forEach(function (step) { step.hidden = true; });
+          next.hidden = true;
+          if (progress) progress.textContent = 'Lectura terminada';
+          if (result) {
+            result.hidden = false;
+            result.textContent = 'Resultado: ' + correct + ' de ' + steps.length + ' respuestas correctas.';
+          }
+        }
+      });
+    }
+    updateProgress();
+  });
+</script>
 {% endblock %}

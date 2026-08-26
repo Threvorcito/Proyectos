@@ -11,12 +11,13 @@ from accounts.models import CustomUser
 from activities.models import Activity
 from activities.services import get_recommended_activities
 from core.models import AuditLog
+from gamification.models import StudentAchievement
 from gamification.services import evaluate_achievements
-from games.models import Game, GameAttemptAnswer
+from games.models import Game, GameAttempt, GameAttemptAnswer
 from games.services import games_for_student
 from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, LessonPlanAssignment, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 from progress.models import StudentDifficulty, StudentProgress
-from readings.models import Reading
+from readings.models import Reading, ReadingComprehensionAnswer, ReadingProgress
 
 from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherStudentUpdateForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
 
@@ -676,9 +677,23 @@ def student_report(request, pk):
     progress_items = StudentProgress.objects.filter(student=student).select_related('activity', 'activity__level').order_by('-last_activity_date')[:10]
     difficulties = StudentDifficulty.objects.filter(student=student).order_by('-error_count', '-last_error_date')[:8]
     attempts_count = student.attempts.count()
+    game_attempts = GameAttempt.objects.filter(student=student).select_related('game', 'game__level', 'game__subject').order_by('-started_at')[:8]
     completed_count = student.progress_items.filter(completed=True).count()
     total_progress = student.progress_items.count()
     completion_percentage = round((completed_count / total_progress) * 100) if total_progress else 0
+    reading_progress = ReadingProgress.objects.filter(student=student).select_related('reading', 'reading__level', 'reading__subject').order_by('-started_at')[:10]
+    reading_rows = []
+    for item in reading_progress:
+        total_questions = item.reading.questions.count()
+        correct_answers = ReadingComprehensionAnswer.objects.filter(student=student, reading=item.reading, is_correct=True).count()
+        answered_questions = ReadingComprehensionAnswer.objects.filter(student=student, reading=item.reading).count()
+        reading_rows.append({
+            'progress': item,
+            'reading': item.reading,
+            'total_questions': total_questions,
+            'answered_questions': answered_questions,
+            'correct_answers': correct_answers,
+        })
     quiz_subject_progress = []
     answer_rows = GameAttemptAnswer.objects.filter(attempt__student=student).values('subject').annotate(
         total=Count('id'),
@@ -693,14 +708,21 @@ def student_report(request, pk):
             'correct': correct,
             'percentage': round((correct / total) * 100) if total else 0,
         })
+    achievements = StudentAchievement.objects.filter(student=student).select_related('achievement').order_by('-earned_at')[:6]
     return render(request, 'dashboard/student_report.html', {
         'student': student,
         'progress_items': progress_items,
         'difficulties': difficulties,
         'attempts_count': attempts_count,
+        'game_attempts': game_attempts,
+        'game_attempts_count': student.game_attempts.count(),
+        'reading_rows': reading_rows,
+        'readings_started_count': student.reading_progress.count(),
+        'readings_completed_count': student.reading_progress.filter(completed=True).count(),
         'completed_count': completed_count,
         'completion_percentage': completion_percentage,
         'quiz_subject_progress': quiz_subject_progress,
+        'achievements': achievements,
     })
 
 

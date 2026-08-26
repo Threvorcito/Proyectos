@@ -59,10 +59,10 @@
 
   <section class="container games-page__section">
     <div class="games-page__section-heading">
-      <h2>Todos los juegos</h2>
-      <p>Elige una práctica breve por grado y materia, pensada para lectura accesible y apoyo multisensorial.</p>
+      <h2>{% if student %}Juegos para tu grado{% else %}Todos los juegos{% endif %}</h2>
+      <p>{% if student %}Elige un juego corto y avanza sin presión.{% else %}Elige una práctica breve por grado y materia, pensada para lectura accesible y apoyo multisensorial.{% endif %}</p>
     </div>
-    <div class="activity-filter-board mb-4" aria-label="Filtros de juegos por grado y materia">
+    {% if not student %}<div class="activity-filter-board mb-4" aria-label="Filtros de juegos por grado y materia">
       {% for value, label in grades %}
         <article class="activity-grade-card activity-grade-card--{{ value }} {% if selected_grade == value %}is-active{% endif %}">
           <div class="activity-grade-card__header">
@@ -81,8 +81,8 @@
           </div>
         </article>
       {% endfor %}
-    </div>
-    {% if selected_grade or selected_subject_id %}
+    </div>{% endif %}
+    {% if not student and selected_grade or not student and selected_subject_id %}
       <div class="activity-current-filter mb-4">
         <strong>Mostrando:</strong>
         {% if selected_grade %}<span>Grado {{ selected_grade }}</span>{% endif %}

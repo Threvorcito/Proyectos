@@ -5,8 +5,10 @@ from unittest.mock import patch
 from accounts.models import CustomUser
 from dashboard.forms import QuickStudentCreationForm
 from activities.models import Activity
+from gamification.models import Achievement, StudentAchievement
 from games.models import Game, GameAttempt, GameAttemptAnswer
 from learning.models import LessonPlan, LessonPlanAssignment, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
+from readings.models import Reading, ReadingAnswer, ReadingComprehensionAnswer, ReadingProgress, ReadingQuestion
 
 
 class DashboardProfileGuardTests(TestCase):
@@ -159,6 +161,90 @@ class LessonPlanImplementationTests(TestCase):
         self.assertContains(response, 'Matemática')
         self.assertContains(response, '1/2')
         self.assertContains(response, '50%')
+
+    def test_student_report_shows_reading_progress_and_rewards(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        subject = Subject.objects.create(name='Lengua y Literatura')
+        user = CustomUser.objects.create_user(username='alumnolecturareporte', email='alumnolecturareporte@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=user, name='Alumno Lectura Reporte', grade='1', reading_level=level, current_level=level, points=20, stars=2)
+        reading = Reading.objects.create(level=level, subject=subject, grade='1', title='La casa azul', content='La casa es azul.')
+        question_one = ReadingQuestion.objects.create(reading=reading, question='¿De qué color es la casa?')
+        question_two = ReadingQuestion.objects.create(reading=reading, question='¿Qué es azul?')
+        ReadingAnswer.objects.create(question=question_one, answer='Azul', is_correct=True)
+        ReadingAnswer.objects.create(question=question_two, answer='La casa', is_correct=True)
+        ReadingComprehensionAnswer.objects.create(student=student, reading=reading, question=question_one, selected_answer='Azul', is_correct=True)
+        ReadingComprehensionAnswer.objects.create(student=student, reading=reading, question=question_two, selected_answer='El perro', is_correct=False)
+        ReadingProgress.objects.create(student=student, reading=reading, completed=True, comprehension_percentage=50)
+        achievement = Achievement.objects.create(name='Primer lector', description='Completa una lectura.', icon='📚', requirement_type='readings', requirement_value=1)
+        StudentAchievement.objects.create(student=student, achievement=achievement)
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
+
+        self.assertContains(response, 'Lecturas y comprensión')
+        self.assertContains(response, 'La casa azul')
+        self.assertContains(response, 'Completada')
+        self.assertContains(response, '50%')
+        self.assertContains(response, '1/2 correctas')
+        self.assertContains(response, '20 puntos')
+        self.assertContains(response, '2 estrellas')
+        self.assertContains(response, 'Primer lector')
+
+    def test_linked_teacher_can_view_student_report_with_reading_data(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        teacher_user = CustomUser.objects.create_user(username='docenteautorizado', email='docenteautorizado@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Autorizado', can_view_student_reports=True)
+        student_user = CustomUser.objects.create_user(username='alumnodocenteautorizado', email='alumnodocenteautorizado@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Docente Autorizado', grade='1', reading_level=level, current_level=level)
+        teacher.students.add(student)
+        reading = Reading.objects.create(level=level, grade='1', title='Lectura visible docente', content='Texto.')
+        ReadingProgress.objects.create(student=student, reading=reading, completed=True, comprehension_percentage=100)
+        self.client.force_login(teacher_user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
+
+        self.assertContains(response, 'Lectura visible docente')
+        self.assertContains(response, 'Lecturas y comprensión')
+
+    def test_unlinked_teacher_cannot_view_student_report(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        teacher_user = CustomUser.objects.create_user(username='docenteajeno', email='docenteajeno@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        TeacherProfile.objects.create(user=teacher_user, name='Docente Ajeno', can_view_student_reports=True)
+        student_user = CustomUser.objects.create_user(username='alumnoajeno', email='alumnoajeno@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Ajeno', grade='1', reading_level=level, current_level=level)
+        self.client.force_login(teacher_user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+
+    def test_linked_parent_can_view_student_report_with_reading_data(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        parent_user = CustomUser.objects.create_user(username='tutorautorizado', email='tutorautorizado@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
+        parent = ParentProfile.objects.create(user=parent_user, name='Tutor Autorizado')
+        student_user = CustomUser.objects.create_user(username='alumnotutorautorizado', email='alumnotutorautorizado@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Tutor Autorizado', grade='1', reading_level=level, current_level=level)
+        parent.students.add(student)
+        reading = Reading.objects.create(level=level, grade='1', title='Lectura visible tutor', content='Texto.')
+        ReadingProgress.objects.create(student=student, reading=reading, completed=False, comprehension_percentage=0)
+        self.client.force_login(parent_user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
+
+        self.assertContains(response, 'Lectura visible tutor')
+        self.assertContains(response, 'En progreso')
+
+    def test_unlinked_parent_cannot_view_student_report(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        parent_user = CustomUser.objects.create_user(username='tutorajeno2', email='tutorajeno2@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
+        ParentProfile.objects.create(user=parent_user, name='Tutor Ajeno')
+        student_user = CustomUser.objects.create_user(username='alumnotutorajeno', email='alumnotutorajeno@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Tutor Ajeno', grade='1', reading_level=level, current_level=level)
+        self.client.force_login(parent_user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
 
 
 class TeacherPermissionEnforcementTests(TestCase):

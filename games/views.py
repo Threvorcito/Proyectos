@@ -60,6 +60,7 @@ def games_index(request):
             'started_games': started_games,
             'subjects': Subject.objects.filter(is_active=True).order_by('name'),
             'grades': [('1', 'Primer grado'), ('2', 'Segundo grado'), ('3', 'Tercer grado')],
+            'student': student,
             'selected_subject_id': subject_id,
             'selected_grade': grade,
         },

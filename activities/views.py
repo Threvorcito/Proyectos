@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from learning.models import Level, Subject
@@ -33,6 +34,7 @@ def activity_list(request):
         'levels': levels,
         'subjects': subjects,
         'grades': grades,
+        'student': student,
         'selected_level_id': level_id,
         'selected_subject_id': subject_id,
         'selected_grade': grade,
@@ -45,7 +47,20 @@ def activity_detail(request, pk):
     if student is not None:
         activities = activities.filter(grade=student.grade)
     activity = get_object_or_404(activities, pk=pk)
-    return render(request, 'activities/detail.html', {'activity': activity})
+    selected_option = None
+    result = request.GET.get('resultado')
+    option_id = request.GET.get('opcion')
+    if option_id:
+        selected_option = activity.options.filter(pk=option_id).first()
+    answer_feedback = None
+    if selected_option and result in ('correcta', 'intenta'):
+        answer_feedback = {
+            'option': selected_option,
+            'is_correct': result == 'correcta',
+            'points': activity.points if result == 'correcta' else 0,
+            'stars': activity.stars if result == 'correcta' else 0,
+        }
+    return render(request, 'activities/detail.html', {'activity': activity, 'answer_feedback': answer_feedback})
 
 
 @login_required
@@ -69,9 +84,11 @@ def submit_answer(request, pk):
     )
     if is_correct:
         messages.success(request, 'Respuesta correcta. Ganaste puntos por tu esfuerzo.')
+        result = 'correcta'
     else:
         messages.info(request, 'Buen intento. Puedes probar otra vez.')
-    return redirect('activities:detail', pk=pk)
+        result = 'intenta'
+    return redirect(f"{reverse('activities:detail', args=[pk])}?opcion={option.pk}&resultado={result}")
 
 
 @login_required

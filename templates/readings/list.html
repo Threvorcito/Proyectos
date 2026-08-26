@@ -4,12 +4,17 @@
   <div class="container py-5">
     <section class="activities-hero readings-hero">
       <span class="eyebrow">Lecturas</span>
-      <h1>Escoge un grado y una materia para leer</h1>
-      <p>Cuentos y textos cortos clasificados por grado y materia, con lectura pausada para estudiantes con dislexia.</p>
-      <a class="btn {% if not selected_grade and not selected_subject_id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'readings:list' %}">Ver todas las lecturas</a>
+      {% if student %}
+        <h1>Lecturas para tu grado</h1>
+        <p>Escoge una lectura corta. Puedes escucharla por partes.</p>
+      {% else %}
+        <h1>Escoge un grado y una materia para leer</h1>
+        <p>Cuentos y textos cortos clasificados por grado y materia, con lectura pausada para estudiantes con dislexia.</p>
+        <a class="btn {% if not selected_grade and not selected_subject_id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'readings:list' %}">Ver todas las lecturas</a>
+      {% endif %}
     </section>
 
-    <section class="activity-filter-board mt-4" aria-label="Filtros de lecturas por grado y materia">
+    {% if not student %}<section class="activity-filter-board mt-4" aria-label="Filtros de lecturas por grado y materia">
       {% for value, label in grades %}
         <article class="activity-grade-card activity-grade-card--{{ value }} {% if selected_grade == value %}is-active{% endif %}">
           <div class="activity-grade-card__header">
@@ -28,9 +33,9 @@
           </div>
         </article>
       {% endfor %}
-    </section>
+    </section>{% endif %}
 
-    {% if selected_grade or selected_subject_id %}
+    {% if not student and selected_grade or not student and selected_subject_id %}
       <div class="activity-current-filter mt-4">
         <strong>Mostrando:</strong>
         {% if selected_grade %}<span>Grado {{ selected_grade }}</span>{% endif %}

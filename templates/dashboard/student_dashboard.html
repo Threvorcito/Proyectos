@@ -11,9 +11,11 @@
     <div class="col-md-3"><div class="stat-card"><span>Estrellas</span><strong>{{ student.stars }}</strong></div></div>
     <div class="col-md-3"><div class="stat-card"><span>Racha</span><strong>{{ student.learning_streak }}</strong></div></div>
   </div>
-  <div class="d-flex flex-wrap gap-2 mt-4">
-    <a class="btn btn-outline-primary" href="{% url 'dashboard:student_report' student.pk %}">Ver mi reporte</a>
-    <a class="btn btn-primary" href="{% url 'activities:list' %}">Practicar</a>
+  <div class="student-main-actions mt-4">
+    {% if today_plan %}<a class="btn btn-primary btn-lg" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">Continuar mi clase</a>{% endif %}
+    <a class="btn btn-primary btn-lg" href="{% url 'activities:list' %}">Practicar</a>
+    <a class="btn btn-outline-primary btn-lg" href="{% url 'games:index' %}">Jugar</a>
+    <a class="btn btn-link" href="{% url 'dashboard:student_report' student.pk %}">Ver mi reporte</a>
   </div>
   <section class="learning-path mt-5" aria-labelledby="learning-path-title">
     <div class="learning-path__header">

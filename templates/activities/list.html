@@ -4,12 +4,17 @@
   <div class="container py-5">
     <section class="activities-hero">
       <span class="eyebrow">Actividades</span>
-      <h1>Escoge tu grado y luego tu materia</h1>
-      <p>Actividades clasificadas por grado y asignatura, con apoyo visual, repetición guiada y lectura accesible para estudiantes con dislexia.</p>
-      <a class="btn {% if not selected_grade and not selected_subject_id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'activities:list' %}">Ver todas las actividades</a>
+      {% if student %}
+        <h1>Estas son tus actividades</h1>
+        <p>Elige una práctica corta para tu grado. Lee con calma y escucha la instrucción si lo necesitas.</p>
+      {% else %}
+        <h1>Escoge tu grado y luego tu materia</h1>
+        <p>Actividades clasificadas por grado y asignatura, con apoyo visual, repetición guiada y lectura accesible para estudiantes con dislexia.</p>
+        <a class="btn {% if not selected_grade and not selected_subject_id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'activities:list' %}">Ver todas las actividades</a>
+      {% endif %}
     </section>
 
-    <section class="activity-filter-board mt-4" aria-label="Filtros de actividades por grado y materia">
+    {% if not student %}<section class="activity-filter-board mt-4" aria-label="Filtros de actividades por grado y materia">
       {% for value, label in grades %}
         <article class="activity-grade-card activity-grade-card--{{ value }} {% if selected_grade == value %}is-active{% endif %}">
           <div class="activity-grade-card__header">
@@ -28,9 +33,9 @@
           </div>
         </article>
       {% endfor %}
-    </section>
+    </section>{% endif %}
 
-    {% if selected_grade or selected_subject_id %}
+    {% if not student and selected_grade or not student and selected_subject_id %}
       <div class="activity-current-filter mt-4">
         <strong>Mostrando:</strong>
         {% if selected_grade %}<span>Grado {{ selected_grade }}</span>{% endif %}
@@ -45,7 +50,7 @@
       <div class="activity-learning-compass__main">
         <span class="eyebrow">Ruta sugerida</span>
         <h2>Practica en pasos cortos</h2>
-        <p>Elige una actividad, lee con calma y repite si lo necesitas. Cada tarjeta combina lectura accesible, apoyo visual y una meta concreta para que el estudiante avance sin presion.</p>
+        <p>Elige una actividad, lee con calma y repite si lo necesitas.</p>
       </div>
       <div class="activity-learning-compass__tips">
         <article><strong>1</strong><span>Observa</span><small>Identifica imagenes, palabras o numeros clave.</small></article>

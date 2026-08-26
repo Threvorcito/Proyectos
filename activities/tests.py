@@ -42,7 +42,7 @@ class ActivitySubmissionTests(TestCase):
             {'option_id': self.incorrect.pk, 'answer': self.correct.text, 'is_correct': '1'},
         )
 
-        self.assertRedirects(response, reverse('activities:detail', args=[self.activity.pk]))
+        self.assertRedirects(response, f"{reverse('activities:detail', args=[self.activity.pk])}?opcion={self.incorrect.pk}&resultado=intenta")
         attempt = ActivityAttempt.objects.get()
         self.assertEqual(attempt.answer, self.incorrect.text)
         self.assertFalse(attempt.is_correct)
@@ -109,8 +109,24 @@ class ActivityGradeFilterTests(TestCase):
             self.client.force_login(student.user)
             response = self.client.get(reverse('activities:list'), {'grade': '3' if grade != '3' else '1'})
             self.assertContains(response, f'Actividad grado {grade}')
+            self.assertContains(response, 'Estas son tus actividades')
+            self.assertNotContains(response, 'activity-filter-board')
             for other_grade in {'1', '2', '3'} - {grade}:
                 self.assertNotContains(response, f'Actividad grado {other_grade}')
+
+    def test_activity_feedback_shows_points_next_to_selected_answer(self):
+        student = self.students['1']
+        activity = Activity.objects.get(title='Actividad grado 1')
+        activity.points = 10
+        activity.stars = 1
+        activity.save(update_fields=['points', 'stars'])
+        correct = ActivityOption.objects.create(activity=activity, text='A', is_correct=True)
+        self.client.force_login(student.user)
+
+        response = self.client.post(reverse('activities:submit_answer', args=[activity.pk]), {'option_id': correct.pk}, follow=True)
+
+        self.assertContains(response, '¡Muy bien!')
+        self.assertContains(response, 'Ganaste 10 puntos')
 
     def test_student_cannot_open_activity_from_other_grade(self):
         self.client.force_login(self.students['1'].user)
