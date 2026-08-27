@@ -95,6 +95,7 @@
                     <td>
                       <span class="lesson-report__pill">{{ plan.activities.count }} actividades</span>
                       <span class="lesson-report__pill">{{ plan.readings.count }} lecturas</span>
+                      <span class="lesson-report__pill">{{ plan.games.count }} juegos</span>
                     </td>
                     <td>
                       {% if plan.is_active and plan.status != 'archived' %}
@@ -185,12 +186,13 @@
           <div class="lesson-plan-dialog__section">
             <div class="lesson-plan-dialog__section-title">
               <strong>Secuencia didáctica</strong>
-              <span>Inicio, lectura docente, comprensión y ortografía</span>
+              <span>Inicio, desarrollo y cierre/evaluación</span>
             </div>
             <div class="admin-dialog__grid admin-dialog__grid--resource">
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.initial_activities.label_tag }}{{ create_form.initial_activities }}{{ create_form.initial_activities.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.teacher_reading.label_tag }}{{ create_form.teacher_reading }}{{ create_form.teacher_reading.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.comprehension_orthography_activities.label_tag }}{{ create_form.comprehension_orthography_activities }}{{ create_form.comprehension_orthography_activities.errors }}</p>
+              <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.closing_activities.label_tag }}{{ create_form.closing_activities }}{{ create_form.closing_activities.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.methodology.label_tag }}{{ create_form.methodology }}{{ create_form.methodology.errors }}</p>
               <p class="admin-dialog__span-2 admin-dialog__compact-content">{{ create_form.notes.label_tag }}{{ create_form.notes }}{{ create_form.notes.errors }}</p>
             </div>
@@ -216,6 +218,11 @@
                 {{ create_form.readings.label_tag }}
                 <div class="admin-dialog__checklist">{{ create_form.readings }}</div>
                 {{ create_form.readings.errors }}
+              </div>
+              <div>
+                {{ create_form.games.label_tag }}
+                <div class="admin-dialog__checklist">{{ create_form.games }}</div>
+                {{ create_form.games.errors }}
               </div>
             </div>
           </div>

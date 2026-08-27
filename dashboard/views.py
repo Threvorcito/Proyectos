@@ -14,7 +14,6 @@ from core.models import AuditLog
 from gamification.models import StudentAchievement
 from gamification.services import evaluate_achievements
 from games.models import Game, GameAttempt, GameAttemptAnswer
-from games.services import games_for_student
 from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, LessonPlanAssignment, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading, ReadingComprehensionAnswer, ReadingProgress
@@ -447,7 +446,7 @@ def lesson_plan_list(request):
     )
     if permission_response:
         return permission_response
-    plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings')
+    plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings', 'games')
     teacher = None
     if not is_admin_user(request.user):
         teacher = getattr(request.user, 'teacher_profile', None)
@@ -486,7 +485,7 @@ def lesson_plan_create(request):
         messages.success(request, 'Plan de clase creado correctamente.')
         return redirect('dashboard:lesson_plans')
     if request.method == 'POST':
-        plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings')
+        plans = LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings', 'games')
         if not is_admin_user(request.user):
             teacher = getattr(request.user, 'teacher_profile', None)
             if teacher is None:
@@ -525,7 +524,7 @@ def lesson_plan_implementation(request, pk):
     if permission_response:
         return permission_response
     plan = get_object_or_404(
-        LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings'),
+        LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings', 'games'),
         pk=pk,
     )
     teacher = getattr(request.user, 'teacher_profile', None)
@@ -535,21 +534,25 @@ def lesson_plan_implementation(request, pk):
 
     activity_ids = plan.activities.values_list('id', flat=True)
     reading_ids = plan.readings.values_list('id', flat=True)
+    game_ids = plan.games.values_list('id', flat=True)
     suggested_activities = Activity.objects.filter(
         is_active=True,
         level=plan.level,
+        subject=plan.subject,
         grade=plan.grade,
     ).exclude(id__in=activity_ids).select_related('subject', 'level')[:6]
     suggested_readings = Reading.objects.filter(
         is_active=True,
         level=plan.level,
+        subject=plan.subject,
         grade=plan.grade,
     ).exclude(id__in=reading_ids).select_related('subject', 'level')[:6]
     suggested_games = Game.objects.filter(
         is_active=True,
         level=plan.level,
-        grade=plan.grade,
-    ).select_related('subject', 'level')[:6]
+        subject=plan.subject,
+        grade__in=('', plan.grade),
+    ).exclude(id__in=game_ids).select_related('subject', 'level')[:6]
 
     return render(request, 'dashboard/lesson_plan_implementation.html', {
         'plan': plan,
@@ -571,7 +574,7 @@ def lesson_plan_report(request, pk):
     if permission_response:
         return permission_response
     plan = get_object_or_404(
-        LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings'),
+        LessonPlan.objects.select_related('teacher', 'subject', 'level').prefetch_related('activities', 'readings', 'games'),
         pk=pk,
     )
     teacher = getattr(request.user, 'teacher_profile', None)
@@ -734,7 +737,12 @@ def student_dashboard(request):
         return redirect('accounts:profile')
     evaluate_achievements(student)
     recommended = get_recommended_activities(student)
-    assigned_plans = LessonPlanAssignment.objects.filter(student=student).select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings')[:3]
+    visible_plan_statuses = (LessonPlan.Status.ACTIVE, LessonPlan.Status.IN_PROGRESS)
+    assigned_plans = LessonPlanAssignment.objects.filter(
+        student=student,
+        plan__is_active=True,
+        plan__status__in=visible_plan_statuses,
+    ).select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings', 'plan__games')[:3]
     today_plan = assigned_plans[0] if assigned_plans else None
     return render(request, 'dashboard/student_dashboard.html', {'student': student, 'recommended': recommended, 'assigned_plans': assigned_plans, 'today_plan': today_plan})
 
@@ -746,13 +754,14 @@ def student_lesson_plan(request, pk):
         messages.error(request, 'Tu cuenta no tiene un perfil de estudiante asignado.')
         return redirect('accounts:profile')
     assignment = get_object_or_404(
-        LessonPlanAssignment.objects.select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings'),
+        LessonPlanAssignment.objects.select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings', 'plan__games'),
         plan_id=pk,
         student=student,
+        plan__is_active=True,
+        plan__status__in=(LessonPlan.Status.ACTIVE, LessonPlan.Status.IN_PROGRESS),
     )
     plan = assignment.plan
-    suggested_games = games_for_student(Game.objects.filter(is_active=True, level=plan.level), student).select_related('subject', 'level')[:4]
-    return render(request, 'dashboard/student_lesson_plan.html', {'assignment': assignment, 'plan': plan, 'suggested_games': suggested_games})
+    return render(request, 'dashboard/student_lesson_plan.html', {'assignment': assignment, 'plan': plan})
 
 
 @login_required
@@ -871,7 +880,7 @@ def teacher_dashboard(request):
         'attempts': sum(student.total_attempts for student in students),
         'difficulties': sum(student.detected_difficulties for student in students),
     }
-    lesson_plan_queryset = LessonPlan.objects.filter(teacher=teacher_profile).select_related('subject', 'level').prefetch_related('activities', 'readings')
+    lesson_plan_queryset = LessonPlan.objects.filter(teacher=teacher_profile).select_related('subject', 'level').prefetch_related('activities', 'readings', 'games')
     summary['lesson_plans'] = lesson_plan_queryset.count()
     lesson_plans = lesson_plan_queryset[:5]
     return render(request, 'dashboard/teacher_dashboard.html', {

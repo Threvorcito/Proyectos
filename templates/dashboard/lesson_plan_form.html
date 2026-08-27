@@ -57,21 +57,23 @@
             </div>
           </div>
           <div class="lesson-plan-dialog__section">
-            <div class="lesson-plan-dialog__section-title"><strong>Secuencia didáctica</strong><span>Inicio, lectura docente, comprensión y ortografía</span></div>
+            <div class="lesson-plan-dialog__section-title"><strong>Secuencia didáctica</strong><span>Inicio, desarrollo y cierre/evaluación</span></div>
             <div class="admin-dialog__grid admin-dialog__grid--resource">
               <p class="admin-dialog__span-2">{{ form.initial_activities.label_tag }}{{ form.initial_activities }}{{ form.initial_activities.errors }}</p>
               <p class="admin-dialog__span-2">{{ form.teacher_reading.label_tag }}{{ form.teacher_reading }}{{ form.teacher_reading.errors }}</p>
               <p class="admin-dialog__span-2">{{ form.comprehension_orthography_activities.label_tag }}{{ form.comprehension_orthography_activities }}{{ form.comprehension_orthography_activities.errors }}</p>
+              <p class="admin-dialog__span-2">{{ form.closing_activities.label_tag }}{{ form.closing_activities }}{{ form.closing_activities.errors }}</p>
               <p class="admin-dialog__span-2">{{ form.methodology.label_tag }}{{ form.methodology }}{{ form.methodology.errors }}</p>
               <p class="admin-dialog__span-2">{{ form.notes.label_tag }}{{ form.notes }}{{ form.notes.errors }}</p>
             </div>
           </div>
           <div class="lesson-plan-dialog__section">
-            <div class="lesson-plan-dialog__section-title"><strong>Recursos vinculados</strong><span>Actividades y lecturas opcionales</span></div>
+            <div class="lesson-plan-dialog__section-title"><strong>Recursos vinculados</strong><span>Actividades, lecturas y juegos opcionales</span></div>
             <div class="admin-dialog__resource-picks">
               <div>{{ form.assigned_students.label_tag }}<div class="admin-dialog__checklist">{{ form.assigned_students }}</div>{{ form.assigned_students.errors }}</div>
               <div>{{ form.activities.label_tag }}<div class="admin-dialog__checklist">{{ form.activities }}</div>{{ form.activities.errors }}</div>
               <div>{{ form.readings.label_tag }}<div class="admin-dialog__checklist">{{ form.readings }}</div>{{ form.readings.errors }}</div>
+              <div>{{ form.games.label_tag }}<div class="admin-dialog__checklist">{{ form.games }}</div>{{ form.games.errors }}</div>
             </div>
           </div>
           <div class="admin-dialog__switch-row">

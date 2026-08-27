@@ -6,6 +6,7 @@ from django.utils.text import slugify
 
 from accounts.models import CustomUser
 from activities.models import Activity
+from games.models import Game
 from learning.models import CurriculumCompetency, LessonPlan, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
 from readings.models import Reading
 
@@ -474,12 +475,13 @@ class LessonPlanForm(forms.ModelForm):
             'subject', 'competency', 'level', 'grade', 'planned_date', 'period', 'unit', 'title', 'topic',
             'achievement_indicator', 'evaluation_criteria', 'content', 'objective',
             'initial_activities', 'teacher_reading', 'comprehension_orthography_activities',
-            'methodology', 'activities', 'readings', 'notes', 'status', 'is_active',
+            'closing_activities', 'methodology', 'activities', 'readings', 'games', 'notes', 'status', 'is_active',
         )
         widgets = {
             'planned_date': forms.DateInput(attrs={'type': 'date'}),
             'activities': forms.CheckboxSelectMultiple(),
             'readings': forms.CheckboxSelectMultiple(),
+            'games': forms.CheckboxSelectMultiple(),
         }
 
     def __init__(self, *args, teacher=None, **kwargs):
@@ -503,10 +505,12 @@ class LessonPlanForm(forms.ModelForm):
         self.fields['initial_activities'].label = 'Actividades iniciales'
         self.fields['teacher_reading'].label = 'Lectura por el docente'
         self.fields['comprehension_orthography_activities'].label = 'Actividades de comprensión y ortografía'
+        self.fields['closing_activities'].label = 'Actividades de cierre/evaluación'
         self.fields['methodology'].label = 'Metodología de aplicación'
         self.fields['planned_date'].label = 'Fecha planificada'
         self.fields['activities'].label = 'Actividades sugeridas'
         self.fields['readings'].label = 'Lecturas sugeridas'
+        self.fields['games'].label = 'Juegos sugeridos'
         self.fields['notes'].label = 'Notas internas'
         self.fields['status'].label = 'Estado del plan'
         self.fields['status'].required = False
@@ -527,9 +531,19 @@ class LessonPlanForm(forms.ModelForm):
             self.fields['assigned_students'].initial = self.instance.assignments.values_list('student_id', flat=True)
         self.fields['activities'].queryset = Activity.objects.filter(is_active=True).select_related('level', 'subject')
         self.fields['readings'].queryset = Reading.objects.filter(is_active=True).select_related('level', 'subject')
+        self.fields['games'].queryset = Game.objects.filter(is_active=True).select_related('level', 'subject')
         if level:
             self.fields['activities'].queryset = self.fields['activities'].queryset.filter(level_id=level)
             self.fields['readings'].queryset = self.fields['readings'].queryset.filter(level_id=level)
+            self.fields['games'].queryset = self.fields['games'].queryset.filter(level_id=level)
+        if subject:
+            self.fields['activities'].queryset = self.fields['activities'].queryset.filter(subject_id=subject)
+            self.fields['readings'].queryset = self.fields['readings'].queryset.filter(subject_id=subject)
+            self.fields['games'].queryset = self.fields['games'].queryset.filter(subject_id=subject)
+        if grade:
+            self.fields['activities'].queryset = self.fields['activities'].queryset.filter(grade=grade)
+            self.fields['readings'].queryset = self.fields['readings'].queryset.filter(grade=grade)
+            self.fields['games'].queryset = self.fields['games'].queryset.filter(grade__in=('', grade))
         style_admin_form(self)
 
     def clean(self):

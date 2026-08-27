@@ -3,11 +3,11 @@ from django.urls import reverse
 from unittest.mock import patch
 
 from accounts.models import CustomUser
-from dashboard.forms import QuickStudentCreationForm
+from dashboard.forms import LessonPlanForm, QuickStudentCreationForm
 from activities.models import Activity
 from gamification.models import Achievement, StudentAchievement
 from games.models import Game, GameAttempt, GameAttemptAnswer
-from learning.models import LessonPlan, LessonPlanAssignment, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
+from learning.models import CurriculumCompetency, LessonPlan, LessonPlanAssignment, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
 from readings.models import Reading, ReadingAnswer, ReadingComprehensionAnswer, ReadingProgress, ReadingQuestion
 
 
@@ -138,6 +138,72 @@ class LessonPlanImplementationTests(TestCase):
         self.assertContains(dashboard_response, 'Lectura con apoyo')
         self.assertContains(plan_response, 'Mi clase con apoyo')
         self.assertContains(plan_response, 'Vamos paso a paso')
+
+    def test_student_dashboard_hides_draft_and_inactive_assigned_plans(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        subject = Subject.objects.create(name='Lengua y Literatura')
+        teacher_user = CustomUser.objects.create_user(username='docentevisibilidad', email='docentevisibilidad@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Visibilidad')
+        student_user = CustomUser.objects.create_user(username='alumnovisibilidad', email='alumnovisibilidad@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Visibilidad', grade='1', reading_level=level, current_level=level)
+        active_plan = LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Clase activa visible', topic='Lectura', objective='Leer.', status=LessonPlan.Status.ACTIVE, is_active=True)
+        draft_plan = LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Clase borrador oculta', topic='Lectura', objective='Leer.', status=LessonPlan.Status.DRAFT, is_active=True)
+        inactive_plan = LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Clase inactiva oculta', topic='Lectura', objective='Leer.', status=LessonPlan.Status.ACTIVE, is_active=False)
+        LessonPlanAssignment.objects.create(plan=active_plan, student=student)
+        LessonPlanAssignment.objects.create(plan=draft_plan, student=student)
+        LessonPlanAssignment.objects.create(plan=inactive_plan, student=student)
+        self.client.force_login(student_user)
+
+        response = self.client.get(reverse('dashboard:student'))
+
+        self.assertContains(response, 'Continuar mi clase')
+        self.assertContains(response, 'Clase activa visible')
+        self.assertNotContains(response, 'Clase borrador oculta')
+        self.assertNotContains(response, 'Clase inactiva oculta')
+
+    def test_student_cannot_open_draft_or_inactive_assigned_plan(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        subject = Subject.objects.create(name='Lengua y Literatura')
+        teacher_user = CustomUser.objects.create_user(username='docentenoabre', email='docentenoabre@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente No Abre')
+        student_user = CustomUser.objects.create_user(username='alumnonoabre', email='alumnonoabre@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno No Abre', grade='1', reading_level=level, current_level=level)
+        draft_plan = LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Borrador directo', topic='Lectura', objective='Leer.', status=LessonPlan.Status.DRAFT)
+        inactive_plan = LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Inactivo directo', topic='Lectura', objective='Leer.', is_active=False)
+        LessonPlanAssignment.objects.create(plan=draft_plan, student=student)
+        LessonPlanAssignment.objects.create(plan=inactive_plan, student=student)
+        self.client.force_login(student_user)
+
+        draft_response = self.client.get(reverse('dashboard:student_lesson_plan', args=[draft_plan.pk]))
+        inactive_response = self.client.get(reverse('dashboard:student_lesson_plan', args=[inactive_plan.pk]))
+
+        self.assertEqual(draft_response.status_code, 404)
+        self.assertEqual(inactive_response.status_code, 404)
+
+    def test_student_lesson_plan_shows_only_linked_resources(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        subject = Subject.objects.create(name='Lengua y Literatura')
+        teacher_user = CustomUser.objects.create_user(username='docenterecursosplan', email='docenterecursosplan@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Recursos Plan')
+        student_user = CustomUser.objects.create_user(username='alumnorecursosplan', email='alumnorecursosplan@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Recursos Plan', grade='1', reading_level=level, current_level=level)
+        activity = Activity.objects.create(level=level, subject=subject, grade='1', title='Actividad asignada al plan', activity_type=Activity.ActivityType.READING)
+        reading = Reading.objects.create(level=level, subject=subject, grade='1', title='Lectura asignada al plan', content='Texto')
+        linked_game = Game.objects.create(level=level, subject=subject, grade='1', name='Juego asignado al plan', slug='juego-asignado-al-plan', description='Juego', skill='Memoria', game_type=Game.GameType.MEMORY)
+        Game.objects.create(level=level, subject=subject, grade='1', name='Juego no vinculado', slug='juego-no-vinculado-plan', description='Juego', skill='Memoria', game_type=Game.GameType.MEMORY)
+        plan = LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Clase con recursos vinculados', topic='Lectura', objective='Leer.', status=LessonPlan.Status.ACTIVE, is_active=True)
+        plan.activities.add(activity)
+        plan.readings.add(reading)
+        plan.games.add(linked_game)
+        LessonPlanAssignment.objects.create(plan=plan, student=student)
+        self.client.force_login(student_user)
+
+        response = self.client.get(reverse('dashboard:student_lesson_plan', args=[plan.pk]))
+
+        self.assertContains(response, 'Actividad asignada al plan')
+        self.assertContains(response, 'Lectura asignada al plan')
+        self.assertContains(response, 'Juego asignado al plan')
+        self.assertNotContains(response, 'Juego no vinculado')
 
     def test_student_report_shows_quiz_progress_by_subject(self):
         level = Level.objects.create(number=1, name='Inicial', order=1)
@@ -985,6 +1051,193 @@ class AcademicRelationshipPermissionTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Escoja una opción válida')
         self.assertFalse(LessonPlan.objects.filter(title='Plan seguro').exists())
+
+    def test_teacher_creates_lesson_plan_with_closing_games_activities_and_readings(self):
+        activity = Activity.objects.create(
+            level=self.level,
+            subject=self.subject,
+            grade='1',
+            title='Ordena las sílabas',
+            activity_type=Activity.ActivityType.SYLLABLES,
+        )
+        reading = Reading.objects.create(
+            level=self.level,
+            subject=self.subject,
+            grade='1',
+            title='El sol sale',
+            content='El sol sale temprano.',
+        )
+        game_one = Game.objects.create(
+            level=self.level,
+            subject=self.subject,
+            grade='1',
+            name='Memoria de palabras',
+            slug='memoria-palabras-plan',
+            description='Juego de memoria',
+            skill='Memoria visual',
+            game_type=Game.GameType.MEMORY,
+        )
+        game_two = Game.objects.create(
+            level=self.level,
+            subject=self.subject,
+            grade='',
+            name='Camino de lectura',
+            slug='camino-lectura-plan',
+            description='Juego lector',
+            skill='Fluidez',
+            game_type=Game.GameType.READING_PATH,
+        )
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:lesson_plan_create'), data={
+            'subject': self.subject.pk,
+            'level': self.level.pk,
+            'grade': '1',
+            'title': 'Plan con cierre y juegos',
+            'topic': 'Sílabas',
+            'objective': 'Practicar lectura de palabras breves.',
+            'initial_activities': 'Recordar sonidos conocidos.',
+            'teacher_reading': 'Leer el texto en voz alta.',
+            'comprehension_orthography_activities': 'Responder preguntas y separar sílabas.',
+            'closing_activities': 'Compartir una palabra aprendida y valorar el avance.',
+            'activities': [activity.pk],
+            'readings': [reading.pk],
+            'games': [game_one.pk, game_two.pk],
+            'assigned_students': [self.linked_student.pk],
+            'status': LessonPlan.Status.ACTIVE,
+            'is_active': 'on',
+        })
+
+        self.assertRedirects(response, reverse('dashboard:lesson_plans'))
+        plan = LessonPlan.objects.get(title='Plan con cierre y juegos')
+        self.assertEqual(plan.closing_activities, 'Compartir una palabra aprendida y valorar el avance.')
+        self.assertQuerySetEqual(plan.activities.all(), [activity], transform=lambda item: item)
+        self.assertQuerySetEqual(plan.readings.all(), [reading], transform=lambda item: item)
+        self.assertEqual(set(plan.games.all()), {game_one, game_two})
+        self.assertTrue(plan.assignments.filter(student=self.linked_student).exists())
+
+    def test_lesson_plan_form_filters_resources_by_grade_subject_and_level(self):
+        other_level = Level.objects.create(number=2, name='Intermedio', order=2)
+        other_subject = Subject.objects.create(name='Matemática')
+        matching_activity = Activity.objects.create(level=self.level, subject=self.subject, grade='1', title='Actividad visible', activity_type=Activity.ActivityType.READING)
+        Activity.objects.create(level=other_level, subject=self.subject, grade='1', title='Actividad otro nivel', activity_type=Activity.ActivityType.READING)
+        matching_reading = Reading.objects.create(level=self.level, subject=self.subject, grade='1', title='Lectura visible', content='Texto')
+        Reading.objects.create(level=self.level, subject=other_subject, grade='1', title='Lectura otra materia', content='Texto')
+        matching_game = Game.objects.create(level=self.level, subject=self.subject, grade='1', name='Juego visible', slug='juego-visible-plan', description='Juego', skill='Lectura', game_type=Game.GameType.DYSLEXIA_QUIZ)
+        general_game = Game.objects.create(level=self.level, subject=self.subject, grade='', name='Juego general visible', slug='juego-general-visible-plan', description='Juego', skill='Lectura', game_type=Game.GameType.MEMORY)
+        Game.objects.create(level=self.level, subject=self.subject, grade='2', name='Juego otro grado', slug='juego-otro-grado-plan', description='Juego', skill='Lectura', game_type=Game.GameType.MEMORY)
+
+        form = LessonPlanForm(data={
+            'subject': self.subject.pk,
+            'level': self.level.pk,
+            'grade': '1',
+            'title': 'Plan filtrado',
+            'topic': 'Lectura',
+            'objective': 'Leer mejor.',
+        }, teacher=self.teacher)
+
+        self.assertIn(matching_activity, form.fields['activities'].queryset)
+        self.assertNotIn('Actividad otro nivel', form.fields['activities'].queryset.values_list('title', flat=True))
+        self.assertIn(matching_reading, form.fields['readings'].queryset)
+        self.assertNotIn('Lectura otra materia', form.fields['readings'].queryset.values_list('title', flat=True))
+        self.assertIn(matching_game, form.fields['games'].queryset)
+        self.assertIn(general_game, form.fields['games'].queryset)
+        self.assertNotIn('Juego otro grado', form.fields['games'].queryset.values_list('name', flat=True))
+
+    def test_teacher_cannot_assign_resources_from_another_grade_by_post(self):
+        other_grade_activity = Activity.objects.create(
+            level=self.level,
+            subject=self.subject,
+            grade='2',
+            title='Actividad de otro grado',
+            activity_type=Activity.ActivityType.READING,
+        )
+        other_grade_reading = Reading.objects.create(
+            level=self.level,
+            subject=self.subject,
+            grade='2',
+            title='Lectura de otro grado',
+            content='Texto de otro grado.',
+        )
+        other_grade_game = Game.objects.create(
+            level=self.level,
+            subject=self.subject,
+            grade='2',
+            name='Juego de otro grado',
+            slug='juego-de-otro-grado-post',
+            description='Juego fuera del grado',
+            skill='Lectura',
+            game_type=Game.GameType.MEMORY,
+        )
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:lesson_plan_create'), data={
+            'subject': self.subject.pk,
+            'level': self.level.pk,
+            'grade': '1',
+            'title': 'Plan con recursos manipulados',
+            'topic': 'Lectura',
+            'objective': 'Evitar recursos de otro grado.',
+            'activities': [other_grade_activity.pk],
+            'readings': [other_grade_reading.pk],
+            'games': [other_grade_game.pk],
+            'assigned_students': [self.linked_student.pk],
+            'status': LessonPlan.Status.ACTIVE,
+            'is_active': 'on',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Escoja una opción válida')
+        self.assertFalse(LessonPlan.objects.filter(title='Plan con recursos manipulados').exists())
+
+    def test_teacher_cannot_select_competency_from_another_grade_by_post(self):
+        other_grade_competency = CurriculumCompetency.objects.create(
+            subject=self.subject,
+            grade='2',
+            title='Competencia de segundo grado',
+            competency='Contenido de segundo grado.',
+            achievement_indicator='Indicador de segundo grado.',
+        )
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:lesson_plan_create'), data={
+            'subject': self.subject.pk,
+            'competency': other_grade_competency.pk,
+            'level': self.level.pk,
+            'grade': '1',
+            'title': 'Plan con competencia manipulada',
+            'topic': 'Lectura',
+            'objective': 'Evitar competencia de otro grado.',
+            'assigned_students': [self.linked_student.pk],
+            'status': LessonPlan.Status.ACTIVE,
+            'is_active': 'on',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Escoja una opción válida')
+        self.assertFalse(LessonPlan.objects.filter(title='Plan con competencia manipulada').exists())
+
+    def test_existing_lesson_plan_without_closing_or_games_still_works(self):
+        self.teacher.can_assign_lesson_plans = True
+        self.teacher.save(update_fields=['can_assign_lesson_plans'])
+        plan = LessonPlan.objects.create(
+            teacher=self.teacher,
+            subject=self.subject,
+            level=self.level,
+            grade='1',
+            title='Plan antiguo',
+            topic='Comprensión',
+            objective='Comprender textos breves.',
+        )
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.get(reverse('dashboard:lesson_plan_implementation', args=[plan.pk]))
+
+        self.assertEqual(plan.closing_activities, '')
+        self.assertEqual(plan.games.count(), 0)
+        self.assertContains(response, 'Plan antiguo')
+        self.assertContains(response, 'Retoma el indicador de logro')
+        self.assertContains(response, 'No hay juegos vinculados todavía.')
 
     def test_parent_dashboard_shows_only_linked_students(self):
         parent_user = CustomUser.objects.create_user(

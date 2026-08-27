@@ -40,7 +40,6 @@
           <div><strong>Disciplina</strong><span>{{ plan.subject }}</span></div>
           <div><strong>Unidad</strong><span>{{ plan.unit|default:'Por definir' }}</span></div>
           <div><strong>Indicador de logro</strong><p>{{ plan.achievement_indicator|default:'Agrega el indicador de logro tomado de MINED.'|linebreaksbr }}</p></div>
-          <div><strong>Criterios de evaluación</strong><p>{{ plan.evaluation_criteria|default:'Define cómo observarás el avance del estudiante.'|linebreaksbr }}</p></div>
           <div><strong>Contenido</strong><p>{{ plan.content|default:plan.topic|linebreaksbr }}</p></div>
         </div>
       </article>
@@ -48,13 +47,15 @@
       <article class="implementation-card implementation-card--wide">
         <div class="implementation-card__header">
           <h2>Secuencia para aplicar en clase</h2>
-          <span>Inicio, modelado y práctica</span>
+          <span>Inicio, desarrollo y cierre/evaluación</span>
         </div>
         <div class="implementation-steps">
           <div><span>1</span><strong>Actividades iniciales</strong><p>{{ plan.initial_activities|default:'Activa saberes previos, presenta imagen, título o pregunta guía.'|linebreaksbr }}</p></div>
-          <div><span>2</span><strong>Lectura por el docente</strong><p>{{ plan.teacher_reading|default:'Modela lectura clara, pausada y expresiva. Repite palabras complejas y acompaña con apoyo visual.'|linebreaksbr }}</p></div>
-          <div><span>3</span><strong>Comprensión y ortografía</strong><p>{{ plan.comprehension_orthography_activities|default:'Incluye lectura silenciosa, preguntas literales/inferenciales y práctica ortográfica guiada.'|linebreaksbr }}</p></div>
-          <div><span>4</span><strong>Metodología de apoyo</strong><p>{{ plan.methodology|default:'Usa letra clara, instrucciones cortas, segmentación silábica, lectura acompañada y más tiempo de respuesta.'|linebreaksbr }}</p></div>
+          <div><span>2</span><strong>Desarrollo: lectura por el docente</strong><p>{{ plan.teacher_reading|default:'Modela lectura clara, pausada y expresiva. Repite palabras complejas y acompaña con apoyo visual.'|linebreaksbr }}</p></div>
+          <div><span>3</span><strong>Desarrollo: comprensión y ortografía</strong><p>{{ plan.comprehension_orthography_activities|default:'Incluye lectura silenciosa, preguntas literales/inferenciales y práctica ortográfica guiada.'|linebreaksbr }}</p></div>
+          <div><span>4</span><strong>Cierre / Evaluación</strong><p>{{ plan.closing_activities|default:'Retoma el indicador de logro, verifica comprensión y registra observaciones breves.'|linebreaksbr }}</p></div>
+          <div><span>5</span><strong>Criterios de evaluación</strong><p>{{ plan.evaluation_criteria|default:'Define cómo observarás el avance del estudiante.'|linebreaksbr }}</p></div>
+          <div><span>6</span><strong>Metodología de apoyo</strong><p>{{ plan.methodology|default:'Usa letra clara, instrucciones cortas, segmentación silábica, lectura acompañada y más tiempo de respuesta.'|linebreaksbr }}</p></div>
         </div>
       </article>
 
@@ -82,6 +83,20 @@
             <a href="{% url 'readings:detail' reading.pk %}"><strong>{{ reading.title }}</strong><span>{{ reading.estimated_time }} min · {{ reading.get_grade_display }}</span></a>
           {% empty %}
             <p class="implementation-empty">No hay lecturas vinculadas todavía.</p>
+          {% endfor %}
+        </div>
+      </article>
+
+      <article class="implementation-card">
+        <div class="implementation-card__header">
+          <h2>Juegos vinculados</h2>
+          <span>Refuerzo lúdico</span>
+        </div>
+        <div class="implementation-list">
+          {% for game in plan.games.all %}
+            <a href="{% url 'games:detail' game.slug %}"><strong>{{ game.name }}</strong><span>{{ game.skill }} · {{ game.get_grade_display }}</span></a>
+          {% empty %}
+            <p class="implementation-empty">No hay juegos vinculados todavía.</p>
           {% endfor %}
         </div>
       </article>

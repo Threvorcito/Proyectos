@@ -27,16 +27,20 @@
     </section>
 
     <section class="student-resource-card mt-4">
-      <div class="student-resource-card__header"><h2>Lecturas y juegos</h2><span>Apoyo visual y lúdico</span></div>
+      <div class="student-resource-card__header"><h2>Lecturas de mi clase</h2><span>Apoyo visual</span></div>
       <div class="student-resource-grid">
         {% for reading in plan.readings.all %}
           <a href="{% url 'readings:detail' reading.pk %}"><strong>{{ reading.title }}</strong><span>Lectura · {{ reading.estimated_time }} min</span></a>
-        {% endfor %}
-        {% for game in suggested_games %}
+        {% empty %}<p>No hay lecturas vinculadas todavía.</p>{% endfor %}
+      </div>
+    </section>
+
+    <section class="student-resource-card mt-4">
+      <div class="student-resource-card__header"><h2>Juegos de mi clase</h2><span>Refuerzo lúdico asignado</span></div>
+      <div class="student-resource-grid">
+        {% for game in plan.games.all %}
           <a href="{% url 'games:detail' game.slug %}"><strong>{{ game.name }}</strong><span>Juego · {{ game.skill }}</span></a>
-        {% empty %}
-          {% if not plan.readings.all %}<p>No hay lecturas o juegos sugeridos todavía.</p>{% endif %}
-        {% endfor %}
+        {% empty %}<p>No hay juegos vinculados todavía.</p>{% endfor %}
       </div>
     </section>
   </div>

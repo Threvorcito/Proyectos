@@ -14,6 +14,7 @@
   <div class="student-main-actions mt-4">
     {% if today_plan %}<a class="btn btn-primary btn-lg" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">Continuar mi clase</a>{% endif %}
     <a class="btn btn-primary btn-lg" href="{% url 'activities:list' %}">Practicar</a>
+    <a class="btn btn-outline-primary btn-lg" href="{% url 'readings:list' %}">Leer</a>
     <a class="btn btn-outline-primary btn-lg" href="{% url 'games:index' %}">Jugar</a>
     <a class="btn btn-link" href="{% url 'dashboard:student_report' student.pk %}">Ver mi reporte</a>
   </div>
@@ -55,6 +56,18 @@
       </div>
       <a class="btn btn-primary" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">Empezar con ayuda</a>
     </section>
+    {% if assigned_plans|length > 1 %}
+      <section class="mt-4">
+        <h2>Otras clases asignadas</h2>
+        <div class="row g-3 mt-1">
+          {% for assignment in assigned_plans %}
+            {% if assignment.pk != today_plan.pk %}
+              <div class="col-md-6"><div class="feature-card"><h3>{{ assignment.plan.title }}</h3><p>{{ assignment.plan.subject }} · {{ assignment.plan.level }}</p><a class="btn btn-outline-primary" href="{% url 'dashboard:student_lesson_plan' assignment.plan.pk %}">Continuar</a></div></div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
   {% endif %}
   <section class="mt-5">
     <h2>Recomendado para ti</h2>
