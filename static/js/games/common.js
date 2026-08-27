@@ -9,12 +9,8 @@
   }
 
   function speak(text) {
-    if (!('speechSynthesis' in window) || !text) return;
-    window.speechSynthesis.cancel();
-    var utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'es-MX';
-    utterance.rate = 0.85;
-    window.speechSynthesis.speak(utterance);
+    if (!text) return;
+    window.AppSpeech?.speak(text, {rate: 0.85});
   }
 
   function getCsrfToken() {

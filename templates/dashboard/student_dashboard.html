@@ -1,83 +1,91 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-5">
-  <div class="dashboard-hero">
-    <h1>Hola, {{ student.display_name }}</h1>
-    <p>¿Qué quieres aprender hoy?</p>
-  </div>
-  <div class="row g-4 mt-2">
-    <div class="col-md-3"><div class="stat-card"><span>Nivel actual</span><strong>{% if student.current_level %}Nivel {{ student.current_level.number }}{% else %}-{% endif %}</strong></div></div>
-    <div class="col-md-3"><div class="stat-card"><span>Progreso</span><strong>{{ student.points }}</strong></div></div>
-    <div class="col-md-3"><div class="stat-card"><span>Estrellas</span><strong>{{ student.stars }}</strong></div></div>
-    <div class="col-md-3"><div class="stat-card"><span>Racha</span><strong>{{ student.learning_streak }}</strong></div></div>
-  </div>
-  <div class="student-main-actions mt-4">
-    {% if today_plan %}<a class="btn btn-primary btn-lg" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">Continuar mi clase</a>{% endif %}
-    <a class="btn btn-primary btn-lg" href="{% url 'activities:list' %}">Practicar</a>
-    <a class="btn btn-outline-primary btn-lg" href="{% url 'readings:list' %}">Leer</a>
-    <a class="btn btn-outline-primary btn-lg" href="{% url 'games:index' %}">Jugar</a>
-    <a class="btn btn-link" href="{% url 'dashboard:student_report' student.pk %}">Ver mi reporte</a>
-  </div>
-  <section class="learning-path mt-5" aria-labelledby="learning-path-title">
-    <div class="learning-path__header">
-      <span class="eyebrow">Mi camino de hoy</span>
-      <h2 id="learning-path-title">Vamos paso a paso</h2>
-      <p>Haz una cosa a la vez. Si te equivocas, puedes intentarlo otra vez.</p>
-    </div>
-    <div class="learning-path__steps">
-      <a class="learning-path__step" href="{% url 'readings:list' %}">
-        <span>1</span>
-        <strong>Escucho</strong>
-        <small>Una lectura corta con voz.</small>
-      </a>
-      <a class="learning-path__step" href="{% url 'activities:list' %}">
-        <span>2</span>
-        <strong>Practico</strong>
-        <small>Letras, sílabas o palabras.</small>
-      </a>
-      <a class="learning-path__step" href="{% url 'games:index' %}">
-        <span>3</span>
-        <strong>Juego</strong>
-        <small>Refuerzo sin presión.</small>
-      </a>
-      <a class="learning-path__step" href="{% url 'dashboard:student_report' student.pk %}">
-        <span>4</span>
-        <strong>Veo mi avance</strong>
-        <small>Mis puntos y estrellas.</small>
-      </a>
-    </div>
-  </section>
-  {% if today_plan %}
-    <section class="student-today-card mt-5">
+<div class="student-dashboard-page">
+  <div class="container py-4 py-md-5">
+    <section class="student-dashboard-hero" aria-labelledby="student-dashboard-title">
       <div>
-        <span class="eyebrow">Mi clase de hoy</span>
-        <h2>{{ today_plan.plan.title }}</h2>
-        <p>{{ today_plan.plan.subject }} · {{ today_plan.plan.level }} · {{ today_plan.plan.period|default:'45 minutos' }}</p>
+        <span class="eyebrow">Hola, {{ student.display_name }}</span>
+        <h1 id="student-dashboard-title">Elige una cosa para hacer ahora</h1>
+        <p>Hazlo con calma. Puedes escuchar, leer, practicar o jugar.</p>
       </div>
-      <a class="btn btn-primary" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">Empezar con ayuda</a>
+      <div class="student-dashboard-hero__badge" aria-label="Tu avance">
+        <span>{{ student.stars }}</span>
+        <strong>estrellas</strong>
+      </div>
     </section>
-    {% if assigned_plans|length > 1 %}
-      <section class="mt-4">
-        <h2>Otras clases asignadas</h2>
-        <div class="row g-3 mt-1">
-          {% for assignment in assigned_plans %}
-            {% if assignment.pk != today_plan.pk %}
-              <div class="col-md-6"><div class="feature-card"><h3>{{ assignment.plan.title }}</h3><p>{{ assignment.plan.subject }} · {{ assignment.plan.level }}</p><a class="btn btn-outline-primary" href="{% url 'dashboard:student_lesson_plan' assignment.plan.pk %}">Continuar</a></div></div>
-            {% endif %}
-          {% endfor %}
+
+    <section class="student-choice-grid mt-4" aria-label="Opciones principales">
+      {% if today_plan %}
+        <a class="student-choice-card student-choice-card--class" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">
+          <span class="student-choice-card__icon" aria-hidden="true">📘</span>
+          <span class="student-choice-card__content"><strong>Mi clase</strong><small>Tu profe preparó algo para ti</small></span>
+          <span class="student-choice-card__action">Continuar</span>
+        </a>
+      {% endif %}
+      <a class="student-choice-card student-choice-card--practice" href="{% url 'activities:list' %}">
+        <span class="student-choice-card__icon" aria-hidden="true">✏️</span>
+        <span class="student-choice-card__content"><strong>Practicar</strong><small>Vamos a practicar</small></span>
+        <span class="student-choice-card__action">Entrar</span>
+      </a>
+      <a class="student-choice-card student-choice-card--read" href="{% url 'readings:list' %}">
+        <span class="student-choice-card__icon" aria-hidden="true">📖</span>
+        <span class="student-choice-card__content"><strong>Leer</strong><small>Descubre una historia</small></span>
+        <span class="student-choice-card__action">Leer</span>
+      </a>
+      <a class="student-choice-card student-choice-card--play" href="{% url 'games:index' %}">
+        <span class="student-choice-card__icon" aria-hidden="true">🎲</span>
+        <span class="student-choice-card__content"><strong>Jugar</strong><small>Aprende jugando</small></span>
+        <span class="student-choice-card__action">Jugar</span>
+      </a>
+      <a class="student-choice-card student-choice-card--progress" href="{% url 'dashboard:student_report' student.pk %}">
+        <span class="student-choice-card__icon" aria-hidden="true">⭐</span>
+        <span class="student-choice-card__content"><strong>Mi avance</strong><small>Mira todo lo que has logrado</small></span>
+        <span class="student-choice-card__action">Ver</span>
+      </a>
+    </section>
+
+    <section class="student-progress-strip mt-4" aria-label="Resumen de avance">
+      <div><span>Nivel</span><strong>{% if student.current_level %}{{ student.current_level.number }}{% else %}-{% endif %}</strong></div>
+      <div><span>Puntos</span><strong>{{ student.points }}</strong></div>
+      <div><span>Racha</span><strong>{{ student.learning_streak }}</strong></div>
+    </section>
+
+    {% if today_plan %}
+      <section class="student-class-card mt-4">
+        <div>
+          <span class="eyebrow">Mi clase de hoy</span>
+          <h2>{{ today_plan.plan.title }}</h2>
+          <p>{{ today_plan.plan.subject }} · {{ today_plan.plan.level }}</p>
         </div>
+        <a class="btn btn-primary btn-lg" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">Continuar mi clase</a>
       </section>
+      {% if assigned_plans|length > 1 %}
+        <section class="student-other-classes mt-4" aria-labelledby="student-other-classes-title">
+          <h2 id="student-other-classes-title">Otras clases asignadas</h2>
+          <div class="student-other-classes__grid">
+            {% for assignment in assigned_plans %}
+              {% if assignment.pk != today_plan.pk %}
+                <a href="{% url 'dashboard:student_lesson_plan' assignment.plan.pk %}"><strong>{{ assignment.plan.title }}</strong><span>{{ assignment.plan.subject }}</span></a>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </section>
+      {% endif %}
     {% endif %}
-  {% endif %}
-  <section class="mt-5">
-    <h2>Recomendado para ti</h2>
-    <div class="row g-4 mt-2">
-      {% for activity in recommended %}
-        <div class="col-md-6"><div class="feature-card"><h3>{{ activity.title }}</h3><p>{{ activity.description }}</p><a class="btn btn-primary" href="{% url 'activities:detail' activity.pk %}">Continuar</a></div></div>
-      {% empty %}
-        <p>No hay recomendaciones aún.</p>
-      {% endfor %}
-    </div>
-  </section>
+
+    <section class="student-recommendations mt-4" aria-labelledby="student-recommendations-title">
+      <div class="student-section-heading">
+        <h2 id="student-recommendations-title">Para practicar un poco más</h2>
+        <p>Elige solo una si quieres seguir.</p>
+      </div>
+      <div class="student-recommendations__grid">
+        {% for activity in recommended %}
+          <a class="student-mini-card" href="{% url 'activities:detail' activity.pk %}"><strong>{{ activity.title }}</strong><span>{{ activity.description }}</span></a>
+        {% empty %}
+          <p>No hay recomendaciones aún.</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
 </div>
 {% endblock %}

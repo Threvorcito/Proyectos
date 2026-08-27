@@ -61,12 +61,7 @@
     var button = document.querySelector('[data-activity-speak]');
     if (!button) return;
     button.addEventListener('click', function () {
-      if (!('speechSynthesis' in window)) return;
-      window.speechSynthesis.cancel();
-      var utterance = new SpeechSynthesisUtterance(button.getAttribute('data-activity-speak'));
-      utterance.lang = 'es-MX';
-      utterance.rate = 0.85;
-      window.speechSynthesis.speak(utterance);
+      window.AppSpeech?.speak(button.getAttribute('data-activity-speak'), {rate: 0.85});
     });
   });
 </script>
