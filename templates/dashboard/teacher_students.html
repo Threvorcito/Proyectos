@@ -24,7 +24,22 @@
           <tbody>
             {% for student in students %}
               <tr>
-                <td><strong>{{ student.display_name }}</strong><br><small>{{ student.get_grade_display }}</small></td>
+                <td>
+                  <strong>{{ student.display_name }}</strong>
+                  <small>{{ student.get_grade_display }}</small>
+                  <small class="teacher-students-tutor-line">
+                    <span aria-hidden="true">👤</span>
+                    {% with tutor_count=student.parents.all|length %}
+                      {% if tutor_count == 0 %}
+                        Sin tutor asignado
+                      {% elif tutor_count == 1 %}
+                        Tutor: {% for parent in student.parents.all %}{{ parent.name }}{% endfor %}
+                      {% else %}
+                        Tutores: {% for parent in student.parents.all %}{{ parent.name }}{% if not forloop.last %}{% if forloop.revcounter == 2 %} y {% else %}, {% endif %}{% endif %}{% endfor %}
+                      {% endif %}
+                    {% endwith %}
+                  </small>
+                </td>
                 <td>{{ student.get_school_display }}</td>
                 <td>{% if student.current_level %}Nivel {{ student.current_level.number }}{% else %}Sin nivel{% endif %}</td>
                 <td><span class="teacher-badge">{{ student.completed_activities }} completadas</span></td>

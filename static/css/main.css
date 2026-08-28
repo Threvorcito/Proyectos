@@ -3258,6 +3258,16 @@ a { text-decoration: none; }
 .teacher-table td small { display: block; }
 .teacher-table td strong { color: #102033; font-weight: 900; }
 .teacher-table td small { color: #64748b; margin-top: .2rem; }
+.teacher-students-tutor-line {
+  align-items: center;
+  color: #6b7280 !important;
+  display: flex !important;
+  font-size: .78rem;
+  gap: .3rem;
+  line-height: 1.35;
+  margin-top: .18rem !important;
+  max-width: 260px;
+}
 .teacher-badge {
   background: #eef6f9;
   border-radius: 999px;
