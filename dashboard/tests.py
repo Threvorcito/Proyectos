@@ -2,6 +2,7 @@ import json
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from unittest.mock import patch
 
 from accounts.models import CustomUser
@@ -1270,6 +1271,37 @@ class ResourceHistoryDetectionTests(TestCase):
 
         self.assertTrue(resource_has_history(activity))
 
+    def test_student_with_reading_progress_has_history(self):
+        reading = Reading.objects.create(level=self.level, subject=self.subject, grade='1', title='Lectura estudiante avance', content='Texto.')
+        ReadingProgress.objects.create(student=self.student, reading=reading)
+
+        self.assertTrue(resource_has_history(self.student))
+
+    def test_student_with_comprehension_answer_has_history(self):
+        reading = Reading.objects.create(level=self.level, subject=self.subject, grade='1', title='Lectura estudiante respuesta', content='Texto.')
+        question = ReadingQuestion.objects.create(reading=reading, question='Pregunta')
+        ReadingComprehensionAnswer.objects.create(student=self.student, reading=reading, question=question, selected_answer='Respuesta', is_correct=True)
+
+        self.assertTrue(resource_has_history(self.student))
+
+    def test_student_with_game_attempt_has_history(self):
+        game = Game.objects.create(level=self.level, subject=self.subject, grade='1', name='Juego estudiante intento', slug='juego-estudiante-intento', description='Juego', skill='Lectura', game_type=Game.GameType.MEMORY)
+        GameAttempt.objects.create(student=self.student, game=game, score=80, correct_answers=4, total_questions=5, completed=True)
+
+        self.assertTrue(resource_has_history(self.student))
+
+    def test_student_with_achievement_has_history(self):
+        achievement = Achievement.objects.create(name='Logro estudiante', description='Logro', requirement_type='activity', requirement_value=1)
+        StudentAchievement.objects.create(student=self.student, achievement=achievement)
+
+        self.assertTrue(resource_has_history(self.student))
+
+    def test_student_with_activity_progress_has_history(self):
+        activity = Activity.objects.create(level=self.level, subject=self.subject, grade='1', title='Actividad progreso estudiante', activity_type=Activity.ActivityType.READING)
+        StudentProgress.objects.create(student=self.student, activity=activity, completed=True, progress_percentage=100, best_score=100, attempts=1)
+
+        self.assertTrue(resource_has_history(self.student))
+
     def test_resource_with_history_is_deactivated_without_losing_related_records(self):
         admin = CustomUser.objects.create_user(username='adminrecursohistoria', email='adminrecursohistoria@example.com', password='Admin12345!', role=CustomUser.Role.ADMIN, is_staff=True)
         reading = Reading.objects.create(level=self.level, subject=self.subject, grade='1', title='Lectura usada', content='Texto.', is_active=True)
@@ -1525,10 +1557,12 @@ class AcademicRelationshipPermissionTests(TestCase):
         self.teacher.can_edit_lesson_plans = True
         self.teacher.save(update_fields=['can_edit_lesson_plans'])
         plan = LessonPlan.objects.create(teacher=self.teacher, subject=self.subject, level=self.level, grade='1', title='Plan historial asignacion', topic='Seguimiento', objective='Conservar seguimiento.')
+        completed_at = timezone.now()
         assignment = LessonPlanAssignment.objects.create(
             plan=plan,
             student=self.linked_student,
             status=LessonPlanAssignment.Status.IN_PROGRESS,
+            completed_at=completed_at,
             teacher_notes='Necesita apoyo con lectura guiada.',
         )
         self.client.force_login(self.teacher_user)
@@ -1547,8 +1581,10 @@ class AcademicRelationshipPermissionTests(TestCase):
 
         self.assertRedirects(response, reverse('dashboard:lesson_plans'))
         assignment.refresh_from_db()
+        self.assertFalse(assignment.is_active)
         self.assertEqual(assignment.status, LessonPlanAssignment.Status.IN_PROGRESS)
         self.assertEqual(assignment.teacher_notes, 'Necesita apoyo con lectura guiada.')
+        self.assertEqual(assignment.completed_at, completed_at)
 
     def test_unused_lesson_plan_assignment_can_be_removed(self):
         self.teacher.can_edit_lesson_plans = True
@@ -1571,6 +1607,69 @@ class AcademicRelationshipPermissionTests(TestCase):
 
         self.assertRedirects(response, reverse('dashboard:lesson_plans'))
         self.assertFalse(LessonPlanAssignment.objects.filter(pk=assignment.pk).exists())
+
+    def test_new_lesson_plan_assignment_is_active(self):
+        self.teacher.can_edit_lesson_plans = True
+        self.teacher.save(update_fields=['can_edit_lesson_plans'])
+        plan = LessonPlan.objects.create(teacher=self.teacher, subject=self.subject, level=self.level, grade='1', title='Plan asignacion activa', topic='Seguimiento', objective='Crear asignacion activa.')
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:lesson_plan_update', args=[plan.pk]), data={
+            'subject': self.subject.pk,
+            'level': self.level.pk,
+            'grade': '1',
+            'title': plan.title,
+            'topic': plan.topic,
+            'objective': plan.objective,
+            'assigned_students': [self.linked_student.pk],
+            'status': LessonPlan.Status.ACTIVE,
+            'is_active': 'on',
+        })
+
+        self.assertRedirects(response, reverse('dashboard:lesson_plans'))
+        self.assertTrue(LessonPlanAssignment.objects.get(plan=plan, student=self.linked_student).is_active)
+
+    def test_inactive_assignment_does_not_appear_as_current_student_class(self):
+        plan = LessonPlan.objects.create(teacher=self.teacher, subject=self.subject, level=self.level, grade='1', title='Plan historico oculto', topic='Seguimiento', objective='No mostrar vigente.')
+        LessonPlanAssignment.objects.create(plan=plan, student=self.linked_student, is_active=False, status=LessonPlanAssignment.Status.IN_PROGRESS, teacher_notes='Historial')
+        self.client.force_login(self.linked_user)
+
+        dashboard_response = self.client.get(reverse('dashboard:student'))
+        detail_response = self.client.get(reverse('dashboard:student_lesson_plan', args=[plan.pk]))
+
+        self.assertNotContains(dashboard_response, 'Plan historico oculto')
+        self.assertEqual(detail_response.status_code, 404)
+
+    def test_reassigning_inactive_assignment_reactivates_without_duplicate(self):
+        self.teacher.can_edit_lesson_plans = True
+        self.teacher.save(update_fields=['can_edit_lesson_plans'])
+        plan = LessonPlan.objects.create(teacher=self.teacher, subject=self.subject, level=self.level, grade='1', title='Plan reactivado', topic='Seguimiento', objective='Reactivar asignacion.')
+        assignment = LessonPlanAssignment.objects.create(plan=plan, student=self.linked_student, is_active=False, status=LessonPlanAssignment.Status.IN_PROGRESS, teacher_notes='Historial previo')
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:lesson_plan_update', args=[plan.pk]), data={
+            'subject': self.subject.pk,
+            'level': self.level.pk,
+            'grade': '1',
+            'title': plan.title,
+            'topic': plan.topic,
+            'objective': plan.objective,
+            'assigned_students': [self.linked_student.pk],
+            'status': LessonPlan.Status.ACTIVE,
+            'is_active': 'on',
+        })
+
+        self.assertRedirects(response, reverse('dashboard:lesson_plans'))
+        assignment.refresh_from_db()
+        self.assertTrue(assignment.is_active)
+        self.assertEqual(assignment.teacher_notes, 'Historial previo')
+        self.assertEqual(LessonPlanAssignment.objects.filter(plan=plan, student=self.linked_student).count(), 1)
+
+    def test_historical_assignments_remain_in_database(self):
+        plan = LessonPlan.objects.create(teacher=self.teacher, subject=self.subject, level=self.level, grade='1', title='Plan historico permanece', topic='Seguimiento', objective='Permanecer en base.')
+        assignment = LessonPlanAssignment.objects.create(plan=plan, student=self.linked_student, is_active=False, status=LessonPlanAssignment.Status.COMPLETED, teacher_notes='Historial')
+
+        self.assertTrue(LessonPlanAssignment.objects.filter(pk=assignment.pk, is_active=False).exists())
 
     def test_teacher_cannot_assign_resources_from_another_grade_by_post(self):
         other_grade_activity = Activity.objects.create(

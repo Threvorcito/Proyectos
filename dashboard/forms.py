@@ -569,7 +569,7 @@ class LessonPlanForm(forms.ModelForm):
         if grade:
             self.fields['assigned_students'].queryset = self.fields['assigned_students'].queryset.filter(grade=grade)
         if self.instance and self.instance.pk:
-            self.fields['assigned_students'].initial = self.instance.assignments.values_list('student_id', flat=True)
+            self.fields['assigned_students'].initial = self.instance.assignments.filter(is_active=True).values_list('student_id', flat=True)
         self.fields['activities'].queryset = Activity.objects.filter(is_active=True).select_related('level', 'subject')
         self.fields['readings'].queryset = Reading.objects.filter(is_active=True).select_related('level', 'subject')
         self.fields['games'].queryset = Game.objects.filter(is_active=True).select_related('level', 'subject')
@@ -613,8 +613,12 @@ class LessonPlanForm(forms.ModelForm):
             completed_at__isnull=True,
             teacher_notes='',
         ).delete()
+        removable_assignments.update(is_active=False)
         for student in selected_students:
-            plan.assignments.get_or_create(student=student)
+            assignment, _ = plan.assignments.get_or_create(student=student)
+            if not assignment.is_active:
+                assignment.is_active = True
+                assignment.save(update_fields=['is_active'])
 
 
 def build_admin_model_form(model, fields):

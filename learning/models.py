@@ -335,6 +335,7 @@ class LessonPlanAssignment(models.Model):
     assigned_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(blank=True, null=True)
     teacher_notes = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
 
     class Meta:
         ordering = ['-assigned_at']

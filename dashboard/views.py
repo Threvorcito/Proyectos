@@ -150,6 +150,10 @@ def user_has_academic_history(user):
         student.attempts.exists()
         or student.progress_items.exists()
         or student.difficulties.exists()
+        or student.reading_progress.exists()
+        or student.reading_answers.exists()
+        or student.game_attempts.exists()
+        or student.achievements.exists()
         or student.lesson_plan_assignments.exists()
     ):
         return True
@@ -165,6 +169,10 @@ def resource_has_history(instance):
             instance.attempts.exists()
             or instance.progress_items.exists()
             or instance.difficulties.exists()
+            or instance.reading_progress.exists()
+            or instance.reading_answers.exists()
+            or instance.game_attempts.exists()
+            or instance.achievements.exists()
             or instance.lesson_plan_assignments.exists()
         )
     if isinstance(instance, LessonPlan):
@@ -564,7 +572,7 @@ def lesson_plan_implementation(request, pk):
 
     return render(request, 'dashboard/lesson_plan_implementation.html', {
         'plan': plan,
-        'assigned_students': plan.assignments.select_related('student', 'student__current_level'),
+        'assigned_students': plan.assignments.filter(is_active=True).select_related('student', 'student__current_level'),
         'suggested_activities': suggested_activities,
         'suggested_readings': suggested_readings,
         'suggested_games': suggested_games,
@@ -591,7 +599,7 @@ def lesson_plan_report(request, pk):
         return redirect('dashboard:lesson_plans')
 
     assignments = list(
-        plan.assignments.select_related('student', 'student__current_level', 'student__reading_level').order_by('student__name')
+        plan.assignments.filter(is_active=True).select_related('student', 'student__current_level', 'student__reading_level').order_by('student__name')
     )
     total_assignments = len(assignments)
     completed_count = sum(1 for assignment in assignments if assignment.status == LessonPlanAssignment.Status.COMPLETED)
@@ -638,6 +646,7 @@ def lesson_plan_assignment_update(request, pk, assignment_pk):
         LessonPlanAssignment.objects.select_related('plan', 'plan__teacher'),
         pk=assignment_pk,
         plan_id=pk,
+        is_active=True,
     )
     teacher = getattr(request.user, 'teacher_profile', None)
     if not is_admin_user(request.user) and assignment.plan.teacher != teacher:
@@ -748,6 +757,7 @@ def student_dashboard(request):
     visible_plan_statuses = (LessonPlan.Status.ACTIVE, LessonPlan.Status.IN_PROGRESS)
     assigned_plans = LessonPlanAssignment.objects.filter(
         student=student,
+        is_active=True,
         plan__is_active=True,
         plan__status__in=visible_plan_statuses,
     ).select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings', 'plan__games')[:3]
@@ -765,6 +775,7 @@ def student_lesson_plan(request, pk):
         LessonPlanAssignment.objects.select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings', 'plan__games'),
         plan_id=pk,
         student=student,
+        is_active=True,
         plan__is_active=True,
         plan__status__in=(LessonPlan.Status.ACTIVE, LessonPlan.Status.IN_PROGRESS),
     )

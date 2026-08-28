@@ -18,7 +18,7 @@ def level_list(request):
         resource_grade = student.grade if student else grade
         assigned_count = 0
         if student:
-            assigned_count = LessonPlanAssignment.objects.filter(student=student, plan__level=level).count()
+            assigned_count = LessonPlanAssignment.objects.filter(student=student, plan__level=level, is_active=True).count()
         elif teacher:
             assigned_count = LessonPlan.objects.filter(teacher=teacher, level=level, is_active=True).count()
         level_cards.append({
@@ -31,7 +31,7 @@ def level_list(request):
         })
     upcoming_plans = []
     if student:
-        upcoming_plans = LessonPlanAssignment.objects.filter(student=student).select_related('plan', 'plan__subject', 'plan__level').order_by('-assigned_at')[:4]
+        upcoming_plans = LessonPlanAssignment.objects.filter(student=student, is_active=True).select_related('plan', 'plan__subject', 'plan__level').order_by('-assigned_at')[:4]
     elif teacher:
         upcoming_plans = LessonPlan.objects.filter(teacher=teacher, is_active=True).select_related('subject', 'level').order_by('-created_at')[:4]
     return render(request, 'learning/levels.html', {
@@ -54,6 +54,7 @@ def level_detail(request, number):
         if student:
             plans = LessonPlan.objects.filter(
                 assignments__student=student,
+                assignments__is_active=True,
                 level=level,
                 subject=subject,
                 is_active=True,
@@ -100,7 +101,7 @@ def level_detail(request, number):
 
     assigned_plan_count = 0
     if student:
-        assigned_plan_count = LessonPlanAssignment.objects.filter(student=student, plan__level=level).count()
+        assigned_plan_count = LessonPlanAssignment.objects.filter(student=student, plan__level=level, is_active=True).count()
 
     return render(request, 'learning/level_detail.html', {
         'level': level,
