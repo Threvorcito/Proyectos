@@ -790,8 +790,25 @@ def teacher_students(request):
     if teacher_profile is None:
         messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
         return redirect('accounts:profile')
+    create_form = QuickStudentCreationForm()
+    if request.method == 'POST':
+        permission_response = require_teacher_permission(request, 'can_create_students', 'No tienes permiso para crear estudiantes.')
+        if permission_response:
+            return permission_response
+        create_form = QuickStudentCreationForm(request.POST)
+        if create_form.is_valid():
+            user, password = create_form.save(teacher=teacher_profile)
+            messages.success(request, f"Alumno creado correctamente. Usuario: {user.username} / PIN: {password}")
+            return redirect('dashboard:teacher_students')
+        students = get_teacher_students_for_page(teacher_profile)
+        return render(request, 'dashboard/teacher_students.html', {
+            'teacher_profile': teacher_profile,
+            'students': students,
+            'create_student_form': create_form,
+            'open_create_student_modal': True,
+        })
     students = get_teacher_students_for_page(teacher_profile)
-    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students})
+    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students, 'create_student_form': create_form})
 
 
 def get_teacher_students_for_page(teacher_profile, edit_form=None, open_edit_student=None):

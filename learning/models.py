@@ -352,6 +352,9 @@ class ParentProfile(models.Model):
     name = models.CharField(max_length=150)
     students = models.ManyToManyField(StudentProfile, blank=True, related_name='parents')
 
+    def __str__(self):
+        return self.name or self.user.get_full_name() or self.user.username
+
 
 class AccessibilityPreference(models.Model):
     student = models.OneToOneField(StudentProfile, on_delete=models.CASCADE, related_name='accessibility')

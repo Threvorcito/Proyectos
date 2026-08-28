@@ -1,6 +1,165 @@
 {% extends 'base.html' %}
 {% block title %}Reporte de {{ student.display_name }}{% endblock %}
 {% block content %}
+{% if request.user.role == 'PARENT' %}
+<div class="family-report-page">
+  <div class="container py-4 py-lg-5">
+    <a class="family-report-back" href="{% url 'dashboard:parents' %}">← Volver al Panel familiar</a>
+
+    <section class="family-report-hero" aria-labelledby="family-report-title">
+      <div class="family-report-hero__avatar" aria-hidden="true">{{ student.display_name|slice:':1' }}</div>
+      <div>
+        <span class="eyebrow">Seguimiento familiar</span>
+        <h1 id="family-report-title">{{ student.display_name }}</h1>
+        <p>Reporte de progreso para acompañar su lectura y práctica desde casa.</p>
+        <div class="family-report-hero__meta" aria-label="Información del estudiante">
+          <span>{{ student.get_grade_display }}</span>
+          {% if student.current_level %}<span>Nivel {{ student.current_level.number }}</span>{% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="family-report-section" aria-labelledby="family-summary-title">
+      <div class="family-report-section__header">
+        <div>
+          <h2 id="family-summary-title">Resumen visual</h2>
+          <p>Vista rápida del avance registrado.</p>
+        </div>
+        <span class="family-report-subtle">{{ attempts_count }} intento{{ attempts_count|pluralize }} en actividades</span>
+      </div>
+      <div class="family-metric-grid">
+        <article class="family-metric-card"><strong>{{ completed_count }}</strong><span>Actividad{{ completed_count|pluralize:'es' }} completada{{ completed_count|pluralize }}</span></article>
+        <article class="family-metric-card"><strong>{{ game_attempts_count }}</strong><span>Juego{{ game_attempts_count|pluralize }} realizado{{ game_attempts_count|pluralize }}</span></article>
+        <article class="family-metric-card"><strong>{{ readings_completed_count }}</strong><span>Lectura{{ readings_completed_count|pluralize }} completada{{ readings_completed_count|pluralize }}</span></article>
+        <article class="family-metric-card"><strong>{{ student.points }}</strong><span>Puntos</span></article>
+        <article class="family-metric-card family-metric-card--star"><strong>⭐ {{ student.stars }}</strong><span>Estrella{{ student.stars|pluralize }}</span></article>
+      </div>
+    </section>
+
+    <div class="family-report-grid">
+      <section class="family-report-section" aria-labelledby="family-activities-title">
+        <div class="family-report-section__header">
+          <div>
+            <h2 id="family-activities-title">Actividades</h2>
+            <p>Prácticas realizadas y avance por actividad.</p>
+          </div>
+        </div>
+        <div class="family-card-list">
+          {% for item in progress_items %}
+            <article class="family-progress-card">
+              <div class="family-progress-card__top">
+                <div><h3>{{ item.activity.title }}</h3><span>Nivel {{ item.activity.level.number }}</span></div>
+                <strong>{{ item.progress_percentage }}%</strong>
+              </div>
+              <div class="family-progress-bar" aria-label="Progreso {{ item.progress_percentage }}%"><span style="width: {{ item.progress_percentage }}%;"></span></div>
+              <div class="family-progress-card__meta">
+                <span>{{ item.attempts }} intento{{ item.attempts|pluralize }}</span>
+                {% if item.last_activity_date %}<span>Última práctica: {{ item.last_activity_date|date:'d/m/Y' }}</span>{% endif %}
+              </div>
+            </article>
+          {% empty %}
+            <div class="family-empty-state"><span aria-hidden="true">📝</span><strong>Todavía no hay actividades registradas</strong><p>Cuando practique una actividad, aparecerá aquí.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="family-report-section" aria-labelledby="family-readings-title">
+        <div class="family-report-section__header">
+          <div>
+            <h2 id="family-readings-title">Lecturas y comprensión</h2>
+            <p>Lecturas iniciadas o completadas con sus respuestas de comprensión.</p>
+          </div>
+        </div>
+        <div class="family-card-list">
+          {% for row in reading_rows %}
+            <article class="family-reading-card">
+              <div class="family-reading-card__icon" aria-hidden="true">📖</div>
+              <div>
+                <h3>{{ row.reading.title }}</h3>
+                <p>{% if row.reading.subject %}{{ row.reading.subject.name }}{% else %}Sin materia{% endif %} · Nivel {{ row.reading.level.number }}</p>
+                <div class="family-reading-card__status">
+                  <span>{% if row.progress.completed %}Completada{% else %}En progreso{% endif %}</span>
+                  <strong>Comprensión: {{ row.progress.comprehension_percentage }}%</strong>
+                </div>
+                {% if row.answered_questions %}
+                  <small>{{ row.correct_answers }}/{{ row.total_questions }} correctas · {{ row.answered_questions }} respondida{{ row.answered_questions|pluralize }}</small>
+                {% else %}
+                  <small>Aún no respondió preguntas</small>
+                {% endif %}
+              </div>
+            </article>
+          {% empty %}
+            <div class="family-empty-state"><span aria-hidden="true">📖</span><strong>Todavía no hay lecturas registradas</strong><p>Cuando inicie una lectura, aparecerá aquí.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <div class="family-report-grid family-report-grid--balanced">
+      <section class="family-report-section" aria-labelledby="family-games-title">
+        <div class="family-report-section__header"><div><h2 id="family-games-title">Juegos</h2><p>Juegos completados o intentados.</p></div></div>
+        <div class="family-card-list">
+          {% for attempt in game_attempts %}
+            <article class="family-result-card">
+              <div><h3>{{ attempt.game.name }}</h3><p>{% if attempt.game.subject %}{{ attempt.game.subject.name }}{% else %}Sin materia{% endif %}</p></div>
+              <strong>{{ attempt.correct_answers }}/{{ attempt.total_questions }} · {{ attempt.score }}%</strong>
+              <span>{% if attempt.completed_at %}{{ attempt.completed_at|date:'d/m/Y' }}{% else %}{{ attempt.started_at|date:'d/m/Y' }}{% endif %}</span>
+            </article>
+          {% empty %}
+            <div class="family-empty-state"><span aria-hidden="true">🎮</span><strong>Todavía no ha realizado juegos</strong><p>Cuando participe en un juego, sus resultados aparecerán aquí.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="family-report-section" aria-labelledby="family-quiz-title">
+        <div class="family-report-section__header"><div><h2 id="family-quiz-title">Quiz por materia</h2><p>Resumen de aciertos guardados en el Quiz de agilidad lectora.</p></div></div>
+        <div class="family-card-list">
+          {% for row in quiz_subject_progress %}
+            <article class="family-result-card family-result-card--quiz">
+              <div><h3>{{ row.subject }}</h3><p>{{ row.correct }}/{{ row.total }} aciertos</p></div>
+              <strong>{{ row.percentage }}%</strong>
+              <div class="family-progress-bar" aria-label="Resultado {{ row.percentage }}%"><span style="width: {{ row.percentage }}%;"></span></div>
+            </article>
+          {% empty %}
+            <div class="family-empty-state"><span aria-hidden="true">✓</span><strong>Aún no hay resultados de quiz</strong><p>Cuando responda un quiz, el resumen aparecerá aquí.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <div class="family-report-grid family-report-grid--balanced">
+      <section class="family-report-section" aria-labelledby="family-difficulties-title">
+        <div class="family-report-section__header"><div><h2 id="family-difficulties-title">Áreas que necesitan refuerzo</h2><p>Datos registrados por la práctica del estudiante.</p></div></div>
+        <div class="family-card-list family-card-list--compact">
+          {% for difficulty in difficulties %}
+            <article class="family-difficulty-card">
+              <strong>“{{ difficulty.word|default:difficulty.difficulty_type }}”</strong>
+              <span>Detectada en {{ difficulty.error_count }} ocasión{{ difficulty.error_count|pluralize:'es' }}</span>
+            </article>
+          {% empty %}
+            <div class="family-empty-state"><span aria-hidden="true">🌱</span><strong>No hay dificultades registradas todavía</strong><p>Cuando el sistema detecte áreas de refuerzo, aparecerán aquí.</p></div>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="family-report-section" aria-labelledby="family-achievements-title">
+        <div class="family-report-section__header"><div><h2 id="family-achievements-title">Logros y puntos</h2><p>Recompensas registradas por el sistema.</p></div></div>
+        <div class="family-reward-strip">
+          <strong>{{ student.points }} puntos</strong>
+          <strong>⭐ {{ student.stars }} estrella{{ student.stars|pluralize }}</strong>
+        </div>
+        <div class="family-achievement-list">
+          {% for item in achievements %}
+            <span>{{ item.achievement.icon }} {{ item.achievement.name }}</span>
+          {% empty %}
+            <p>No hay logros registrados todavía.</p>
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+{% else %}
 <div class="container py-5">
   <div class="dashboard-hero mb-4">
     <span class="eyebrow">Reporte individual</span>
@@ -140,4 +299,5 @@
     <a class="btn btn-outline-secondary" href="{% url 'dashboard:redirect' %}">Mi panel</a>
   </div>
 </div>
+{% endif %}
 {% endblock %}

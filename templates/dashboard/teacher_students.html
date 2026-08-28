@@ -11,7 +11,7 @@
           <p>Consulta los estudiantes vinculados a tu perfil docente y registra nuevos alumnos cuando tengas permiso.</p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-          {% if teacher_profile.can_create_students %}<a class="btn btn-primary" href="{% url 'dashboard:quick_student_create' %}">Agregar alumno</a>{% endif %}
+          {% if teacher_profile.can_create_students %}<button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createStudentModal">Agregar alumno</button>{% endif %}
           <a class="btn btn-outline-primary" href="{% url 'dashboard:teacher' %}">Volver al panel</a>
         </div>
       </div>
@@ -79,6 +79,76 @@
         </table>
       </div>
     </section>
+
+    {% if teacher_profile.can_create_students %}
+      <div class="modal fade admin-dialog admin-dialog--teacher{% if open_create_student_modal %} show{% endif %}" id="createStudentModal" tabindex="-1" aria-labelledby="createStudentModalTitle" aria-hidden="{% if open_create_student_modal %}false{% else %}true{% endif %}" data-bs-backdrop="static"{% if open_create_student_modal %} style="display: block;"{% endif %}>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+          <div class="modal-content">
+            <form method="post" action="{% url 'dashboard:teacher_students' %}">
+              {% csrf_token %}
+              <div class="modal-header">
+                <div>
+                  <span class="eyebrow">Panel docente</span>
+                  <h2 class="modal-title" id="createStudentModalTitle">Registrar estudiante</h2>
+                  <p>Registra estudiantes de primaria sin solicitar correo. El sistema generará su acceso para el aula.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
+                {% if create_student_form.non_field_errors %}
+                  <div class="alert alert-danger" role="alert">{{ create_student_form.non_field_errors }}</div>
+                {% endif %}
+
+                <section class="teacher-student-edit-section" aria-labelledby="create-student-basic-title">
+                  <div class="admin-dialog__section-title">
+                    <strong id="create-student-basic-title">Datos del estudiante</strong>
+                    <span>Información académica inicial</span>
+                  </div>
+                  <div class="admin-dialog__grid teacher-student-edit-grid">
+                    <p class="admin-dialog__span-2">{{ create_student_form.name.label_tag }}{{ create_student_form.name }}{{ create_student_form.name.errors }}</p>
+                    <p>{{ create_student_form.alias.label_tag }}{{ create_student_form.alias }}{{ create_student_form.alias.errors }}</p>
+                    <p>{{ create_student_form.grade.label_tag }}{{ create_student_form.grade }}{{ create_student_form.grade.errors }}</p>
+                    <p>{{ create_student_form.reading_level.label_tag }}{{ create_student_form.reading_level }}{{ create_student_form.reading_level.errors }}</p>
+                    <p>{{ create_student_form.school.label_tag }}{{ create_student_form.school }}{{ create_student_form.school.errors }}</p>
+                    <p>{{ create_student_form.modality.label_tag }}{{ create_student_form.modality }}{{ create_student_form.modality.errors }}</p>
+                    <p>{{ create_student_form.zone.label_tag }}{{ create_student_form.zone }}{{ create_student_form.zone.errors }}</p>
+                  </div>
+                </section>
+
+                <section class="teacher-student-edit-section teacher-student-edit-section--tutor" aria-labelledby="create-student-tutor-title">
+                  <div class="admin-dialog__section-title">
+                    <strong id="create-student-tutor-title">Padre, madre o tutor</strong>
+                    <span>Selecciona uno existente o crea uno nuevo</span>
+                  </div>
+                  <div class="teacher-student-tutor-picker teacher-student-tutor-picker--compact" data-create-tutor-picker>
+                    <button class="teacher-student-tutor-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#createStudentTutorList" aria-expanded="false" aria-controls="createStudentTutorList">
+                      <span><span aria-hidden="true">👤</span> Seleccionar tutor existente</span>
+                      <span class="teacher-student-tutor-toggle__chevron" aria-hidden="true">⌄</span>
+                    </button>
+                    <p class="teacher-student-tutor-selected" data-create-tutor-summary>Sin tutor existente seleccionado</p>
+                    <div class="collapse" id="createStudentTutorList">
+                      <div class="admin-dialog__checklist teacher-student-tutor-list teacher-student-tutor-list--scroll" data-create-tutor-list>{{ create_student_form.parents }}</div>
+                    </div>
+                    {{ create_student_form.parents.errors }}
+                  </div>
+                  <div class="admin-dialog__grid teacher-student-edit-grid mt-3">
+                    <p>{{ create_student_form.new_parent_first_name.label_tag }}{{ create_student_form.new_parent_first_name }}{{ create_student_form.new_parent_first_name.errors }}</p>
+                    <p>{{ create_student_form.new_parent_last_name.label_tag }}{{ create_student_form.new_parent_last_name }}{{ create_student_form.new_parent_last_name.errors }}</p>
+                    <p>{{ create_student_form.new_parent_email.label_tag }}{{ create_student_form.new_parent_email }}{{ create_student_form.new_parent_email.errors }}</p>
+                    <p>{{ create_student_form.new_parent_username.label_tag }}{{ create_student_form.new_parent_username }}{{ create_student_form.new_parent_username.errors }}</p>
+                  </div>
+                </section>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear alumno</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% if open_create_student_modal %}<div class="modal-backdrop fade show"></div>{% endif %}
+    {% endif %}
 
     {% if teacher_profile.can_create_students %}
       {% for student in students %}
@@ -180,10 +250,41 @@
 
 {% block extra_js %}
   {{ block.super }}
-  {% if open_edit_student %}
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var picker = document.querySelector('[data-create-tutor-picker]');
+      if (!picker) return;
+
+      var summary = picker.querySelector('[data-create-tutor-summary]');
+      var checkboxes = picker.querySelectorAll('input[type="checkbox"]');
+
+      function checkboxLabel(checkbox) {
+        var label = picker.querySelector('label[for="' + checkbox.id + '"]');
+        return label ? label.textContent.trim() : '';
+      }
+
+      function updateTutorSummary() {
+        var selected = Array.from(checkboxes).filter(function (checkbox) { return checkbox.checked; });
+        if (!summary) return;
+        if (selected.length === 0) {
+          summary.textContent = 'Sin tutor existente seleccionado';
+        } else if (selected.length === 1) {
+          summary.textContent = 'Tutor seleccionado: ' + checkboxLabel(selected[0]);
+        } else {
+          summary.textContent = selected.length + ' tutores seleccionados';
+        }
+      }
+
+      checkboxes.forEach(function (checkbox) {
+        checkbox.addEventListener('change', updateTutorSummary);
+      });
+      updateTutorSummary();
+    });
+  </script>
+  {% if open_edit_student or open_create_student_modal %}
     <script>
       document.addEventListener('DOMContentLoaded', function () {
-        var modal = document.getElementById('editStudentModal{{ open_edit_student }}');
+        var modal = document.getElementById('{% if open_create_student_modal %}createStudentModal{% else %}editStudentModal{{ open_edit_student }}{% endif %}');
         if (modal && window.bootstrap) {
           window.bootstrap.Modal.getOrCreateInstance(modal).show();
         }

@@ -268,6 +268,7 @@ class QuickStudentCreationForm(forms.Form):
         super().__init__(*args, **kwargs)
         self.fields['reading_level'].queryset = Level.objects.filter(is_active=True).order_by('order')
         self.fields['parents'].queryset = ParentProfile.objects.select_related('user').order_by('name')
+        self.fields['parents'].label_from_instance = lambda parent: str(parent)
         style_admin_form(self)
 
     def clean(self):

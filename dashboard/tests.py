@@ -596,7 +596,9 @@ class TeacherPermissionEnforcementTests(TestCase):
 
         self.assertContains(response, 'Mis alumnos')
         self.assertContains(response, 'Alumno Página')
-        self.assertContains(response, reverse('dashboard:quick_student_create'))
+        self.assertContains(response, 'data-bs-target="#createStudentModal"')
+        self.assertContains(response, 'Registrar estudiante')
+        self.assertContains(response, 'Padre, madre o tutor')
         self.assertContains(response, reverse('dashboard:teacher_student_update', args=[student.pk]))
         self.assertContains(response, f'data-bs-target="#editStudentModal{student.pk}"')
         self.assertContains(response, 'Editar estudiante')
@@ -605,6 +607,54 @@ class TeacherPermissionEnforcementTests(TestCase):
         self.assertContains(response, 'Apoyo al aprendizaje')
         self.assertNotContains(response, 'Tutores vinculados')
         self.assertContains(response, reverse('dashboard:teacher_student_delete', args=[student.pk]))
+
+    def test_teacher_creates_student_from_students_page_modal(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+
+        response = self.client.post(reverse('dashboard:teacher_students'), data={
+            'name': 'Alumno Modal',
+            'alias': 'Modal',
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+        })
+
+        self.assertRedirects(response, reverse('dashboard:teacher_students'))
+        student = StudentProfile.objects.get(name='Alumno Modal')
+        self.assertTrue(self.teacher.students.filter(pk=student.pk).exists())
+
+    def test_teacher_students_create_modal_reopens_with_errors(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+
+        response = self.client.post(reverse('dashboard:teacher_students'), data={
+            'name': '',
+            'alias': 'Error',
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="createStudentModal"')
+        self.assertContains(response, 'show')
+        self.assertContains(response, 'Este campo es obligatorio')
+
+    def test_teacher_students_create_modal_shows_parent_names(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+        parent_user = CustomUser.objects.create_user(username='tutormodal', email='tutormodal@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
+        ParentProfile.objects.create(user=parent_user, name='María López')
+
+        response = self.client.get(reverse('dashboard:teacher_students'))
+
+        self.assertContains(response, 'María López')
+        self.assertNotContains(response, 'ParentProfile object')
 
     def test_teacher_can_update_linked_student(self):
         self.teacher.can_create_students = True
