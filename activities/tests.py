@@ -136,6 +136,16 @@ class ActivityGradeFilterTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
 
+    def test_student_cannot_submit_activity_from_other_grade(self):
+        self.client.force_login(self.students['1'].user)
+        other_activity = Activity.objects.get(title='Actividad grado 2')
+        option = ActivityOption.objects.create(activity=other_activity, text='A', is_correct=True)
+
+        response = self.client.post(reverse('activities:submit_answer', args=[other_activity.pk]), {'option_id': option.pk})
+
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(ActivityAttempt.objects.count(), 0)
+
     def test_recommendations_do_not_fallback_to_other_grades_without_general_marker(self):
         level = Level.objects.create(number=2, name='Intermedio')
         user = CustomUser.objects.create_user(username='singeneral', email='singeneral@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)

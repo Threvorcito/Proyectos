@@ -2,6 +2,7 @@ import secrets
 
 from django.contrib import messages
 from django.contrib.auth import login
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import LoginView, LogoutView
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
@@ -11,7 +12,7 @@ from activities.models import Activity
 from games.models import Game
 from readings.models import Reading
 from learning.models import Level, ParentProfile, StudentProfile, TeacherProfile
-from learning.models import Lesson, LessonPlan
+from learning.models import LessonPlan
 
 from .forms import EmailAuthenticationForm, ProfileUpdateForm, RegistrationForm, StudentProfileForm
 from .models import CustomUser
@@ -183,7 +184,7 @@ class RegisterView(FormView):
         return super().form_valid(form)
 
 
-class ProfileView(UpdateView):
+class ProfileView(LoginRequiredMixin, UpdateView):
     model = CustomUser
     form_class = ProfileUpdateForm
     template_name = 'accounts/profile.html'
@@ -197,20 +198,17 @@ class ProfileView(UpdateView):
         teacher = getattr(self.request.user, 'teacher_profile', None)
         if teacher is not None:
             lesson_plans = LessonPlan.objects.filter(teacher=teacher).select_related('subject', 'level').prefetch_related('activities', 'readings')[:6]
-            lessons = Lesson.objects.filter(is_active=True).select_related('level').order_by('level__order', 'order')[:6]
             activities = Activity.objects.filter(is_active=True).select_related('subject', 'level').order_by('-created_at')[:6]
             games = Game.objects.filter(is_active=True).select_related('subject', 'level').order_by('grade', 'name')[:6]
             readings = Reading.objects.filter(is_active=True).select_related('subject', 'level').order_by('grade', 'title')[:6]
             context.update({
                 'teacher_profile': teacher,
                 'teacher_lesson_plans': lesson_plans,
-                'teacher_lessons': lessons,
                 'teacher_activities': activities,
                 'teacher_games': games,
                 'teacher_readings': readings,
                 'teacher_report_stats': {
                     'plans': LessonPlan.objects.filter(teacher=teacher).count(),
-                    'lessons': Lesson.objects.filter(is_active=True).count(),
                     'activities': Activity.objects.filter(is_active=True).count(),
                     'games': Game.objects.filter(is_active=True).count(),
                     'readings': Reading.objects.filter(is_active=True).count(),

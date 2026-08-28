@@ -70,7 +70,8 @@ def submit_answer(request, pk):
         messages.info(request, 'Solo los estudiantes pueden registrar respuestas de actividades.')
         return redirect('activities:detail', pk=pk)
 
-    activity = get_object_or_404(Activity, pk=pk, is_active=True)
+    student = request.user.student_profile
+    activity = get_object_or_404(Activity, pk=pk, is_active=True, grade=student.grade)
     option = get_object_or_404(ActivityOption, pk=request.POST.get('option_id'), activity=activity)
     answer = option.text
     is_correct = option.is_correct

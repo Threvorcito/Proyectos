@@ -7,7 +7,7 @@ from django.utils.text import slugify
 from accounts.models import CustomUser
 from activities.models import Activity
 from games.models import Game
-from learning.models import CurriculumCompetency, LessonPlan, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
+from learning.models import CurriculumCompetency, LessonPlan, LessonPlanAssignment, Level, ParentProfile, StudentProfile, Subject, TeacherProfile
 from readings.models import Reading
 
 
@@ -461,6 +461,47 @@ class TeacherStudentUpdateForm(forms.ModelForm):
         return student
 
 
+class TeacherStudentModalForm(forms.ModelForm):
+    parents = forms.ModelMultipleChoiceField(
+        label='Seleccionar tutor',
+        queryset=ParentProfile.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = StudentProfile
+        fields = ('name', 'alias', 'birth_date', 'grade', 'school', 'modality', 'zone', 'reading_level', 'current_level')
+        widgets = {
+            'birth_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].label = 'Nombre completo'
+        self.fields['alias'].label = 'Nombre corto o alias'
+        self.fields['birth_date'].label = 'Fecha de nacimiento'
+        self.fields['grade'].label = 'Grado'
+        self.fields['school'].label = 'Colegio / centro educativo'
+        self.fields['modality'].label = 'Modalidad educativa'
+        self.fields['zone'].label = 'Zona'
+        self.fields['reading_level'].label = 'Nivel lector inicial'
+        self.fields['current_level'].label = 'Nivel actual'
+        self.fields['reading_level'].queryset = Level.objects.filter(is_active=True).order_by('order')
+        self.fields['current_level'].queryset = Level.objects.filter(is_active=True).order_by('order')
+        self.fields['parents'].queryset = ParentProfile.objects.select_related('user').order_by('name')
+        self.fields['parents'].label_from_instance = lambda parent: parent.name or parent.user.get_full_name() or parent.user.username
+        if self.instance and self.instance.pk:
+            self.fields['parents'].initial = self.instance.parents.values_list('pk', flat=True)
+        style_admin_form(self)
+
+    def save(self, commit=True):
+        student = super().save(commit=commit)
+        if commit:
+            student.parents.set(self.cleaned_data.get('parents') or [])
+        return student
+
+
 class LessonPlanForm(forms.ModelForm):
     assigned_students = forms.ModelMultipleChoiceField(
         label='Asignar a estudiantes',
@@ -566,7 +607,12 @@ class LessonPlanForm(forms.ModelForm):
         selected_students = self.cleaned_data.get('assigned_students')
         if selected_students is None:
             return
-        plan.assignments.exclude(student__in=selected_students).delete()
+        removable_assignments = plan.assignments.exclude(student__in=selected_students)
+        removable_assignments.filter(
+            status=LessonPlanAssignment.Status.ASSIGNED,
+            completed_at__isnull=True,
+            teacher_notes='',
+        ).delete()
         for student in selected_students:
             plan.assignments.get_or_create(student=student)
 

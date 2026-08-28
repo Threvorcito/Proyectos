@@ -33,7 +33,6 @@ class RegistrationForm(UserCreationForm):
     role = forms.ChoiceField(
         label='Tipo de cuenta',
         choices=(
-            (CustomUser.Role.TEACHER, 'Docente'),
             (CustomUser.Role.PARENT, 'Padre o tutor'),
         ),
     )
@@ -74,8 +73,8 @@ class RegistrationForm(UserCreationForm):
 
     def clean_role(self):
         role = self.cleaned_data['role']
-        if role == CustomUser.Role.STUDENT:
-            raise forms.ValidationError('Las cuentas de estudiantes deben ser creadas por un docente.')
+        if role != CustomUser.Role.PARENT:
+            raise forms.ValidationError('Solo padres o tutores pueden registrarse públicamente.')
         return role
 
 

@@ -3,7 +3,7 @@
 {% block content %}
 <div class="teacher-dashboard">
   <div class="container py-5">
-    <section class="teacher-report-card">
+    <section class="teacher-report-card teacher-students-card">
       <div class="teacher-report-card__header">
         <div>
           <span class="eyebrow">Panel docente</span>
@@ -16,8 +16,8 @@
         </div>
       </div>
 
-      <div class="table-responsive mt-3">
-        <table class="table teacher-table align-middle">
+      <div class="table-responsive teacher-students-table-wrap mt-3">
+        <table class="table teacher-table teacher-students-table align-middle">
           <thead>
             <tr><th>Estudiante</th><th>Colegio</th><th>Nivel</th><th>Progreso</th><th>Puntos</th><th>Última actividad</th><th class="text-end">Acciones</th></tr>
           </thead>
@@ -30,25 +30,28 @@
                 <td><span class="teacher-badge">{{ student.completed_activities }} completadas</span></td>
                 <td>{{ student.points }}</td>
                 <td>{{ student.last_activity_at|date:'d/m/Y H:i'|default:'Sin actividad' }}</td>
-                <td>
-                  <div class="d-flex flex-wrap gap-2 justify-content-end">
-                    <form method="post" action="{% url 'dashboard:teacher_student_login' student.pk %}">
-                      {% csrf_token %}
-                      <button class="btn btn-sm btn-primary" type="submit">Entrar</button>
-                    </form>
-                    <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:student_report' student.pk %}">Reporte</a>
-                    <form method="post" action="{% url 'dashboard:teacher_student_visual_key_regenerate' student.pk %}" onsubmit="return confirm('¿Quieres crear nuevos dibujos secretos para este alumno? La clave anterior dejará de funcionar.');">
-                      {% csrf_token %}
-                      <input type="hidden" name="had_visual_key" value="{% if student.visual_key_hash %}1{% else %}0{% endif %}">
-                      <button class="btn btn-sm btn-outline-success" type="submit">{% if student.visual_key_hash %}Regenerar dibujos{% else %}Crear dibujos{% endif %}</button>
-                    </form>
-                    {% if teacher_profile.can_create_students %}
-                      <a class="btn btn-sm btn-outline-secondary" href="{% url 'dashboard:teacher_student_update' student.pk %}">Editar</a>
-                      <form method="post" action="{% url 'dashboard:teacher_student_delete' student.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar o quitar este alumno?');">
+                <td class="teacher-students-table__actions-cell">
+                  <div class="dropdown teacher-students-actions">
+                    <button class="teacher-students-actions__toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Opciones de {{ student.display_name }}">⋮</button>
+                    <div class="dropdown-menu dropdown-menu-end teacher-students-actions__menu">
+                      <form method="post" action="{% url 'dashboard:teacher_student_login' student.pk %}">
                         {% csrf_token %}
-                        <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
+                        <button class="dropdown-item" type="submit">Ver como estudiante</button>
                       </form>
-                    {% endif %}
+                      <a class="dropdown-item" href="{% url 'dashboard:student_report' student.pk %}">Ver reporte</a>
+                      <form method="post" action="{% url 'dashboard:teacher_student_visual_key_regenerate' student.pk %}" onsubmit="return confirm('¿Quieres crear nuevos dibujos secretos para este alumno? La clave anterior dejará de funcionar.');">
+                        {% csrf_token %}
+                        <input type="hidden" name="had_visual_key" value="{% if student.visual_key_hash %}1{% else %}0{% endif %}">
+                        <button class="dropdown-item" type="submit">Regenerar dibujos</button>
+                      </form>
+                      {% if teacher_profile.can_create_students %}
+                        <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#editStudentModal{{ student.pk }}">Editar</button>
+                        <form method="post" action="{% url 'dashboard:teacher_student_delete' student.pk %}" onsubmit="return confirm('¿Quieres quitar a este estudiante de Mis alumnos? Su cuenta, progreso y demás información se conservarán.');">
+                          {% csrf_token %}
+                          <button class="dropdown-item teacher-students-actions__danger" type="submit">Quitar de mis alumnos</button>
+                        </form>
+                      {% endif %}
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -61,6 +64,115 @@
         </table>
       </div>
     </section>
+
+    {% if teacher_profile.can_create_students %}
+      {% for student in students %}
+        <div class="modal fade admin-dialog admin-dialog--teacher teacher-student-edit-modal{% if student.open_edit_modal %} show{% endif %}" id="editStudentModal{{ student.pk }}" tabindex="-1" aria-labelledby="editStudentModalTitle{{ student.pk }}" aria-hidden="{% if student.open_edit_modal %}false{% else %}true{% endif %}" data-bs-backdrop="static"{% if student.open_edit_modal %} style="display: block;"{% endif %}>
+          <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+              <form method="post" action="{% url 'dashboard:teacher_student_update' student.pk %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                  <div>
+                    <span class="eyebrow">Panel docente</span>
+                    <h2 class="modal-title" id="editStudentModalTitle{{ student.pk }}">Editar estudiante</h2>
+                    <p>{{ student.display_name }}</p>
+                  </div>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
+                  {% if student.edit_form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">{{ student.edit_form.non_field_errors }}</div>
+                  {% endif %}
+                  <section class="teacher-student-edit-section" aria-labelledby="student-basic-title-{{ student.pk }}">
+                    <div class="admin-dialog__section-title">
+                      <strong id="student-basic-title-{{ student.pk }}">Datos del estudiante</strong>
+                      <span>Identificación básica</span>
+                    </div>
+                    <div class="admin-dialog__grid teacher-student-edit-grid">
+                      <p class="admin-dialog__span-2">{{ student.edit_form.name.label_tag }}{{ student.edit_form.name }}{{ student.edit_form.name.errors }}</p>
+                      <p>{{ student.edit_form.alias.label_tag }}{{ student.edit_form.alias }}{{ student.edit_form.alias.errors }}</p>
+                      <p>{{ student.edit_form.birth_date.label_tag }}{{ student.edit_form.birth_date }}{{ student.edit_form.birth_date.errors }}</p>
+                    </div>
+                  </section>
+
+                  <section class="teacher-student-edit-section" aria-labelledby="student-school-title-{{ student.pk }}">
+                    <div class="admin-dialog__section-title">
+                      <strong id="student-school-title-{{ student.pk }}">Información académica</strong>
+                      <span>Nivel, grado y contexto escolar</span>
+                    </div>
+                    <div class="admin-dialog__grid teacher-student-edit-grid">
+                      <p>{{ student.edit_form.grade.label_tag }}{{ student.edit_form.grade }}{{ student.edit_form.grade.errors }}</p>
+                      <p>{{ student.edit_form.reading_level.label_tag }}{{ student.edit_form.reading_level }}{{ student.edit_form.reading_level.errors }}</p>
+                      <p>{{ student.edit_form.current_level.label_tag }}{{ student.edit_form.current_level }}{{ student.edit_form.current_level.errors }}</p>
+                      <p>{{ student.edit_form.school.label_tag }}{{ student.edit_form.school }}{{ student.edit_form.school.errors }}</p>
+                      <p>{{ student.edit_form.modality.label_tag }}{{ student.edit_form.modality }}{{ student.edit_form.modality.errors }}</p>
+                      <p>{{ student.edit_form.zone.label_tag }}{{ student.edit_form.zone }}{{ student.edit_form.zone.errors }}</p>
+                    </div>
+                  </section>
+
+                  <section class="teacher-student-edit-section teacher-student-edit-section--tutor" aria-labelledby="student-tutor-title-{{ student.pk }}">
+                    <div class="admin-dialog__section-title">
+                      <strong id="student-tutor-title-{{ student.pk }}">Tutor del estudiante</strong>
+                      <span>Vinculación familiar</span>
+                    </div>
+                    <div class="teacher-student-tutor-summary">
+                      <div>
+                        <span aria-hidden="true">👤</span>
+                        <p>
+                          {% for parent in student.parents.all %}
+                            <strong>{{ parent.name }}</strong>{% if not forloop.last %}<br>{% endif %}
+                          {% empty %}
+                            <strong>Sin tutor vinculado</strong>
+                          {% endfor %}
+                        </p>
+                      </div>
+                      <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#studentTutorPicker{{ student.pk }}" aria-expanded="{% if student.edit_form.parents.errors %}true{% else %}false{% endif %}" aria-controls="studentTutorPicker{{ student.pk }}">
+                        {% if student.parents.all %}Cambiar tutor{% else %}Asignar tutor{% endif %}
+                      </button>
+                    </div>
+                    <div class="collapse{% if student.edit_form.parents.errors %} show{% endif %}" id="studentTutorPicker{{ student.pk }}">
+                      <div class="teacher-student-tutor-picker">
+                        <p>Selecciona el tutor correcto para este estudiante.</p>
+                        <div class="admin-dialog__checklist teacher-student-tutor-list">{{ student.edit_form.parents }}</div>
+                        {{ student.edit_form.parents.errors }}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section class="teacher-student-edit-section teacher-student-edit-section--support" aria-labelledby="student-support-title-{{ student.pk }}">
+                    <div class="admin-dialog__section-title">
+                      <strong id="student-support-title-{{ student.pk }}">Apoyo al aprendizaje</strong>
+                      <span>Orientación para el docente</span>
+                    </div>
+                    <p>El nivel lector y el nivel actual ayudan a orientar actividades, lecturas y acompañamiento. Las preferencias de lectura del estudiante se ajustan desde su sección “Mi forma de leer”.</p>
+                  </section>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                  <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% if student.open_edit_modal %}<div class="modal-backdrop fade show"></div>{% endif %}
+      {% endfor %}
+    {% endif %}
   </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  {% if open_edit_student %}
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('editStudentModal{{ open_edit_student }}');
+        if (modal && window.bootstrap) {
+          window.bootstrap.Modal.getOrCreateInstance(modal).show();
+        }
+      });
+    </script>
+  {% endif %}
 {% endblock %}

@@ -91,13 +91,10 @@
             {% endif %}
           </div>
 
-          {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans or teacher_profile.can_manage_lessons or teacher_profile.can_manage_activities or teacher_profile.can_manage_readings or teacher_profile.can_manage_games %}
+          {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans or teacher_profile.can_manage_activities or teacher_profile.can_manage_readings or teacher_profile.can_manage_games %}
             <div class="profile-report-metrics">
               {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans %}
                 <article><span>Planes creados</span><strong>{{ teacher_report_stats.plans }}</strong></article>
-              {% endif %}
-              {% if teacher_profile.can_manage_lessons %}
-                <article><span>Clases activas</span><strong>{{ teacher_report_stats.lessons }}</strong></article>
               {% endif %}
               {% if teacher_profile.can_manage_activities %}
                 <article><span>Actividades</span><strong>{{ teacher_report_stats.activities }}</strong></article>
@@ -146,25 +143,6 @@
               </div>
             </article>
             {% endif %}
-
-            {% if teacher_profile.can_manage_lessons %}
-            <article class="profile-report-table">
-              <div class="profile-report-table__title"><h3>Clases disponibles</h3><span>Contenido activo</span></div>
-              <div class="table-responsive">
-                <table class="table align-middle">
-                  <thead><tr><th>Clase</th><th>Nivel</th><th>Etapa</th></tr></thead>
-                  <tbody>
-                    {% for lesson in teacher_lessons %}
-                      <tr><td><strong>{{ lesson.title }}</strong></td><td>{{ lesson.level }}</td><td>{{ lesson.get_stage_display }}</td></tr>
-                    {% empty %}
-                      <tr><td colspan="3" class="profile-report-empty">No hay clases activas.</td></tr>
-                    {% endfor %}
-                  </tbody>
-                </table>
-              </div>
-            </article>
-            {% endif %}
-
             {% if teacher_profile.can_manage_games %}
             <article class="profile-report-table">
               <div class="profile-report-table__title"><h3>Juegos activos</h3><span>Recursos lúdicos</span></div>

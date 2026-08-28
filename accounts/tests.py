@@ -26,23 +26,51 @@ class LoginTests(TestCase):
 
 
 class RegisterTests(TestCase):
-    def test_new_teacher_account_is_created_and_logged_in(self):
+    def test_public_register_form_does_not_offer_teacher_role(self):
+        response = self.client.get(reverse('accounts:register'))
+
+        self.assertContains(response, 'Padre o tutor')
+        self.assertNotContains(response, 'Docente')
+
+    def test_new_parent_account_is_created_and_logged_in(self):
         response = self.client.post(reverse('accounts:register'), data={
             'first_name': 'Maria',
             'last_name': 'Lopez',
             'username': 'maria_lopez',
             'email': 'maria@example.com',
-            'role': CustomUser.Role.TEACHER,
+            'role': CustomUser.Role.PARENT,
             'password1': 'Docente123!',
             'password2': 'Docente123!',
         })
 
         self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
         user = CustomUser.objects.get(username='maria_lopez')
-        self.assertEqual(user.role, CustomUser.Role.TEACHER)
+        self.assertEqual(user.role, CustomUser.Role.PARENT)
         self.assertEqual(user.email, 'maria@example.com')
         self.assertTrue(user.is_authenticated)
         self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+
+    def test_public_register_rejects_manipulated_teacher_role(self):
+        response = self.client.post(reverse('accounts:register'), data={
+            'first_name': 'Maria',
+            'last_name': 'Lopez',
+            'username': 'docente_manipulado',
+            'email': 'docente_manipulado@example.com',
+            'role': CustomUser.Role.TEACHER,
+            'password1': 'Docente123!',
+            'password2': 'Docente123!',
+        })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'TEACHER no es una de las opciones disponibles.')
+        self.assertFalse(CustomUser.objects.filter(username='docente_manipulado').exists())
+
+
+class ProfileViewAccessTests(TestCase):
+    def test_anonymous_user_is_redirected_to_login(self):
+        response = self.client.get(reverse('accounts:profile'))
+
+        self.assertRedirects(response, f"{reverse('accounts:login')}?next={reverse('accounts:profile')}")
 
 
 class ProfileUpdateFormTests(TestCase):

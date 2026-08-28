@@ -1,30 +1,60 @@
 {% extends 'base.html' %}
 {% block content %}
-<div class="container py-5">
-  <h1>Panel familiar</h1>
-  <p>Vista sencilla para acompañar el progreso del estudiante.</p>
-
-  <section class="feature-card mt-4">
-    <h2 class="h4">Estudiantes vinculados</h2>
-    <div class="table-responsive mt-3">
-      <table class="table align-middle mb-0">
-        <thead><tr><th>Estudiante</th><th>Nivel</th><th>Actividades</th><th>Intentos</th><th>Dificultades</th><th></th></tr></thead>
-        <tbody>
-          {% for student in students %}
-            <tr>
-              <td><strong>{{ student.display_name }}</strong><br><small>{{ student.get_grade_display }}</small></td>
-              <td>{% if student.current_level %}Nivel {{ student.current_level.number }}{% else %}Sin nivel{% endif %}</td>
-              <td>{{ student.completed_activities }}</td>
-              <td>{{ student.total_attempts }}</td>
-              <td>{{ student.detected_difficulties }}</td>
-              <td class="text-end"><a class="btn btn-sm btn-primary" href="{% url 'dashboard:student_report' student.pk %}">Ver reporte</a></td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="6">Todavía no hay estudiantes vinculados a esta cuenta familiar.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<div class="container py-4 py-lg-5 parent-dashboard">
+  <section class="parent-dashboard__hero" aria-labelledby="parent-dashboard-title">
+    <div>
+      <span class="eyebrow">Acompañamiento familiar</span>
+      <h1 id="parent-dashboard-title">Panel familiar</h1>
+      <p>Consulta el avance de los estudiantes vinculados a tu cuenta.</p>
     </div>
+    <div class="parent-dashboard__hero-icon" aria-hidden="true">👨‍👩‍👧</div>
+  </section>
+
+  <section class="parent-dashboard__panel" aria-labelledby="linked-students-title">
+    <div class="parent-dashboard__panel-header">
+      <h2 id="linked-students-title">Estudiantes vinculados</h2>
+      <span>{{ students|length }} estudiante{% if students|length != 1 %}s{% endif %}</span>
+    </div>
+
+    {% if students %}
+      <div class="parent-student-grid">
+        {% for student in students %}
+          <article class="parent-student-card">
+            <div class="parent-student-card__header">
+              <span class="parent-student-card__avatar" aria-hidden="true">{{ student.display_name|slice:':1' }}</span>
+              <div>
+                <h3>{{ student.display_name }}</h3>
+                <p>{{ student.get_grade_display }}{% if student.current_level %} · Nivel {{ student.current_level.number }}{% endif %}</p>
+              </div>
+            </div>
+
+            <div class="parent-student-card__metrics" aria-label="Resumen de progreso">
+              <div><strong>{{ student.completed_activities }}</strong><span>actividades</span></div>
+              <div><strong>{{ student.total_attempts }}</strong><span>intentos</span></div>
+              <div><strong>{{ student.detected_difficulties }}</strong><span>dificultades</span></div>
+            </div>
+
+            <p class="parent-student-card__note">
+              {% if student.detected_difficulties %}
+                Revisa las dificultades detectadas para acompañar mejor su práctica.
+              {% elif student.current_level %}
+                Continúa acompañando su lectura en el nivel actual.
+              {% else %}
+                Aún no tiene un nivel asignado.
+              {% endif %}
+            </p>
+
+            <a class="btn btn-primary parent-student-card__action" href="{% url 'dashboard:student_report' student.pk %}">Ver progreso</a>
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="parent-empty-state" role="status">
+        <div class="parent-empty-state__icon" aria-hidden="true">👨‍👩‍👧</div>
+        <h2>Aún no tienes estudiantes vinculados</h2>
+        <p>Cuando el docente vincule a tu hijo o estudiante con esta cuenta, aquí podrás acompañar su progreso.</p>
+      </div>
+    {% endif %}
   </section>
 </div>
 {% endblock %}

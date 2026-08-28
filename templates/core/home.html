@@ -34,8 +34,23 @@
   }
 
   .home-hero .home-hero__inner {
+    max-width: 1120px;
+    padding-bottom: 2.25rem !important;
+    padding-top: 2.25rem !important;
     position: relative;
     z-index: 1;
+  }
+
+  .home-hero h1 {
+    font-size: clamp(2rem, 3.25vw, 3.05rem);
+    line-height: 1.14;
+    margin-bottom: .9rem;
+  }
+
+  .home-hero .lead {
+    font-size: 1.05rem;
+    line-height: 1.65;
+    max-width: 590px;
   }
 
   .home-hero .home-hero__kicker {
@@ -86,12 +101,12 @@
       radial-gradient(circle at 88% 18%, rgba(91, 191, 140, .13), transparent 24%),
       linear-gradient(180deg, #ffffff 0%, #f8fcfd 100%);
     border: 1px solid rgba(226, 232, 240, .95);
-    border-radius: 30px;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, .12);
-    max-width: 480px;
-    min-height: 380px;
+    border-radius: 26px;
+    box-shadow: 0 18px 46px rgba(15, 23, 42, .1);
+    max-width: 400px;
+    min-height: 315px;
     overflow: hidden;
-    padding: 1.35rem;
+    padding: 1.05rem;
     position: relative;
     width: 100%;
   }
@@ -99,34 +114,34 @@
   .home-hero .learning-demo::before {
     background: rgba(242, 193, 78, .15);
     border-radius: 999px;
-    bottom: -64px;
+    bottom: -56px;
     content: "";
-    height: 160px;
-    left: -52px;
+    height: 136px;
+    left: -44px;
     position: absolute;
-    width: 160px;
+    width: 136px;
   }
 
   .home-hero .learning-demo__book {
     align-items: center;
     background: #eef9fc;
     border: 1px solid rgba(43, 142, 168, .12);
-    border-radius: 22px;
+    border-radius: 18px;
     color: var(--primary);
     display: inline-flex;
-    height: 62px;
+    height: 52px;
     justify-content: center;
     left: 50%;
     position: relative;
     transform: translateX(-50%);
-    width: 78px;
+    width: 66px;
     z-index: 1;
   }
 
   .home-hero .learning-demo__stack {
     display: grid;
-    gap: .9rem;
-    margin-top: 1rem;
+    gap: .7rem;
+    margin-top: .8rem;
     position: relative;
     z-index: 1;
   }
@@ -134,9 +149,9 @@
   .home-hero .word-builder {
     background: rgba(255, 255, 255, .88);
     border: 1px solid #e2e8f0;
-    border-radius: 22px;
-    box-shadow: 0 14px 34px rgba(15, 23, 42, .075);
-    padding: 1rem;
+    border-radius: 18px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .065);
+    padding: .8rem;
     transition: transform .25s ease, box-shadow .25s ease;
   }
 
@@ -159,8 +174,8 @@
     border-radius: 14px;
     color: var(--primary);
     font-weight: 800;
-    min-width: 58px;
-    padding: .55rem .7rem;
+    min-width: 50px;
+    padding: .42rem .58rem;
     text-align: center;
   }
 
@@ -190,7 +205,7 @@
 
   .home-hero .word-builder__word strong {
     color: #0f172a;
-    font-size: 1.45rem;
+    font-size: 1.25rem;
     letter-spacing: .05em;
   }
 
@@ -201,9 +216,9 @@
     border-radius: 999px;
     color: #a66f13;
     display: inline-flex;
-    height: 38px;
+    height: 34px;
     justify-content: center;
-    width: 38px;
+    width: 34px;
   }
 
   .home-hero .progress-badge {
@@ -212,13 +227,13 @@
     background: #fff;
     border: 1px solid #e2e8f0;
     border-radius: 18px;
-    bottom: 1.1rem;
-    box-shadow: 0 16px 34px rgba(15, 23, 42, .12);
+    bottom: .9rem;
+    box-shadow: 0 12px 26px rgba(15, 23, 42, .1);
     display: inline-flex;
     gap: .45rem;
-    padding: .65rem .85rem;
+    padding: .55rem .75rem;
     position: absolute;
-    right: 1.1rem;
+    right: .9rem;
     z-index: 2;
   }
 
@@ -290,303 +305,164 @@
     }
   }
 
-  .home-levels {
-    --level-one: #2b8ea8;
-    --level-two: #35a982;
-    --level-three: #d59b28;
+  .home-levels a.home-levels__card,
+  .home-student-start a.home-student-start__card {
+    color: inherit;
+    cursor: pointer;
+    text-decoration: none;
   }
 
-  .home-levels .levels-header {
-    margin: 0 auto 1.75rem;
-    max-width: 680px;
-    text-align: center;
+  .home-info.container,
+  .home-levels.container,
+  .home-benefits.container {
+    padding-bottom: 1.2rem !important;
+    padding-top: 1.2rem !important;
   }
 
-  .home-levels .levels-header h2 {
-    font-size: clamp(1.8rem, 3vw, 2.45rem);
-    font-weight: 700;
-    margin-bottom: .45rem;
+  .home-levels .home-levels__header {
+    margin-bottom: 1.15rem;
   }
 
-  .home-levels .levels-header p {
-    font-size: 1.05rem;
-    margin-bottom: .3rem;
+  .home-levels .home-levels__header h2 {
+    font-size: clamp(1.55rem, 2.3vw, 2.05rem);
   }
 
-  .home-levels .levels-header span {
-    color: #64748b;
-    display: inline-block;
+  .home-levels .home-levels__header p {
+    font-size: .98rem;
   }
 
-  .home-levels .levels-grid {
-    display: grid;
-    gap: 24px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .home-levels .home-levels__grid {
+    gap: 1rem;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 1040px;
+  }
+
+  .home-levels .home-levels__card {
+    border-radius: 22px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .06);
+    min-height: 285px;
+    padding: 1.25rem 1.1rem;
+  }
+
+  .home-levels .home-levels__card::before {
+    height: 128px;
+    right: -56px;
+    top: -62px;
+    width: 128px;
+  }
+
+  .home-levels .home-levels__card::after {
+    height: 46px;
+    width: 46px;
+  }
+
+  .home-levels .home-levels__card:hover,
+  .home-levels .home-levels__card:focus-visible {
+    box-shadow: 0 16px 34px rgba(15, 23, 42, .095);
+    transform: translateY(-3px);
+  }
+
+  .home-levels .home-levels__icon {
+    height: 62px;
+    margin-bottom: .8rem;
+    width: 62px;
+  }
+
+  .home-levels .home-levels__level {
+    font-size: .72rem;
+    margin-bottom: .35rem;
+  }
+
+  .home-levels .home-levels__card h3 {
+    font-size: 1.25rem;
+    margin-bottom: .55rem;
+  }
+
+  .home-levels .home-levels__card p {
+    font-size: .94rem;
+    line-height: 1.55;
+    margin-bottom: .85rem;
+  }
+
+  .home-levels .home-levels__tags {
+    gap: .35rem;
+    margin-bottom: .8rem;
+  }
+
+  .home-levels .home-levels__tags span {
+    font-size: .76rem;
+    padding: .28rem .5rem;
+  }
+
+  .home-levels .home-levels__action {
+    font-size: .92rem;
+  }
+
+  .home-levels .home-levels__card:active,
+  .home-student-start .home-student-start__card:active {
+    transform: translateY(-1px) scale(.99);
+  }
+
+  .home-levels .home-levels__card--advance {
+    background: linear-gradient(180deg, #f5f1ff 0%, #ffffff 82%);
+    border-top-color: #8b6ef2;
+  }
+
+  .home-levels .home-levels__card--advance::before,
+  .home-levels .home-levels__card--advance::after { background: #8b6ef2; }
+
+  .home-levels .home-levels__card--advance .home-levels__icon,
+  .home-levels .home-levels__card--advance .home-levels__action { color: #8b6ef2; }
+
+  .home-parent-cta {
+    background: linear-gradient(135deg, #ffffff 0%, #eef8fb 100%);
+    border: 1px solid #dbe7ef;
+    border-radius: 24px;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, .065);
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
     margin: 0 auto;
-    max-width: 1080px;
+    max-width: 1040px;
+    padding: 1.25rem;
   }
 
-  .home-levels .level-card {
-    align-items: center;
-    background: #fff;
-    border: 1px solid #dbe6ef;
-    border-radius: 24px;
-    box-shadow: 0 14px 36px rgba(15, 23, 42, .08);
-    display: flex;
-    flex-direction: column;
-    min-height: 340px;
-    overflow: hidden;
-    padding: 28px 24px;
-    position: relative;
-    text-align: center;
-    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-  }
-
-  .home-levels .level-card::before {
-    border-radius: 999px;
-    content: "";
-    height: 150px;
-    opacity: .16;
-    position: absolute;
-    right: -64px;
-    top: -72px;
-    width: 150px;
-  }
-
-  .home-levels .level-card:hover,
-  .home-levels .level-card:focus-visible {
-    box-shadow: 0 20px 46px rgba(15, 23, 42, .12);
-    outline: none;
-    transform: translateY(-5px);
-  }
-
-  .home-levels .level-card--one {
-    background: linear-gradient(180deg, #eef9fc 0%, #ffffff 82%);
-    border-top: 5px solid var(--level-one);
-  }
-
-  .home-levels .level-card--two {
-    background: linear-gradient(180deg, #effbf6 0%, #ffffff 82%);
-    border-top: 5px solid var(--level-two);
-  }
-
-  .home-levels .level-card--three {
-    background: linear-gradient(180deg, #fff8e7 0%, #ffffff 82%);
-    border-top: 5px solid var(--level-three);
-  }
-
-  .home-levels .level-card--one::before { background: var(--level-one); }
-  .home-levels .level-card--two::before { background: var(--level-two); }
-  .home-levels .level-card--three::before { background: var(--level-three); }
-
-  .home-levels .level-icon {
-    align-items: center;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 12px 26px rgba(15, 23, 42, .1);
-    display: inline-flex;
-    font-size: 1.05rem;
-    font-weight: 800;
-    height: 76px;
-    justify-content: center;
-    letter-spacing: .04em;
-    margin-bottom: 1rem;
-    position: relative;
-    transition: transform .25s ease;
-    width: 76px;
-    z-index: 1;
-  }
-
-  .home-levels .level-card:hover .level-icon,
-  .home-levels .level-card:focus-visible .level-icon {
-    transform: scale(1.05);
-  }
-
-  .home-levels .level-card--one .level-icon { color: var(--level-one); }
-  .home-levels .level-card--two .level-icon { color: var(--level-two); }
-  .home-levels .level-card--three .level-icon { color: var(--level-three); }
-
-  .home-levels .level-number {
-    color: #64748b;
-    font-size: .78rem;
-    font-weight: 800;
-    letter-spacing: .12em;
-    margin-bottom: .45rem;
-    text-transform: uppercase;
-  }
-
-  .home-levels .level-title {
+  .home-parent-cta h2 {
     color: #0f172a;
-    font-size: 1.45rem;
-    font-weight: 700;
-    margin-bottom: .75rem;
+    font-size: clamp(1.35rem, 2.2vw, 1.85rem);
+    font-weight: 900;
+    margin-bottom: .35rem;
   }
 
-  .home-levels .level-description {
-    color: #475569;
-    line-height: 1.65;
-    margin-bottom: 1rem;
+  .home-parent-cta p {
+    color: #52657a;
+    line-height: 1.6;
+    margin: 0;
   }
 
-  .home-levels .level-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .45rem;
-    justify-content: center;
-    margin: auto 0 1rem;
-  }
-
-  .home-levels .level-tags span {
-    background: rgba(255, 255, 255, .86);
-    border: 1px solid #e2e8f0;
+  .home-parent-cta .btn {
+    align-self: center;
     border-radius: 999px;
-    color: #334155;
-    font-size: .82rem;
-    font-weight: 600;
-    padding: .35rem .65rem;
+    flex: 0 0 auto;
+    font-weight: 900;
+    min-height: 44px;
+    padding: .65rem 1rem;
   }
 
-  .home-levels .level-link {
-    color: var(--primary);
-    font-weight: 800;
-  }
-
-  .home-levels .level-card--two .level-link { color: var(--level-two); }
-  .home-levels .level-card--three .level-link { color: #a66f13; }
-
-  @media (max-width: 991.98px) {
-    .home-levels .levels-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .home-levels .level-card--three {
-      grid-column: 1 / -1;
-      justify-self: center;
-      max-width: calc(50% - 12px);
-      width: 100%;
-    }
-  }
-
-  @media (max-width: 767.98px) {
-    .home-levels .levels-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .home-levels .level-card--three {
-      grid-column: auto;
-      max-width: none;
-    }
-  }
-
-  .home-learning-path {
-    --learn-color: #2b8ea8;
-    --practice-color: #35a982;
-    --advance-color: #8b6ef2;
-  }
-
-  .home-learning-path .learning-grid {
-    display: grid;
-    gap: 24px;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .home-learning-path .learning-card {
-    align-items: center;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 24px;
-    box-shadow: 0 12px 30px rgba(15, 23, 42, .07);
-    display: flex;
-    flex-direction: column;
-    min-height: 275px;
-    overflow: hidden;
-    padding: 26px 22px;
-    position: relative;
-    text-align: center;
-    transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
-  }
-
-  .home-learning-path .learning-card::before {
-    border-radius: 999px;
-    content: "";
-    height: 120px;
-    opacity: .13;
-    position: absolute;
-    right: -54px;
-    top: -58px;
-    width: 120px;
-  }
-
-  .home-learning-path .learning-card:hover,
-  .home-learning-path .learning-card:focus-visible {
-    box-shadow: 0 18px 40px rgba(15, 23, 42, .11);
+  .home-levels--informational .home-levels__card,
+  .home-levels--informational .home-levels__card:hover,
+  .home-levels--informational .home-levels__card:focus-visible,
+  .home-levels--informational .home-levels__card:active {
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .06);
+    cursor: default;
     outline: none;
-    transform: translateY(-4px);
+    transform: none;
   }
 
-  .home-learning-path .learning-card--learn {
-    background: linear-gradient(180deg, #eef9fc 0%, #ffffff 84%);
-    border-top: 5px solid var(--learn-color);
-  }
-
-  .home-learning-path .learning-card--practice {
-    background: linear-gradient(180deg, #effbf6 0%, #ffffff 84%);
-    border-top: 5px solid var(--practice-color);
-  }
-
-  .home-learning-path .learning-card--advance {
-    background: linear-gradient(180deg, #f5f1ff 0%, #ffffff 84%);
-    border-top: 5px solid var(--advance-color);
-  }
-
-  .home-learning-path .learning-card--learn::before { background: var(--learn-color); }
-  .home-learning-path .learning-card--practice::before { background: var(--practice-color); }
-  .home-learning-path .learning-card--advance::before { background: var(--advance-color); }
-
-  .home-learning-path .learning-icon {
-    align-items: center;
-    background: #fff;
-    border-radius: 50%;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, .09);
-    display: inline-flex;
-    font-size: 1.35rem;
-    font-weight: 800;
-    height: 68px;
-    justify-content: center;
-    margin-bottom: 1rem;
-    position: relative;
-    transition: transform .25s ease;
-    width: 68px;
-    z-index: 1;
-  }
-
-  .home-learning-path .learning-card:hover .learning-icon,
-  .home-learning-path .learning-card:focus-visible .learning-icon {
-    transform: scale(1.05);
-  }
-
-  .home-learning-path .learning-card--learn .learning-icon { color: var(--learn-color); }
-  .home-learning-path .learning-card--practice .learning-icon { color: var(--practice-color); }
-  .home-learning-path .learning-card--advance .learning-icon { color: var(--advance-color); }
-
-  .home-learning-path .learning-title {
-    color: #0f172a;
-    font-size: 1.45rem;
-    font-weight: 700;
-    margin-bottom: .75rem;
-  }
-
-  .home-learning-path .learning-description {
-    color: #475569;
-    line-height: 1.65;
-    margin-bottom: 1rem;
-  }
-
-  .home-learning-path .learning-tags {
-    color: #64748b;
-    font-size: .9rem;
-    font-weight: 700;
-    margin-top: auto;
+  .home-levels--informational .home-levels__card:hover .home-levels__icon,
+  .home-levels--informational .home-levels__card:focus-visible .home-levels__icon {
+    transform: none;
   }
 
   .home-benefits .benefits-header {
@@ -611,16 +487,8 @@
     border-left: 5px solid var(--benefit-color, var(--primary));
     border-radius: 20px;
     box-shadow: 0 8px 22px rgba(15, 23, 42, .055);
-    min-height: 180px;
-    padding: 20px 18px;
-    transition: transform .25s ease, box-shadow .25s ease;
-  }
-
-  .home-benefits .benefit-card:hover,
-  .home-benefits .benefit-card:focus-visible {
-    box-shadow: 0 14px 30px rgba(15, 23, 42, .09);
-    outline: none;
-    transform: translateY(-3px);
+    min-height: 155px;
+    padding: 18px 16px;
   }
 
   .home-benefits .benefit-card--reading { --benefit-color: #2b8ea8; background: linear-gradient(180deg, #f0faff 0%, #fff 90%); }
@@ -637,10 +505,10 @@
     display: inline-flex;
     font-size: 1.2rem;
     font-weight: 800;
-    height: 48px;
+    height: 42px;
     justify-content: center;
-    margin-bottom: .9rem;
-    width: 48px;
+    margin-bottom: .75rem;
+    width: 42px;
   }
 
   .home-benefits .benefit-title {
@@ -657,12 +525,146 @@
     margin-bottom: 0;
   }
 
+  .home-info .home-info__header,
+  .home-student-start .home-student-start__header {
+    margin: 0 auto 1.1rem;
+    max-width: 700px;
+    text-align: center;
+  }
+
+  .home-info .home-info__header h2,
+  .home-student-start .home-student-start__header h1 {
+    color: #0f172a;
+    font-size: clamp(1.6rem, 2.6vw, 2.15rem);
+    font-weight: 800;
+    line-height: 1.18;
+    margin-bottom: .6rem;
+  }
+
+  .home-info .home-info__header p,
+  .home-student-start .home-student-start__header p {
+    color: #475569;
+    font-size: .98rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .home-info .home-info__grid,
+  .home-student-start .home-student-start__grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .home-info .home-info__card,
+  .home-student-start .home-student-start__card {
+    background: #fff;
+    border: 1px solid #dbe7ef;
+    border-radius: 22px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, .055);
+    color: #102033;
+    display: grid;
+    gap: .75rem;
+    min-height: 100%;
+    padding: 1.05rem;
+  }
+
+  .home-student-start .home-student-start__card {
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+  }
+
+  .home-student-start .home-student-start__card:hover,
+  .home-student-start .home-student-start__card:focus-visible {
+    border-color: rgba(43, 142, 168, .38);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, .1);
+    outline: none;
+    transform: translateY(-3px);
+  }
+
+  .home-info .home-info__icon,
+  .home-student-start .home-student-start__icon {
+    align-items: center;
+    background: #eef8fb;
+    border-radius: 20px;
+    color: var(--primary);
+    display: inline-flex;
+    font-size: 1.35rem;
+    font-weight: 900;
+    height: 50px;
+    justify-content: center;
+    width: 50px;
+  }
+
+  .home-info .home-info__card:nth-child(2) .home-info__icon,
+  .home-student-start .home-student-start__card:nth-child(2) .home-student-start__icon { background: #effbf6; color: #27815f; }
+  .home-info .home-info__card:nth-child(3) .home-info__icon,
+  .home-student-start .home-student-start__card:nth-child(3) .home-student-start__icon { background: #fff8e7; color: #a66f13; }
+
+  .home-info .home-info__card h3,
+  .home-student-start .home-student-start__card strong {
+    color: #0f172a;
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0;
+  }
+
+  .home-info .home-info__card p,
+  .home-student-start .home-student-start__card span {
+    color: #475569;
+    font-size: .94rem;
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .home-info .home-info__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    margin-top: .15rem;
+  }
+
+  .home-info .home-info__chips span {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    color: #334155;
+    font-size: .85rem;
+    font-weight: 700;
+    padding: .38rem .62rem;
+  }
+
+  .home-student-start .home-student-start__grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .home-student-start .home-student-start__card {
+    min-height: 180px;
+  }
+
+  .home-student-start .home-student-start__card--main {
+    background: linear-gradient(135deg, #ffffff, #eef8fb);
+    grid-column: span 2;
+  }
+
+  .home-student-start .home-student-start__action {
+    align-self: end;
+    background: #102033;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 900;
+    margin-top: .25rem;
+    padding: .75rem 1rem;
+    text-align: center;
+  }
+
   @media (max-width: 991.98px) {
-    .home-learning-path .learning-grid {
+    .home-levels .home-levels__grid,
+    .home-learning-path .home-levels__grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .home-learning-path .learning-card--advance {
+    .home-learning-path .home-levels__card--advance {
       grid-column: 1 / -1;
       justify-self: center;
       max-width: calc(50% - 12px);
@@ -672,22 +674,126 @@
     .home-benefits .benefits-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .home-info .home-info__grid,
+    .home-student-start .home-student-start__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
 
   @media (max-width: 767.98px) {
-    .home-learning-path .learning-grid,
-    .home-benefits .benefits-grid {
+    .home-hero .home-hero__inner {
+      padding-bottom: 2rem !important;
+      padding-top: 2rem !important;
+    }
+
+    .home-hero h1 {
+      font-size: clamp(2rem, 8vw, 2.55rem);
+    }
+
+    .home-info.container,
+    .home-levels.container,
+    .home-benefits.container {
+      padding-bottom: 1.5rem !important;
+      padding-top: 1.5rem !important;
+    }
+
+    .home-parent-cta {
+      align-items: stretch;
+      flex-direction: column;
+    }
+
+    .home-parent-cta .btn {
+      align-self: stretch;
+      min-height: 48px;
+    }
+
+    .home-levels .home-levels__grid,
+    .home-learning-path .home-levels__grid,
+    .home-benefits .benefits-grid,
+    .home-info .home-info__grid,
+    .home-student-start .home-student-start__grid {
       grid-template-columns: 1fr;
     }
 
-    .home-learning-path .learning-card--advance {
+    .home-levels .home-levels__card {
+      min-height: 265px;
+      padding: 1.35rem 1.15rem;
+    }
+
+    .home-levels .home-levels__icon {
+      height: 66px;
+      width: 66px;
+    }
+
+    .home-levels .home-levels__card h3 {
+      font-size: 1.32rem;
+    }
+
+    .home-levels .home-levels__tags span {
+      font-size: .8rem;
+      padding: .32rem .58rem;
+    }
+
+    .home-learning-path .home-levels__card--advance {
       grid-column: auto;
       max-width: none;
+    }
+
+    .home-student-start .home-student-start__card--main {
+      grid-column: auto;
+    }
+
+    .home-student-start .home-student-start__card {
+      min-height: 150px;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .home-levels .home-levels__card,
+    .home-info .home-info__card,
+    .home-student-start .home-student-start__card {
+      transition: none;
     }
   }
 </style>
 {% endblock %}
 {% block content %}
+{% if user.is_authenticated and user.role == 'STUDENT' %}
+<section class="container py-4 py-md-5 home-student-start" aria-labelledby="student-home-title">
+  <div class="home-student-start__header">
+    <span class="eyebrow">Hola de nuevo</span>
+    <h1 id="student-home-title">Elige una actividad para continuar</h1>
+    <p>Haz una cosa a la vez. Puedes ir a tu panel, practicar, leer o jugar.</p>
+  </div>
+  <div class="home-student-start__grid">
+    <a class="home-student-start__card home-student-start__card--main" href="{% url 'dashboard:student' %}" aria-label="Continuar mi clase desde mi panel de estudiante">
+      <span class="home-student-start__icon" aria-hidden="true">📘</span>
+      <strong>Ir a mi panel</strong>
+      <span>Continúa tu clase y mira tus opciones de hoy.</span>
+      <span class="home-student-start__action">Continuar</span>
+    </a>
+    <a class="home-student-start__card" href="{% url 'activities:list' %}" aria-label="Ir a actividades para practicar">
+      <span class="home-student-start__icon" aria-hidden="true">✎</span>
+      <strong>Practicar</strong>
+      <span>Haz una actividad corta.</span>
+      <span class="home-student-start__action">Entrar</span>
+    </a>
+    <a class="home-student-start__card" href="{% url 'readings:list' %}" aria-label="Ir a lecturas">
+      <span class="home-student-start__icon" aria-hidden="true">📖</span>
+      <strong>Leer</strong>
+      <span>Descubre una historia.</span>
+      <span class="home-student-start__action">Leer</span>
+    </a>
+    <a class="home-student-start__card" href="{% url 'games:index' %}" aria-label="Ir a juegos">
+      <span class="home-student-start__icon" aria-hidden="true">★</span>
+      <strong>Jugar</strong>
+      <span>Aprende jugando.</span>
+      <span class="home-student-start__action">Jugar</span>
+    </a>
+  </div>
+</section>
+{% else %}
 <section class="hero-section home-hero">
   <div class="container py-5 home-hero__inner">
     <div class="row align-items-center g-4">
@@ -699,18 +805,27 @@
         <h1>Leer puede ser una aventura diferente para cada niño</h1>
         <p class="lead">Lectura sin Límites acompaña a los estudiantes paso a paso mediante sonidos, sílabas, palabras, juegos y lecturas interactivas.</p>
         <div class="home-hero__actions">
-          <a class="btn btn-primary btn-lg home-hero__button" href="{% url 'accounts:register' %}">
-            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" focusable="false">
-              <path d="M8 5.5 17 12l-9 6.5v-13Z" fill="currentColor"/>
-            </svg>
-            Comenzar a aprender
-          </a>
-          <a class="btn btn-outline-primary btn-lg home-hero__button" href="{% url 'activities:list' %}">
-            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" focusable="false">
-              <path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.8L12 18l-1.8-5.4-5.7-1.8L10.2 9 12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-            </svg>
-            Explorar actividades
-          </a>
+          {% if user.is_authenticated and user.role == 'PARENT' %}
+            <a class="btn btn-primary btn-lg home-hero__button" href="{% url 'dashboard:parents' %}">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" focusable="false">
+                <path d="M5 12.5 10 17l9-10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Ir a mi Panel familiar
+            </a>
+          {% else %}
+            <a class="btn btn-primary btn-lg home-hero__button" href="{% url 'accounts:register' %}">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" focusable="false">
+                <path d="M8 5.5 17 12l-9 6.5v-13Z" fill="currentColor"/>
+              </svg>
+              Comenzar a aprender
+            </a>
+            <a class="btn btn-outline-primary btn-lg home-hero__button" href="{% url 'activities:list' %}">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" focusable="false">
+                <path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.8L12 18l-1.8-5.4-5.7-1.8L10.2 9 12 3.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              </svg>
+              Explorar actividades
+            </a>
+          {% endif %}
         </div>
       </div>
       <div class="col-lg-6 home-hero__visual">
@@ -763,86 +878,180 @@
   </div>
 </section>
 
-<section class="container py-4 home-levels" aria-labelledby="home-levels-title">
-  <div class="levels-header">
+<section class="container py-4 home-info" aria-labelledby="home-info-title">
+  <div class="home-info__header">
+    <span class="eyebrow">Apoyo lector</span>
+    <h2 id="home-info-title">Una ayuda clara para aprender a leer</h2>
+    <p>Información breve para familias, docentes y estudiantes.</p>
+  </div>
+  <div class="home-info__grid">
+    <article class="home-info__card">
+      <span class="home-info__icon" aria-hidden="true">Aa</span>
+      <h3>¿Qué es la dislexia?</h3>
+      <p>Es una dificultad para leer con fluidez. Cada niño puede necesitar más tiempo, apoyo visual y práctica guiada.</p>
+    </article>
+    <article class="home-info__card">
+      <span class="home-info__icon" aria-hidden="true">🔊</span>
+      <h3>¿Cómo ayuda esta plataforma?</h3>
+      <p>Ofrece lectura guiada, apoyo por voz, actividades cortas, juegos educativos, accesibilidad y seguimiento del progreso.</p>
+      <div class="home-info__chips" aria-label="Apoyos de la plataforma">
+        <span>Voz</span>
+        <span>Juegos</span>
+        <span>Lecturas</span>
+        <span>Progreso</span>
+      </div>
+    </article>
+    <article class="home-info__card">
+      <span class="home-info__icon" aria-hidden="true">★</span>
+      <h3>Nuestro propósito</h3>
+      <p>Apoyar a estudiantes de 1.º, 2.º y 3.º grado con una experiencia accesible, sencilla y motivadora.</p>
+    </article>
+  </div>
+</section>
+
+{% if user.is_authenticated and user.role == 'PARENT' %}
+<section class="container py-4" aria-labelledby="home-parent-title">
+  <div class="home-parent-cta">
+    <div>
+      <span class="eyebrow">Acompaña su aprendizaje</span>
+      <h2 id="home-parent-title">Consulta el progreso de tus estudiantes</h2>
+      <p>Revisa sus avances, lecturas, actividades y áreas que necesitan refuerzo.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'dashboard:parents' %}">Ver progreso de mis estudiantes</a>
+  </div>
+</section>
+{% endif %}
+
+<section class="container py-4 home-levels{% if user.is_authenticated and user.role == 'PARENT' %} home-levels--informational{% endif %}" aria-labelledby="home-levels-title">
+  <div class="home-levels__header">
     <h2 id="home-levels-title">Niveles</h2>
     <p>Un recorrido claro, progresivo y amigable.</p>
     <span>Elige dónde quieres comenzar tu aventura de lectura.</span>
   </div>
-  <div class="levels-grid">
-    <article class="level-card level-card--one" tabindex="0">
-      <div class="level-icon" aria-hidden="true">ABC</div>
-      <span class="level-number">Nivel 1</span>
-      <h3 class="level-title">Primeros pasos</h3>
-      <p class="level-description">Descubre letras, sonidos y sílabas mientras formas tus primeras palabras.</p>
-      <div class="level-tags" aria-label="Habilidades del nivel 1">
+  <div class="home-levels__grid">
+    {% if user.is_authenticated and user.role == 'PARENT' %}
+    <article class="home-levels__card home-levels__card--one">
+    {% else %}
+    <a class="home-levels__card home-levels__card--one" href="{% url 'learning:level_detail' 1 %}" aria-label="Abrir Nivel 1, Primeros pasos">
+    {% endif %}
+      <div class="home-levels__icon" aria-hidden="true">ABC</div>
+      <span class="home-levels__level">Nivel 1</span>
+      <h3>Primeros pasos</h3>
+      <p>Descubre letras, sonidos y sílabas mientras formas tus primeras palabras.</p>
+      <div class="home-levels__tags" aria-label="Habilidades del nivel 1">
         <span>Letras</span>
         <span>Sonidos</span>
         <span>Sílabas</span>
       </div>
-      <span class="level-link">Explorar nivel →</span>
+      {% if not user.is_authenticated or user.role != 'PARENT' %}
+      <span class="home-levels__action">Explorar nivel →</span>
+      {% endif %}
+    {% if user.is_authenticated and user.role == 'PARENT' %}
     </article>
+    {% else %}
+    </a>
+    {% endif %}
 
-    <article class="level-card level-card--two" tabindex="0">
-      <div class="level-icon" aria-hidden="true">A Z</div>
-      <span class="level-number">Nivel 2</span>
-      <h3 class="level-title">Construyo palabras</h3>
-      <p class="level-description">Combina sílabas, reconoce sonidos y practica palabras de forma divertida.</p>
-      <div class="level-tags" aria-label="Habilidades del nivel 2">
+    {% if user.is_authenticated and user.role == 'PARENT' %}
+    <article class="home-levels__card home-levels__card--two">
+    {% else %}
+    <a class="home-levels__card home-levels__card--two" href="{% url 'learning:level_detail' 2 %}" aria-label="Abrir Nivel 2, Construyo palabras">
+    {% endif %}
+      <div class="home-levels__icon" aria-hidden="true">A Z</div>
+      <span class="home-levels__level">Nivel 2</span>
+      <h3>Construyo palabras</h3>
+      <p>Combina sílabas, reconoce sonidos y practica palabras de forma divertida.</p>
+      <div class="home-levels__tags" aria-label="Habilidades del nivel 2">
         <span>Sílabas</span>
         <span>Palabras</span>
         <span>Sonidos</span>
       </div>
-      <span class="level-link">Explorar nivel →</span>
+      {% if not user.is_authenticated or user.role != 'PARENT' %}
+      <span class="home-levels__action">Explorar nivel →</span>
+      {% endif %}
+    {% if user.is_authenticated and user.role == 'PARENT' %}
     </article>
+    {% else %}
+    </a>
+    {% endif %}
 
-    <article class="level-card level-card--three" tabindex="0">
-      <div class="level-icon" aria-hidden="true">
+    {% if user.is_authenticated and user.role == 'PARENT' %}
+    <article class="home-levels__card home-levels__card--three">
+    {% else %}
+    <a class="home-levels__card home-levels__card--three" href="{% url 'learning:level_detail' 3 %}" aria-label="Abrir Nivel 3, Leo y comprendo">
+    {% endif %}
+      <div class="home-levels__icon" aria-hidden="true">
         <svg width="34" height="34" viewBox="0 0 24 24" fill="none" focusable="false">
           <path d="M5 5.5c2.5 0 4.3.55 7 2.05 2.7-1.5 4.5-2.05 7-2.05v12.2c-2.4 0-4.25.5-7 2-2.75-1.5-4.6-2-7-2V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M12 7.55v12.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
       </div>
-      <span class="level-number">Nivel 3</span>
-      <h3 class="level-title">Leo y comprendo</h3>
-      <p class="level-description">Lee pequeños textos, descubre nuevas palabras y fortalece tu comprensión.</p>
-      <div class="level-tags" aria-label="Habilidades del nivel 3">
+      <span class="home-levels__level">Nivel 3</span>
+      <h3>Leo y comprendo</h3>
+      <p>Lee pequeños textos, descubre nuevas palabras y fortalece tu comprensión.</p>
+      <div class="home-levels__tags" aria-label="Habilidades del nivel 3">
         <span>Lectura</span>
         <span>Historias</span>
         <span>Comprensión</span>
       </div>
-      <span class="level-link">Explorar nivel →</span>
+      {% if not user.is_authenticated or user.role != 'PARENT' %}
+      <span class="home-levels__action">Explorar nivel →</span>
+      {% endif %}
+    {% if user.is_authenticated and user.role == 'PARENT' %}
     </article>
+    {% else %}
+    </a>
+    {% endif %}
   </div>
 </section>
 
-<section class="container py-4 home-learning-path" aria-label="Aprendo, practico y avanzo">
-  <div class="learning-grid">
-    <article class="learning-card learning-card--learn" tabindex="0">
-      <div class="learning-icon" aria-hidden="true">ABC</div>
-      <h3 class="learning-title">Aprendo</h3>
-      <p class="learning-description">Descubro letras, sonidos y sílabas paso a paso.</p>
-      <span class="learning-tags">Letras · Sonidos · Sílabas</span>
-    </article>
-    <article class="learning-card learning-card--practice" tabindex="0">
-      <div class="learning-icon" aria-hidden="true">✎</div>
-      <h3 class="learning-title">Practico</h3>
-      <p class="learning-description">Refuerzo lo aprendido con actividades y pequeños retos interactivos.</p>
-      <span class="learning-tags">Actividades · Palabras · Retos</span>
-    </article>
-    <article class="learning-card learning-card--advance" tabindex="0">
-      <div class="learning-icon" aria-hidden="true">★</div>
-      <h3 class="learning-title">Avanzo</h3>
-      <p class="learning-description">Celebro mis logros y continúo avanzando a mi propio ritmo.</p>
-      <span class="learning-tags">Progreso · Logros · Estrellas</span>
-    </article>
+{% if not user.is_authenticated or user.role != 'PARENT' %}
+<section class="container py-4 home-levels home-learning-path" aria-label="Aprendo, practico y avanzo">
+  <div class="home-levels__grid">
+    <a class="home-levels__card home-levels__card--one" href="{% url 'learning:levels' %}" aria-label="Ir a la sección Aprender">
+      <div class="home-levels__icon" aria-hidden="true">ABC</div>
+      <span class="home-levels__level">Aprender</span>
+      <h3>Aprendo</h3>
+      <p>Descubro letras, sonidos y sílabas paso a paso.</p>
+      <div class="home-levels__tags" aria-label="Contenidos de aprendizaje">
+        <span>Letras</span>
+        <span>Sonidos</span>
+        <span>Sílabas</span>
+      </div>
+      <span class="home-levels__action">Ir a Aprender →</span>
+    </a>
+    <a class="home-levels__card home-levels__card--two" href="{% url 'activities:list' %}" aria-label="Ir a actividades para practicar">
+      <div class="home-levels__icon" aria-hidden="true">✎</div>
+      <span class="home-levels__level">Practicar</span>
+      <h3>Practico</h3>
+      <p>Refuerzo lo aprendido con actividades y pequeños retos interactivos.</p>
+      <div class="home-levels__tags" aria-label="Contenidos de práctica">
+        <span>Actividades</span>
+        <span>Palabras</span>
+        <span>Retos</span>
+      </div>
+      <span class="home-levels__action">Ir a Practicar →</span>
+    </a>
+    <a class="home-levels__card home-levels__card--advance" href="{% if user.is_authenticated %}{% url 'progress:overview' %}{% else %}{% url 'accounts:login' %}{% endif %}" aria-label="Ir a mi progreso y logros">
+      <div class="home-levels__icon" aria-hidden="true">★</div>
+      <span class="home-levels__level">Progreso</span>
+      <h3>Avanzo</h3>
+      <p>Celebro mis logros y continúo avanzando a mi propio ritmo.</p>
+      <div class="home-levels__tags" aria-label="Elementos de avance">
+        <span>Progreso</span>
+        <span>Logros</span>
+        <span>Estrellas</span>
+      </div>
+      <span class="home-levels__action">Ver avance →</span>
+    </a>
   </div>
 </section>
+{% endif %}
 
 <section class="container py-4 home-benefits" aria-labelledby="home-benefits-title">
   <div class="benefits-header"><h2 id="home-benefits-title">Beneficios</h2></div>
   <div class="benefits-grid">
-    <article class="benefit-card benefit-card--reading" tabindex="0">
+    <article class="benefit-card benefit-card--reading">
       <div class="benefit-icon" aria-hidden="true">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" focusable="false">
           <path d="M5 5.5c2.5 0 4.3.55 7 2.05 2.7-1.5 4.5-2.05 7-2.05v12.2c-2.4 0-4.25.5-7 2-2.75-1.5-4.6-2-7-2V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
@@ -852,21 +1061,22 @@
       <h3 class="benefit-title">Lectura guiada</h3>
       <p class="benefit-description">Lee paso a paso con apoyo visual y auditivo.</p>
     </article>
-    <article class="benefit-card benefit-card--progress" tabindex="0">
+    <article class="benefit-card benefit-card--progress">
       <div class="benefit-icon" aria-hidden="true">↗</div>
       <h3 class="benefit-title">Progreso individual</h3>
       <p class="benefit-description">Cada estudiante avanza a su propio ritmo.</p>
     </article>
-    <article class="benefit-card benefit-card--access" tabindex="0">
+    <article class="benefit-card benefit-card--access">
       <div class="benefit-icon" aria-hidden="true">Aa</div>
       <h3 class="benefit-title">Accesibilidad</h3>
       <p class="benefit-description">Ajusta la lectura según tus necesidades.</p>
     </article>
-    <article class="benefit-card benefit-card--audio" tabindex="0">
+    <article class="benefit-card benefit-card--audio">
       <div class="benefit-icon" aria-hidden="true">🔊</div>
       <h3 class="benefit-title">Audio en navegador</h3>
       <p class="benefit-description">Escucha letras, palabras y pequeñas lecturas.</p>
     </article>
   </div>
 </section>
+{% endif %}
 {% endblock %}

@@ -5,7 +5,7 @@
   if (!body || !controls) return;
 
   const defaults = {
-    fontSize: Number(body.dataset.defaultFontSize || 18),
+    fontSize: Number(body.dataset.defaultFontSize || 16),
     letterSpacing: Number(body.dataset.defaultLetterSpacing || 0),
     wordSpacing: Number(body.dataset.defaultWordSpacing || 0),
     lineHeight: Number(body.dataset.defaultLineHeight || 1.6),

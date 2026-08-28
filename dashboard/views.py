@@ -1,5 +1,5 @@
 from django.contrib import messages
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
@@ -18,7 +18,12 @@ from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, L
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading, ReadingComprehensionAnswer, ReadingProgress
 
-from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherStudentUpdateForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
+from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherStudentModalForm, TeacherStudentUpdateForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
+
+
+TEACHER_IMPERSONATION_USER_KEY = 'teacher_impersonation_user_id'
+TEACHER_IMPERSONATION_PROFILE_KEY = 'teacher_impersonation_profile_id'
+TEACHER_IMPERSONATION_STUDENT_KEY = 'teacher_impersonation_student_id'
 
 
 ADMIN_RESOURCES = {
@@ -69,7 +74,6 @@ def can_manage_resource(user, resource):
         return False
     permission_map = {
         'planes': teacher.can_create_lesson_plans or teacher.can_edit_lesson_plans or teacher.can_assign_lesson_plans,
-        'clases': teacher.can_manage_lessons,
         'actividades': teacher.can_manage_activities,
         'lecturas': teacher.can_manage_readings,
         'juegos': teacher.can_manage_games,
@@ -167,6 +171,10 @@ def resource_has_history(instance):
         return instance.assignments.exists()
     if isinstance(instance, Activity):
         return instance.attempts.exists() or instance.progress_items.exists() or instance.lesson_plans.exists()
+    if isinstance(instance, Reading):
+        return instance.student_progress.exists() or instance.student_answers.exists() or instance.lesson_plans.exists()
+    if isinstance(instance, Game):
+        return instance.attempts.exists() or instance.lesson_plans.exists()
     if isinstance(instance, (Reading, Game)):
         return instance.lesson_plans.exists()
     return False
@@ -771,18 +779,29 @@ def teacher_students(request):
     if teacher_profile is None:
         messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
         return redirect('accounts:profile')
-    students = teacher_profile.students.select_related('user', 'current_level').annotate(
+    students = get_teacher_students_for_page(teacher_profile)
+    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students})
+
+
+def get_teacher_students_for_page(teacher_profile, edit_form=None, open_edit_student=None):
+    students = list(teacher_profile.students.select_related('user', 'current_level').prefetch_related('parents').annotate(
         completed_activities=Count('progress_items', filter=Q(progress_items__completed=True), distinct=True),
         total_attempts=Count('attempts', distinct=True),
         detected_difficulties=Count('difficulties', distinct=True),
-    ).order_by('name')
-    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students})
+    ).order_by('name'))
+    for student in students:
+        student.edit_form = edit_form if edit_form is not None and student.pk == open_edit_student else TeacherStudentModalForm(instance=student)
+        student.open_edit_modal = student.pk == open_edit_student
+    return students
 
 
 @login_required
 @user_passes_test(is_teacher)
 @require_POST
 def teacher_student_login(request, pk):
+    if request.session.get(TEACHER_IMPERSONATION_USER_KEY):
+        messages.error(request, 'Ya estás viendo una cuenta de estudiante.')
+        return redirect('dashboard:student')
     teacher_profile = getattr(request.user, 'teacher_profile', None)
     if teacher_profile is None:
         messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
@@ -792,8 +811,41 @@ def teacher_student_login(request, pk):
         messages.error(request, 'Este estudiante no tiene una cuenta activa.')
         return redirect('dashboard:teacher_students')
     login(request, student.user, backend='django.contrib.auth.backends.ModelBackend')
+    request.session[TEACHER_IMPERSONATION_USER_KEY] = teacher_profile.user_id
+    request.session[TEACHER_IMPERSONATION_PROFILE_KEY] = teacher_profile.id
+    request.session[TEACHER_IMPERSONATION_STUDENT_KEY] = student.id
     messages.success(request, f'Entraste al modo estudiante de {student.display_name()}.')
     return redirect('dashboard:student')
+
+
+@login_required
+@require_POST
+def teacher_student_return(request):
+    teacher_user_id = request.session.get(TEACHER_IMPERSONATION_USER_KEY)
+    teacher_profile_id = request.session.get(TEACHER_IMPERSONATION_PROFILE_KEY)
+    student_id = request.session.get(TEACHER_IMPERSONATION_STUDENT_KEY)
+    current_student = getattr(request.user, 'student_profile', None)
+    teacher_user = CustomUser.objects.filter(pk=teacher_user_id, role=CustomUser.Role.TEACHER, is_active=True).first()
+    teacher_profile = TeacherProfile.objects.filter(pk=teacher_profile_id, user=teacher_user, is_active=True).first()
+    valid_session = bool(
+        current_student
+        and teacher_user
+        and teacher_profile
+        and current_student.pk == student_id
+        and teacher_profile.students.filter(pk=current_student.pk).exists()
+    )
+    if not valid_session:
+        for key in (TEACHER_IMPERSONATION_USER_KEY, TEACHER_IMPERSONATION_PROFILE_KEY, TEACHER_IMPERSONATION_STUDENT_KEY):
+            request.session.pop(key, None)
+        logout(request)
+        messages.error(request, 'Se cerró el modo temporal por seguridad.')
+        return redirect('accounts:login')
+
+    login(request, teacher_user, backend='django.contrib.auth.backends.ModelBackend')
+    for key in (TEACHER_IMPERSONATION_USER_KEY, TEACHER_IMPERSONATION_PROFILE_KEY, TEACHER_IMPERSONATION_STUDENT_KEY):
+        request.session.pop(key, None)
+    messages.success(request, 'Volviste a tu cuenta docente.')
+    return redirect('dashboard:teacher_students')
 
 
 @login_required
@@ -826,13 +878,20 @@ def teacher_student_update(request, pk):
         messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
         return redirect('accounts:profile')
     student = get_object_or_404(teacher_profile.students.select_related('user'), pk=pk)
-    form = TeacherStudentUpdateForm(request.POST or None, request.FILES or None, instance=student)
+    if request.method != 'POST':
+        return redirect('dashboard:teacher_students')
+    form = TeacherStudentModalForm(request.POST, instance=student)
     if request.method == 'POST' and form.is_valid():
         form.save()
         write_audit(request, 'update_teacher_student', student, {'teacher_id': teacher_profile.pk})
         messages.success(request, 'Alumno actualizado correctamente.')
         return redirect('dashboard:teacher_students')
-    return render(request, 'dashboard/teacher_student_form.html', {'form': form, 'student': student})
+    students = get_teacher_students_for_page(teacher_profile, edit_form=form, open_edit_student=student.pk)
+    return render(request, 'dashboard/teacher_students.html', {
+        'teacher_profile': teacher_profile,
+        'students': students,
+        'open_edit_student': student.pk,
+    })
 
 
 @login_required
@@ -848,17 +907,9 @@ def teacher_student_delete(request, pk):
         return redirect('accounts:profile')
     student = get_object_or_404(teacher_profile.students.select_related('user'), pk=pk)
     label = student.display_name()
-    if resource_has_history(student):
-        student.user.is_active = False
-        student.user.save(update_fields=['is_active'])
-        teacher_profile.students.remove(student)
-        write_audit(request, 'deactivate_teacher_student', student, {'teacher_id': teacher_profile.pk})
-        messages.success(request, f'Se quitó {label} de tus alumnos y se conservó su historial académico.')
-    else:
-        user = student.user
-        write_audit(request, 'delete_teacher_student', student, {'teacher_id': teacher_profile.pk, 'user_id': user.pk})
-        user.delete()
-        messages.success(request, f'Se eliminó correctamente el alumno {label}.')
+    teacher_profile.students.remove(student)
+    write_audit(request, 'unlink_teacher_student', student, {'teacher_id': teacher_profile.pk})
+    messages.success(request, f'Se quitó {label} de tus alumnos. Su cuenta, progreso y demás información se conservaron.')
     return redirect('dashboard:teacher_students')
 
 
