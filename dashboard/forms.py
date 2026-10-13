@@ -16,10 +16,11 @@ class AdminUserCreationForm(UserCreationForm):
 
     class Meta(UserCreationForm.Meta):
         model = CustomUser
-        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff', 'is_superuser')
+        fields = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, actor=None, **kwargs):
         super().__init__(*args, **kwargs)
+        restrict_staff_field(self, actor)
         self._original_password = self.instance.password if self.instance and self.instance.pk else ''
         self.fields['role'].choices = (
             (CustomUser.Role.ADMIN, 'Administrador'),
@@ -62,7 +63,7 @@ class AdminUserUpdateForm(forms.ModelForm):
         model = CustomUser
         fields = ('username', 'email', 'first_name', 'last_name', 'role', 'is_staff', 'is_active', 'password')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, actor=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._original_password = self.instance.password if self.instance and self.instance.pk else ''
         self.fields['password'].initial = ''
@@ -75,6 +76,7 @@ class AdminUserUpdateForm(forms.ModelForm):
         self.fields['is_active'].label = 'Cuenta activa'
         self.fields['is_active'].help_text = 'Activa o suspende el acceso sin borrar el historial de la cuenta.'
         self.fields['is_staff'].help_text = 'Úsalo solo para administradores que deban entrar al administrador avanzado de Django.'
+        restrict_staff_field(self, actor)
         self.fields['role'].choices = (
             (CustomUser.Role.ADMIN, 'Administrador'),
             (CustomUser.Role.TEACHER, 'Docente'),
@@ -91,6 +93,8 @@ class AdminUserUpdateForm(forms.ModelForm):
             user.password = self._original_password
         if commit:
             user.save()
+            if password:
+                clear_legacy_teacher_password(user)
             full_name = user.get_full_name() or user.username
             if user.is_active and user.role == CustomUser.Role.TEACHER:
                 teacher, _ = TeacherProfile.objects.get_or_create(user=user, defaults={
@@ -227,10 +231,14 @@ class TeacherUpdateForm(forms.ModelForm):
     def save(self, commit=True):
         password = self.cleaned_data.get('password', '')
         teacher = super().save(commit=False)
-        if password:
+        teacher.password = self._original_password
+        if password and teacher.user_id:
+            # The linked account is the single source of truth for the password.
+            teacher.user.set_password(password)
+            teacher.password = ''
+        elif password:
+            # No account yet: keep a pending password that the first login moves to the user.
             teacher.set_password(password)
-        else:
-            teacher.password = self._original_password
         if commit:
             teacher.save()
             if teacher.user_id:
@@ -240,7 +248,10 @@ class TeacherUpdateForm(forms.ModelForm):
                 user.first_name = teacher.first_name
                 user.last_name = teacher.last_name
                 user.role = CustomUser.Role.TEACHER
-                user.save(update_fields=['is_active', 'email', 'first_name', 'last_name', 'role'])
+                update_fields = ['is_active', 'email', 'first_name', 'last_name', 'role']
+                if password:
+                    update_fields.append('password')
+                user.save(update_fields=update_fields)
             self.save_m2m()
         return teacher
 
@@ -629,6 +640,19 @@ def build_admin_model_form(model, fields):
         pass
 
     return AdminModelForm
+
+
+def restrict_staff_field(form, actor):
+    """Only superusers may grant Django admin access; superuser status is never editable here."""
+    if actor is None or not actor.is_superuser:
+        form.fields.pop('is_staff', None)
+
+
+def clear_legacy_teacher_password(user):
+    teacher = TeacherProfile.objects.filter(user=user).exclude(password='').first()
+    if teacher:
+        teacher.password = ''
+        teacher.save(update_fields=['password'])
 
 
 def style_admin_form(form):

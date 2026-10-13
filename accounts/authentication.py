@@ -16,11 +16,34 @@ class EmailOrTeacherBackend(ModelBackend):
         if user is not None:
             return user
 
+        return self._authenticate_legacy_teacher(identifier, password)
+
+    def _authenticate_legacy_teacher(self, identifier, password):
+        """Accept a TeacherProfile password only as a one-time migration to CustomUser.
+
+        Once the linked account has a usable password, the profile hash is ignored so a
+        reset on the account cannot be bypassed with an older profile password.
+        """
         teacher = TeacherProfile.objects.select_related('user').filter(email__iexact=identifier).first()
-        if teacher is None or not teacher.is_active or not teacher.check_password(password):
+        if teacher is None or not teacher.is_active or not teacher.password:
+            return None
+        linked_user = teacher.user if teacher.user_id else CustomUser.objects.filter(
+            email__iexact=teacher.email, role=CustomUser.Role.TEACHER,
+        ).first()
+        if linked_user is not None and linked_user.has_usable_password():
+            return None
+        if not teacher.check_password(password):
             return None
 
-        return self._get_or_create_teacher_user(teacher)
+        with transaction.atomic():
+            user = self._get_or_create_teacher_user(teacher)
+            if user is None:
+                return None
+            user.set_password(password)
+            user.save(update_fields=['password'])
+            teacher.password = ''
+            teacher.save(update_fields=['password'])
+        return user
 
     def _authenticate_user(self, identifier, password):
         user = CustomUser.objects.filter(email__iexact=identifier).first()

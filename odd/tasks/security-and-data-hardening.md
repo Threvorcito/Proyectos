@@ -15,7 +15,7 @@ The platform serves minors (grades 1-3). The audit found that any visitor can en
 ## Tasks
 - [x] T1 Untrack SQLite DBs, remove lock file, dead `myapp/`, unused crispy deps, pin Django version (findings 6, 18, 19)
 - [x] T2 Safe settings defaults: DEBUG False by default, require SECRET_KEY when not DEBUG, secure cookies/HSTS when not DEBUG; fast hasher for tests (7, 17)
-- [ ] T3 Privilege escalation: drop `is_superuser` from admin form, `is_staff` only by superusers; single teacher password (4, 5)
+- [x] T3 Privilege escalation: drop `is_superuser` from admin form, `is_staff` only by superusers; single teacher password (4, 5)
 - [ ] T4 Per-account login lockout (DB/cache backed) for visual-key and PIN/password login (1, 2)
 - [ ] T5 Roster exposure on public student login flow (3) — needs product decision
 - [ ] T6 `ensure_games` stops overwriting admin edits and stops writing on GET (8)
@@ -30,7 +30,14 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 | Task | Route | Evidence | Commit | Review tier |
 |------|-------|----------|--------|-------------|
 | T1 | delegated | writer | 5502f6e | pending |
-| T2 | delegated | writer | `fix(settings): default to secure production settings` | pending |
+| T2 | delegated | writer | 3578cd6 | pending |
+| T3 | delegated | writer | `fix(auth): block privilege escalation and stale teacher passwords` | pending |
+
+## Follow-ups noted
+- `templates/dashboard/admin_resource_landing.html` still renders the "Superusuario" label (and the staff switch label) after those fields were removed from the form for non-superusers; wrap them in `{% if create_form.is_superuser %}` / `{% if row.form.is_staff %}` or drop them.
+- `core/management/commands/seed_demo.py` still sets `TeacherProfile.set_password`; harmless now (user has a usable password, so the profile hash is ignored) but can be removed.
+- Role ADMIN set by a non-superuser admin still implies `is_staff=True` in `AdminUserCreationForm.save` (by design).
+- `TeacherCreationForm` still stores a pending profile password because the account is created lazily on first login; that login moves it to `CustomUser` and clears the profile hash.
 
 ## Next step
-T3.
+T4.

@@ -263,6 +263,11 @@ def admin_dashboard(request):
     return render(request, 'dashboard/admin_dashboard.html', {'stats': stats, 'recent_students': recent_students, 'recent_plans': recent_plans, 'resources': ADMIN_RESOURCES})
 
 
+def resource_form_kwargs(request, resource):
+    # User forms need the acting user to decide which privilege fields are editable.
+    return {'actor': request.user} if resource == 'usuarios' else {}
+
+
 @login_required
 def admin_resource_landing(request, resource):
     teacher_resource_page = is_teacher_resource_request(request)
@@ -278,12 +283,13 @@ def admin_resource_landing(request, resource):
         objects = objects.filter(is_superuser=False)
     objects = list(objects.order_by('-pk')[:20])
     form_class = config.get('create_form') or config.get('form') or build_admin_model_form(config['model'], config['fields'])
-    create_form = style_admin_form(form_class())
+    form_kwargs = resource_form_kwargs(request, resource)
+    create_form = style_admin_form(form_class(**form_kwargs))
     edit_rows = []
     if config.get('update_form') or not config.get('form'):
         edit_form_class = config.get('update_form') or build_admin_model_form(config['model'], config['fields'])
         edit_rows = [
-            {'object': item, 'form': style_admin_form(edit_form_class(instance=item))}
+            {'object': item, 'form': style_admin_form(edit_form_class(instance=item, **form_kwargs))}
             for item in objects
         ]
     return render(request, 'dashboard/admin_resource_landing.html', {
@@ -310,7 +316,8 @@ def admin_resource_create(request, resource):
         messages.error(request, 'No tienes permiso para crear este recurso.')
         return redirect('dashboard:redirect')
     form_class = config.get('create_form') or config.get('form') or build_admin_model_form(config['model'], config['fields'])
-    form = style_admin_form(form_class(request.POST or None, request.FILES or None))
+    form_kwargs = resource_form_kwargs(request, resource)
+    form = style_admin_form(form_class(request.POST or None, request.FILES or None, **form_kwargs))
     credentials = None
     if request.method == 'POST' and form.is_valid():
         instance = form.save()
@@ -324,7 +331,7 @@ def admin_resource_create(request, resource):
             return redirect(redirect_name, resource=resource)
         if credentials is None:
             return redirect(redirect_name, resource=resource)
-        form = form_class()
+        form = form_class(**form_kwargs)
     return render(request, 'dashboard/admin_resource_form.html', {'resource': resource, 'config': config, 'form': form, 'is_edit': False, 'credentials': credentials, 'teacher_resource_page': is_teacher_resource_request(request), 'resource_list_route': redirect_name})
 
 
@@ -346,7 +353,7 @@ def admin_resource_update(request, resource, pk):
         messages.error(request, 'El superusuario no se edita desde esta pantalla.')
         return redirect(redirect_name, resource=resource)
     form_class = config.get('update_form') or build_admin_model_form(config['model'], config['fields'])
-    form = style_admin_form(form_class(request.POST or None, request.FILES or None, instance=instance))
+    form = style_admin_form(form_class(request.POST or None, request.FILES or None, instance=instance, **resource_form_kwargs(request, resource)))
     if request.method == 'POST' and form.is_valid():
         instance = form.save()
         write_audit(request, 'update', instance, {'resource': resource})
