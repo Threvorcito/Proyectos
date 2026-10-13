@@ -1,11 +1,14 @@
 import os
+import sys
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 def load_local_env():
-    env_path = BASE_DIR / '.env'
+    env_path = Path(os.environ.get('DJANGO_ENV_FILE', BASE_DIR / '.env'))
     if not env_path.exists():
         return
     for line in env_path.read_text(encoding='utf-8').splitlines():
@@ -18,8 +21,19 @@ def load_local_env():
 
 load_local_env()
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-lectura-sin-limites-dev-key')
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes', 'on')
+
+
+def env_bool(name, default):
+    return os.environ.get(name, str(default)).lower() in ('1', 'true', 'yes', 'on')
+
+
+# Secure by default: DEBUG must be enabled explicitly (see .env.example).
+DEBUG = env_bool('DJANGO_DEBUG', False)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if not DEBUG:
+        raise ImproperlyConfigured('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is off.')
+    SECRET_KEY = 'django-insecure-lectura-sin-limites-dev-key'
 ALLOWED_HOSTS = [host.strip() for host in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',') if host.strip()]
 
 INSTALLED_APPS = [
@@ -150,11 +164,19 @@ LOGIN_REDIRECT_URL = 'dashboard:redirect'
 LOGOUT_REDIRECT_URL = 'core:home'
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 24 * 7
 
-SECURE_SSL_REDIRECT = os.environ.get('DJANGO_SECURE_SSL_REDIRECT', 'False').lower() in ('1', 'true', 'yes', 'on')
-SESSION_COOKIE_SECURE = os.environ.get('DJANGO_SESSION_COOKIE_SECURE', 'False').lower() in ('1', 'true', 'yes', 'on')
-CSRF_COOKIE_SECURE = os.environ.get('DJANGO_CSRF_COOKIE_SECURE', 'False').lower() in ('1', 'true', 'yes', 'on')
-SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', '0'))
-SECURE_HSTS_INCLUDE_SUBDOMAINS = os.environ.get('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', 'False').lower() in ('1', 'true', 'yes', 'on')
-SECURE_HSTS_PRELOAD = os.environ.get('DJANGO_SECURE_HSTS_PRELOAD', 'False').lower() in ('1', 'true', 'yes', 'on')
+# HTTPS hardening defaults to on in production and off in DEBUG; each flag is env-overridable.
+SECURE_SSL_REDIRECT = env_bool('DJANGO_SECURE_SSL_REDIRECT', not DEBUG)
+SESSION_COOKIE_SECURE = env_bool('DJANGO_SESSION_COOKIE_SECURE', not DEBUG)
+CSRF_COOKIE_SECURE = env_bool('DJANGO_CSRF_COOKIE_SECURE', not DEBUG)
+SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_SECURE_HSTS_SECONDS', '0' if DEBUG else '31536000'))
+SECURE_HSTS_INCLUDE_SUBDOMAINS = env_bool('DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS', not DEBUG)
+SECURE_HSTS_PRELOAD = env_bool('DJANGO_SECURE_HSTS_PRELOAD', False)
+# Only trust X-Forwarded-Proto when a TLS-terminating proxy is known to set it.
+SECURE_PROXY_SSL_HEADER = (
+    ('HTTP_X_FORWARDED_PROTO', 'https') if env_bool('DJANGO_SECURE_PROXY_SSL_HEADER', False) else None
+)
+
+if 'test' in sys.argv:
+    PASSWORD_HASHERS = ['django.contrib.auth.hashers.MD5PasswordHasher']
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
