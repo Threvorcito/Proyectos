@@ -14,22 +14,30 @@ def normalize_subject_name(name):
 
 
 def ensure_games():
+    """Create built-in games that are missing; never overwrite existing rows.
+
+    When every built-in game already exists this costs a single read query, so
+    views can call it on each request without writing or undoing admin edits.
+    """
+    expected_slugs = {definition['slug'] for definition in GAME_DEFINITIONS}
+    existing_slugs = set(Game.objects.filter(slug__in=expected_slugs).values_list('slug', flat=True))
+    if existing_slugs >= expected_slugs:
+        return
     levels = {level.number: level for level in Level.objects.all()}
     subjects = {normalize_subject_name(subject.name): subject for subject in Subject.objects.all()}
     language_subject = subjects.get('lengua y literatura')
-    games = []
     for definition in GAME_DEFINITIONS:
+        if definition['slug'] in existing_slugs:
+            continue
         data = definition.copy()
         level_number = data.pop('level_number')
         subject_name = data.pop('subject_name', 'Lengua y Literatura')
         subject = subjects.get(normalize_subject_name(subject_name), language_subject)
         grade = data.pop('grade', str(min(level_number, 3)))
-        game, _ = Game.objects.update_or_create(
+        Game.objects.get_or_create(
             slug=data['slug'],
             defaults={**data, 'level': levels.get(level_number), 'subject': subject, 'grade': grade},
         )
-        games.append(game)
-    return games
 
 
 def student_game_grade_filter(student):
@@ -49,7 +57,6 @@ def get_student_for_user(user):
 
 
 def get_recommended_games(student):
-    ensure_games()
     if not student:
         games = {game.slug: game for game in Game.objects.filter(is_active=True)}
         return [games[slug] for slug in ('cazador-de-letras', 'memoria-de-palabras', 'construye-la-palabra') if slug in games]

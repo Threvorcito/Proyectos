@@ -184,3 +184,32 @@ class QuizAgilidadLectoraGeneralTests(TestCase):
             recommended_slugs = {game.slug for game in get_recommended_games(self.students[grade])}
 
             self.assertIn('quiz-agilidad-lectora', recommended_slugs)
+
+
+class EnsureGamesTests(TestCase):
+    def setUp(self):
+        Level.objects.create(number=1, name='Nivel 1', order=1)
+        Subject.objects.create(name='Lengua y Literatura')
+        ensure_games()
+
+    def test_admin_rename_of_built_in_game_survives_games_page_visit(self):
+        game = Game.objects.get(slug='cazador-de-letras')
+        game.name = 'Cazador renombrado'
+        game.save(update_fields=['name'])
+
+        self.client.get(reverse('games:index'))
+        self.client.get(reverse('games:detail', args=['cazador-de-letras']))
+
+        game.refresh_from_db()
+        self.assertEqual(game.name, 'Cazador renombrado')
+
+    def test_ensure_games_only_reads_when_all_games_exist(self):
+        with self.assertNumQueries(1):
+            ensure_games()
+
+    def test_ensure_games_creates_missing_games(self):
+        Game.objects.filter(slug='cazador-de-letras').delete()
+
+        ensure_games()
+
+        self.assertTrue(Game.objects.filter(slug='cazador-de-letras').exists())

@@ -18,7 +18,7 @@ The platform serves minors (grades 1-3). The audit found that any visitor can en
 - [x] T3 Privilege escalation: drop `is_superuser` from admin form, `is_staff` only by superusers; single teacher password (4, 5)
 - [x] T4 Per-account login lockout (DB/cache backed) for visual-key and PIN/password login (1, 2)
 - [x] T5 Roster exposure on public student login flow (3) — product decision: classroom code
-- [ ] T6 `ensure_games` stops overwriting admin edits and stops writing on GET (8)
+- [x] T6 `ensure_games` stops overwriting admin edits and stops writing on GET (8)
 - [ ] T7 Progress race + point farming: unique constraints, atomic, F() updates, points only on first completion, server-side game score sanity (9, 13)
 - [ ] T8 Transactions in quick student creation and admin delete audit order (12)
 - [ ] T9 Admin plan teacher assignment; tutor password shown on creation (10, 11)
@@ -34,7 +34,8 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 | T3 | delegated | writer | 41f74ad | pending |
 | T3b | delegated | writer | ef48832 | pending |
 | T4 | delegated | writer | 53118fd | pending |
-| T5 | delegated | writer | `feat(accounts): require classroom code for student sign-in` | pending |
+| T5 | delegated | writer | eb70684 | pending |
+| T6 | delegated | writer | `fix(games): create missing built-in games without overwriting edits` | pending |
 
 ## Follow-ups noted
 - Done in T3b: staff switch is rendered only when the form has `is_staff`; the dead "Superusuario" switch is removed; `seed_demo` no longer sets `TeacherProfile.set_password` (verified against a throwaway SQLite via `SQLITE_NAME`).
@@ -50,5 +51,8 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 - `/cuentas/estudiantes/` asks for the code; a valid code stores teacher id + code in the session and a signed `classroom` cookie (30 days, `teacherpk:code`). The roster is served only when the stored code still matches, so changing ids or regenerating the code denies access. `teacher_id` POSTs are ignored.
 - Wrong codes use the T4 lockout keyed `classroom-ip:<REMOTE_ADDR>` with 20 failures / 15 min; the key is never reset on success so a known code cannot refill guesses. Behind a reverse proxy REMOTE_ADDR is the proxy address (shared limit) until proxy headers are trusted.
 
+## T6 notes
+- `ensure_games()` reads existing built-in slugs (1 query) and only `get_or_create`s missing ones; existing rows are never updated. Views still call it so a fresh DB gets the games, but a GET with all games present does no writes. A deleted built-in game is recreated on the next visit; admins should deactivate (`is_active`) instead of deleting.
+
 ## Next step
-T6.
+T7.
