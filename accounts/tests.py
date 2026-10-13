@@ -155,7 +155,7 @@ class StudentVisualAccessTests(TestCase):
         self.parent.students.add(self.student)
 
     def test_student_visual_access_logs_in_same_student_profile(self):
-        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
         self.client.post(reverse('accounts:student_access_parents'), {'parent_id': self.parent.pk})
 
@@ -171,7 +171,7 @@ class StudentVisualAccessTests(TestCase):
     def test_student_visual_access_rejects_student_not_linked_to_teacher(self):
         other_user = CustomUser.objects.create_user(username='otroalumno', email='otroalumno@example.com', password='2468', role=CustomUser.Role.STUDENT)
         other_student = StudentProfile.objects.create(user=other_user, name='Otro Alumno', grade='1', reading_level=self.level, current_level=self.level)
-        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
 
         response = self.client.post(reverse('accounts:student_access_students'), {'student_id': other_student.pk})
 
@@ -181,7 +181,7 @@ class StudentVisualAccessTests(TestCase):
     def test_student_visual_access_rejects_parent_not_linked_to_student(self):
         other_parent_user = CustomUser.objects.create_user(username='otrotutor', email='otrotutor@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
         other_parent = ParentProfile.objects.create(user=other_parent_user, name='Otro Tutor')
-        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
 
         response = self.client.post(reverse('accounts:student_access_parents'), {'parent_id': other_parent.pk})
@@ -190,7 +190,7 @@ class StudentVisualAccessTests(TestCase):
         self.assertNotIn('student_access_parent_id', self.client.session)
 
     def test_student_visual_access_shows_linked_parent(self):
-        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
 
         response = self.client.get(reverse('accounts:student_access_parents'))
@@ -202,7 +202,7 @@ class StudentVisualAccessTests(TestCase):
         second_parent_user = CustomUser.objects.create_user(username='tutorvisualdos', email='tutorvisualdos@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
         second_parent = ParentProfile.objects.create(user=second_parent_user, name='Tutor Visual Dos')
         second_parent.students.add(self.student)
-        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
 
         response = self.client.get(reverse('accounts:student_access_parents'))
@@ -212,7 +212,7 @@ class StudentVisualAccessTests(TestCase):
 
     def test_student_visual_access_without_parent_shows_help_message(self):
         self.parent.students.remove(self.student)
-        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
 
         response = self.client.get(reverse('accounts:student_access_parents'))
@@ -220,7 +220,7 @@ class StudentVisualAccessTests(TestCase):
         self.assertContains(response, 'Falta vincular un tutor')
 
     def test_student_visual_access_rejects_wrong_visual_key(self):
-        self.client.post(reverse('accounts:student_access'), {'teacher_id': self.teacher.pk})
+        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
         self.client.post(reverse('accounts:student_access_parents'), {'parent_id': self.parent.pk})
 

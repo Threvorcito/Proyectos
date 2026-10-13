@@ -1,5 +1,6 @@
 import secrets
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,16 +20,48 @@ from .forms import EmailAuthenticationForm, ProfileUpdateForm, RegistrationForm,
 from .models import CustomUser
 
 
+CLASSROOM_COOKIE = 'classroom'
+CLASSROOM_COOKIE_SALT = 'accounts.classroom'
+CLASSROOM_COOKIE_MAX_AGE = 60 * 60 * 24 * 30
+CLASSROOM_CODE_MAX_FAILURES = 20
+LOCKED_CHILD_MESSAGE = 'Hiciste muchos intentos. Pide ayuda a tu docente y prueba en un ratito.'
+
+
 def _clear_student_access_session(request):
     for key in ('student_access_teacher_id', 'student_access_student_id', 'student_access_parent_id'):
         request.session.pop(key, None)
 
 
-def _student_access_teacher(request):
-    teacher_id = request.session.get('student_access_teacher_id')
-    if not teacher_id:
+def _classroom_teacher(teacher_id, code):
+    if not teacher_id or not code:
         return None
-    return TeacherProfile.objects.filter(pk=teacher_id, is_active=True, students__user__is_active=True).distinct().first()
+    return TeacherProfile.objects.filter(pk=teacher_id, classroom_code=code, is_active=True).first()
+
+
+def _student_access_teacher(request):
+    """Return the teacher unlocked on this device with a valid classroom code."""
+    return _classroom_teacher(
+        request.session.get('student_access_teacher_id'),
+        request.session.get('student_access_classroom_code'),
+    )
+
+
+def _remembered_classroom_teacher(request):
+    value = request.get_signed_cookie(
+        CLASSROOM_COOKIE, default='', salt=CLASSROOM_COOKIE_SALT, max_age=CLASSROOM_COOKIE_MAX_AGE,
+    )
+    teacher_id, _, code = (value or '').partition(':')
+    return _classroom_teacher(teacher_id if teacher_id.isdigit() else None, code)
+
+
+def _unlock_classroom(request, teacher):
+    _clear_student_access_session(request)
+    request.session['student_access_teacher_id'] = teacher.pk
+    request.session['student_access_classroom_code'] = teacher.classroom_code
+
+
+def _client_ip(request):
+    return request.META.get('REMOTE_ADDR', '') or 'unknown'
 
 
 def _student_access_student(request, teacher):
@@ -45,22 +78,45 @@ def _student_access_parent(request, student):
     return ParentProfile.objects.filter(pk=parent_id, students=student, user__is_active=True).first()
 
 
-def student_access_teachers(request):
+def student_access_code(request):
+    """Public entry: a classroom code unlocks one teacher's roster on this device."""
     if request.method == 'POST':
-        teacher = TeacherProfile.objects.filter(
-            pk=request.POST.get('teacher_id'),
-            is_active=True,
-            students__user__is_active=True,
-        ).distinct().first()
-        if teacher is None:
-            messages.error(request, 'Escoge una profe o un profe de la lista.')
-            return redirect('accounts:student_access')
-        _clear_student_access_session(request)
-        request.session['student_access_teacher_id'] = teacher.pk
-        return redirect('accounts:student_access_students')
+        if request.POST.get('forget'):
+            _clear_student_access_session(request)
+            request.session.pop('student_access_classroom_code', None)
+            response = redirect('accounts:student_access')
+            response.delete_cookie(CLASSROOM_COOKIE)
+            return response
 
-    teachers = TeacherProfile.objects.filter(is_active=True, students__user__is_active=True).distinct().order_by('name')
-    return render(request, 'accounts/student_access_teachers.html', {'teachers': teachers})
+        lock_key = f'classroom-ip:{_client_ip(request)}'
+        if lockout.is_locked(lock_key):
+            messages.error(request, LOCKED_CHILD_MESSAGE)
+            return redirect('accounts:student_access')
+        code = TeacherProfile.normalize_classroom_code(request.POST.get('code'))
+        teacher = TeacherProfile.objects.filter(classroom_code=code, is_active=True).first() if code else None
+        if teacher is None:
+            # Never reset this key on success: a known code must not refill guesses.
+            lockout.register_failure(lock_key, max_failures=CLASSROOM_CODE_MAX_FAILURES)
+            messages.error(request, 'Ese código no es correcto. Revisa las letras con tu docente.')
+            return redirect('accounts:student_access')
+        _unlock_classroom(request, teacher)
+        response = redirect('accounts:student_access_students')
+        response.set_signed_cookie(
+            CLASSROOM_COOKIE,
+            f'{teacher.pk}:{teacher.classroom_code}',
+            salt=CLASSROOM_COOKIE_SALT,
+            max_age=CLASSROOM_COOKIE_MAX_AGE,
+            httponly=True,
+            samesite='Lax',
+            secure=settings.SESSION_COOKIE_SECURE,
+        )
+        return response
+
+    teacher = _student_access_teacher(request) or _remembered_classroom_teacher(request)
+    if teacher is not None:
+        _unlock_classroom(request, teacher)
+        return redirect('accounts:student_access_students')
+    return render(request, 'accounts/student_access_code.html')
 
 
 def student_access_students(request):
@@ -117,7 +173,7 @@ def student_access_key(request):
     if request.method == 'POST':
         if lockout.is_locked(lock_key):
             _clear_student_access_session(request)
-            messages.error(request, 'Tus dibujos secretos están descansando un ratito. Pide ayuda a tu docente.')
+            messages.error(request, LOCKED_CHILD_MESSAGE)
             return redirect('accounts:student_access')
         selected_codes = [request.POST.get(f'symbol_{index}', '') for index in range(1, 4)]
         if student.check_visual_key(selected_codes):
@@ -129,7 +185,7 @@ def student_access_key(request):
         lockout.register_failure(lock_key)
         if lockout.is_locked(lock_key):
             _clear_student_access_session(request)
-            messages.error(request, 'Tus dibujos secretos están descansando un ratito. Pide ayuda a tu docente.')
+            messages.error(request, LOCKED_CHILD_MESSAGE)
             return redirect('accounts:student_access')
         messages.error(request, 'Intenta otra vez con tus dibujos secretos.')
 

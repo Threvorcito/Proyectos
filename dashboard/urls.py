@@ -33,5 +33,6 @@ urlpatterns = [
     path('estudiante/planes/<int:pk>/', views.student_lesson_plan, name='student_lesson_plan'),
     path('estudiante/', views.student_dashboard, name='student'),
     path('docente/', views.teacher_dashboard, name='teacher'),
+    path('docente/codigo-aula/', views.teacher_classroom_code_regenerate, name='teacher_classroom_code_regenerate'),
     path('padres/', views.parent_dashboard, name='parents'),
 ]

@@ -64,6 +64,7 @@ class StudentVisualKeyLockoutTests(TestCase):
         client = Client()
         session = client.session
         session['student_access_teacher_id'] = self.teacher.pk
+        session['student_access_classroom_code'] = self.teacher.classroom_code
         session['student_access_student_id'] = self.student.pk
         session['student_access_parent_id'] = self.parent.pk
         session.save()

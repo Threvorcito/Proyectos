@@ -978,6 +978,20 @@ def teacher_dashboard(request):
 
 
 @login_required
+@user_passes_test(is_teacher)
+@require_POST
+def teacher_classroom_code_regenerate(request):
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    if teacher_profile is None:
+        messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
+        return redirect('accounts:profile')
+    code = teacher_profile.regenerate_classroom_code()
+    write_audit(request, 'regenerate_classroom_code', teacher_profile, {})
+    messages.success(request, f'Nuevo código de aula: {code}. Los dispositivos del aula deberán escribirlo otra vez.')
+    return redirect('dashboard:teacher')
+
+
+@login_required
 @user_passes_test(is_parent)
 def parent_dashboard(request):
     parent = getattr(request.user, 'parent_profile', None)

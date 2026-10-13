@@ -25,6 +25,18 @@
       </div>
     </section>
 
+    <section class="teacher-classroom-code" aria-label="Código de aula">
+      <div>
+        <span class="eyebrow">Código de aula</span>
+        <strong class="teacher-classroom-code__value">{{ teacher_profile.classroom_code }}</strong>
+        <small>Tus alumnos lo escriben en «Acceso para estudiantes» para ver sus tarjetas. No lo compartas fuera del aula.</small>
+      </div>
+      <form method="post" action="{% url 'dashboard:teacher_classroom_code_regenerate' %}" onsubmit="return confirm('¿Crear un código nuevo? El anterior dejará de funcionar.');">
+        {% csrf_token %}
+        <button class="btn btn-outline-secondary" type="submit">Crear código nuevo</button>
+      </form>
+    </section>
+
     <section class="teacher-action-panel" aria-label="Accesos de gestión">
       {% if teacher_profile.can_create_students %}<a href="{% url 'dashboard:teacher_students' %}"><strong>Alumnos</strong><span>Ver y agregar estudiantes</span></a>{% endif %}
       {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans %}<a href="{% url 'dashboard:lesson_plans' %}"><strong>Planes</strong><span>Ver reportes y crear planificación</span></a>{% endif %}

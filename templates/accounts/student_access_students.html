@@ -24,5 +24,11 @@
     <div class="kid-card"><strong>No hay estudiantes.</strong><span>Pide ayuda a tu profe.</span></div>
   {% endfor %}
 </div>
-<div class="kid-access__actions"><a class="btn btn-outline-primary kid-access__back" href="{% url 'accounts:student_access' %}">Atrás</a></div>
+<div class="kid-access__actions">
+  <form method="post" action="{% url 'accounts:student_access' %}">
+    {% csrf_token %}
+    <input type="hidden" name="forget" value="1">
+    <button class="btn btn-outline-primary kid-access__back" type="submit">Cambiar código del aula</button>
+  </form>
+</div>
 {% endblock %}

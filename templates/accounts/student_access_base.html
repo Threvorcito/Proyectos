@@ -23,6 +23,10 @@
   .visual-key-option span { align-items: center; background: #f8fafc; border: 2px solid #dbeafe; border-radius: 18px; display: flex; flex-direction: column; font-size: 2rem; font-weight: 900; gap: .25rem; min-height: 94px; justify-content: center; padding: .7rem; }
   .visual-key-option input:checked + span { background: #dbeafe; border-color: #2563eb; color: #1d4ed8; }
   .visual-key-option small { color: #334155; font-size: .78rem; }
+  .kid-code-form { background: #fff; border: 2px solid #dbeafe; border-radius: 24px; display: flex; flex-wrap: wrap; gap: 1rem; padding: 1.25rem; }
+  .kid-code-form__input { border: 3px solid #93c5fd; border-radius: 20px; color: #14213d; flex: 1 1 260px; font-size: clamp(2rem, 8vw, 3.25rem); font-weight: 900; letter-spacing: .3em; min-height: 88px; min-width: 0; padding: .5rem 1rem; text-align: center; text-transform: uppercase; }
+  .kid-code-form__input:focus { border-color: #2563eb; outline: 3px solid #bfdbfe; }
+  .kid-code-form__submit { border-radius: 999px; flex: 1 1 200px; font-size: 1.35rem; font-weight: 900; min-height: 88px; }
   @media (max-width: 700px) { .kid-access__header { align-items: flex-start; flex-direction: column; } .kid-card { min-height: 145px; } }
 </style>
 {% endblock %}

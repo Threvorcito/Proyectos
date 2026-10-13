@@ -47,7 +47,7 @@ def is_locked(key):
     return LoginAttempt.objects.filter(key=key, locked_until__gt=_now()).exists()
 
 
-def register_failure(key):
+def register_failure(key, max_failures=MAX_FAILURES):
     if not key:
         return
     now = _now()
@@ -57,7 +57,7 @@ def register_failure(key):
             attempt.failures = 0
             attempt.window_started_at = now
         attempt.failures += 1
-        if attempt.failures >= MAX_FAILURES:
+        if attempt.failures >= max_failures:
             attempt.locked_until = now + LOCK_DURATION
             attempt.failures = 0
             attempt.window_started_at = None

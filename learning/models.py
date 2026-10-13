@@ -146,7 +146,17 @@ class StudentProfile(models.Model):
         return self.visual_key_items_for_codes(codes)
 
 
+CLASSROOM_CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'
+CLASSROOM_CODE_LENGTH = 6
+
+
+def generate_classroom_code():
+    return ''.join(secrets.choice(CLASSROOM_CODE_ALPHABET) for _ in range(CLASSROOM_CODE_LENGTH))
+
+
 class TeacherProfile(models.Model):
+    CLASSROOM_CODE_ALPHABET = CLASSROOM_CODE_ALPHABET
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True, related_name='teacher_profile')
     first_name = models.CharField(max_length=80, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
@@ -156,6 +166,7 @@ class TeacherProfile(models.Model):
     students = models.ManyToManyField(StudentProfile, blank=True, related_name='teachers')
     bio = models.TextField(blank=True)
     is_active = models.BooleanField(default=True, verbose_name='Docente activo')
+    classroom_code = models.CharField(max_length=CLASSROOM_CODE_LENGTH, unique=True, default=generate_classroom_code, editable=False, verbose_name='Código de aula')
     can_create_students = models.BooleanField(default=False, verbose_name='Puede crear estudiantes')
     can_view_student_reports = models.BooleanField(default=False, verbose_name='Puede ver reportes de estudiantes')
     can_create_lesson_plans = models.BooleanField(default=False, verbose_name='Puede crear planes de clase')
@@ -179,6 +190,18 @@ class TeacherProfile(models.Model):
         if full_name:
             self.name = full_name
         super().save(*args, **kwargs)
+
+    @classmethod
+    def normalize_classroom_code(cls, raw_code):
+        return ''.join(ch for ch in (raw_code or '').upper() if ch.isalnum())[:CLASSROOM_CODE_LENGTH * 2]
+
+    def regenerate_classroom_code(self):
+        code = generate_classroom_code()
+        while TeacherProfile.objects.filter(classroom_code=code).exists():
+            code = generate_classroom_code()
+        self.classroom_code = code
+        self.save(update_fields=['classroom_code'])
+        return code
 
     def set_password(self, raw_password):
         self.password = make_password(raw_password) if raw_password else ''

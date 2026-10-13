@@ -17,7 +17,7 @@ The platform serves minors (grades 1-3). The audit found that any visitor can en
 - [x] T2 Safe settings defaults: DEBUG False by default, require SECRET_KEY when not DEBUG, secure cookies/HSTS when not DEBUG; fast hasher for tests (7, 17)
 - [x] T3 Privilege escalation: drop `is_superuser` from admin form, `is_staff` only by superusers; single teacher password (4, 5)
 - [x] T4 Per-account login lockout (DB/cache backed) for visual-key and PIN/password login (1, 2)
-- [ ] T5 Roster exposure on public student login flow (3) — needs product decision
+- [x] T5 Roster exposure on public student login flow (3) — product decision: classroom code
 - [ ] T6 `ensure_games` stops overwriting admin edits and stops writing on GET (8)
 - [ ] T7 Progress race + point farming: unique constraints, atomic, F() updates, points only on first completion, server-side game score sanity (9, 13)
 - [ ] T8 Transactions in quick student creation and admin delete audit order (12)
@@ -33,7 +33,8 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 | T2 | delegated | writer | 3578cd6 | pending |
 | T3 | delegated | writer | 41f74ad | pending |
 | T3b | delegated | writer | ef48832 | pending |
-| T4 | delegated | writer | `fix(auth): lock accounts after repeated failed logins` | pending |
+| T4 | delegated | writer | 53118fd | pending |
+| T5 | delegated | writer | `feat(accounts): require classroom code for student sign-in` | pending |
 
 ## Follow-ups noted
 - Done in T3b: staff switch is rendered only when the form has `is_staff`; the dead "Superusuario" switch is removed; `seed_demo` no longer sets `TeacherProfile.set_password` (verified against a throwaway SQLite via `SQLITE_NAME`).
@@ -44,5 +45,10 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 - Lockout lives in `accounts.LoginAttempt` (DB table) via `accounts/lockout.py`: no CACHES are configured, so the default LocMemCache would be per-process and reset on restart. Keys: `student:<id>` (visual key), `user:<pk>` for password login (username and email share one counter), `login:<identifier>` for unknown identifiers. The session attempt counter was removed as redundant.
 - Known trade-off: anyone can lock a student for 15 minutes by guessing wrong; T5 classroom code limits who can reach the visual-key step.
 
+## T5 notes
+- `TeacherProfile.classroom_code`: 6 chars from `ABCDEFGHJKMNPQRSTUVWXYZ23456789`, unique, auto-generated (migration 0017 backfills existing teachers). Shown on the teacher dashboard with a "Crear código nuevo" action.
+- `/cuentas/estudiantes/` asks for the code; a valid code stores teacher id + code in the session and a signed `classroom` cookie (30 days, `teacherpk:code`). The roster is served only when the stored code still matches, so changing ids or regenerating the code denies access. `teacher_id` POSTs are ignored.
+- Wrong codes use the T4 lockout keyed `classroom-ip:<REMOTE_ADDR>` with 20 failures / 15 min; the key is never reset on success so a known code cannot refill guesses. Behind a reverse proxy REMOTE_ADDR is the proxy address (shared limit) until proxy headers are trusted.
+
 ## Next step
-T5.
+T6.
