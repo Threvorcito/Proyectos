@@ -53,10 +53,10 @@ def activity_detail(request, pk):
     if option_id:
         selected_option = activity.options.filter(pk=option_id).first()
     answer_feedback = None
-    if selected_option and result in ('correcta', 'intenta'):
+    if selected_option and result in ('correcta', 'repaso', 'intenta'):
         answer_feedback = {
             'option': selected_option,
-            'is_correct': result == 'correcta',
+            'is_correct': result in ('correcta', 'repaso'),
             'points': activity.points if result == 'correcta' else 0,
             'stars': activity.stars if result == 'correcta' else 0,
         }
@@ -76,16 +76,19 @@ def submit_answer(request, pk):
     answer = option.text
     is_correct = option.is_correct
     correct_option = activity.options.filter(is_correct=True).order_by('order', 'pk').first()
-    register_attempt(
+    attempt = register_attempt(
         request.user,
         activity,
         answer=answer,
         is_correct=is_correct,
         correct_answer=correct_option.text if correct_option else '',
     )
-    if is_correct:
+    if is_correct and attempt.points_awarded:
         messages.success(request, 'Respuesta correcta. Ganaste puntos por tu esfuerzo.')
         result = 'correcta'
+    elif is_correct:
+        messages.success(request, 'Respuesta correcta. Ya ganaste los puntos de esta actividad.')
+        result = 'repaso'
     else:
         messages.info(request, 'Buen intento. Puedes probar otra vez.')
         result = 'intenta'

@@ -19,7 +19,7 @@ The platform serves minors (grades 1-3). The audit found that any visitor can en
 - [x] T4 Per-account login lockout (DB/cache backed) for visual-key and PIN/password login (1, 2)
 - [x] T5 Roster exposure on public student login flow (3) — product decision: classroom code
 - [x] T6 `ensure_games` stops overwriting admin edits and stops writing on GET (8)
-- [ ] T7 Progress race + point farming: unique constraints, atomic, F() updates, points only on first completion, server-side game score sanity (9, 13)
+- [x] T7 Progress race + point farming: unique constraints, atomic, F() updates, points only on first completion, server-side game score sanity (9, 13)
 - [ ] T8 Transactions in quick student creation and admin delete audit order (12)
 - [ ] T9 Admin plan teacher assignment; tutor password shown on creation (10, 11)
 - [ ] T10 Report N+1 queries; JSON endpoints return 400 on bad input; unreachable branch removal (15, 16, 18)
@@ -35,7 +35,8 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 | T3b | delegated | writer | ef48832 | pending |
 | T4 | delegated | writer | 53118fd | pending |
 | T5 | delegated | writer | eb70684 | pending |
-| T6 | delegated | writer | `fix(games): create missing built-in games without overwriting edits` | pending |
+| T6 | delegated | writer | 29d541a | pending |
+| T7 | delegated | writer | `fix(progress): award activity points once and prevent duplicate rows` | pending |
 
 ## Follow-ups noted
 - Done in T3b: staff switch is rendered only when the form has `is_staff`; the dead "Superusuario" switch is removed; `seed_demo` no longer sets `TeacherProfile.set_password` (verified against a throwaway SQLite via `SQLITE_NAME`).
@@ -54,5 +55,10 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 ## T6 notes
 - `ensure_games()` reads existing built-in slugs (1 query) and only `get_or_create`s missing ones; existing rows are never updated. Views still call it so a fresh DB gets the games, but a GET with all games present does no writes. A deleted built-in game is recreated on the next visit; admins should deactivate (`is_active`) instead of deleting.
 
+## T7 notes
+- Unique constraints: `StudentProgress(student, activity)` and `StudentDifficulty(student, difficulty_type, character_a, character_b, syllable, word)` (the exact `get_or_create` key). Migration `progress/0002` merges duplicates first, keeping the lowest id: progress keeps completed-if-any and max percentage/score/attempts/latest date; difficulty sums `error_count` and keeps the latest date. Verified on a throwaway SQLite with seeded duplicates.
+- `register_attempt` runs in `transaction.atomic()` and locks the student row (`select_for_update`), so attempt numbers, progress and points are serialized per student; counters use `F()`. Points/stars/experience are awarded only when progress flips to completed. The activity page says "Ya ganaste los puntos de esta actividad." on repeats.
+- Games award no points (only `GameAttempt` rows, score computed server-side 0-100). Anti-farming there is a clamp: `total_questions` is capped at `MAX_GAME_QUESTIONS = 100`.
+
 ## Next step
-T7.
+T8.

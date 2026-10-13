@@ -47,6 +47,17 @@ class ActivitySubmissionTests(TestCase):
         self.assertEqual(attempt.answer, self.incorrect.text)
         self.assertFalse(attempt.is_correct)
 
+    def test_repeated_correct_submission_does_not_promise_points_again(self):
+        self.client.force_login(self.user)
+        url = reverse('activities:submit_answer', args=[self.activity.pk])
+        self.client.post(url, {'option_id': self.correct.pk})
+
+        response = self.client.post(url, {'option_id': self.correct.pk}, follow=True)
+
+        self.assertContains(response, 'Ya ganaste los puntos de esta actividad.')
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.points, 10)
+
     def test_non_student_cannot_register_activity_attempt(self):
         teacher = CustomUser.objects.create_user(
             username='docente',

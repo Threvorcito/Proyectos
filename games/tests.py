@@ -8,6 +8,7 @@ from learning.models import Level, StudentProfile, Subject
 
 from .models import Game, GameAttempt
 from .services import ensure_games, get_recommended_games
+from .views import MAX_GAME_QUESTIONS
 
 
 class GameAttemptSaveTests(TestCase):
@@ -44,6 +45,25 @@ class GameAttemptSaveTests(TestCase):
         self.assertEqual(attempt.total_questions, 0)
         self.assertEqual(attempt.correct_answers, 0)
         self.assertEqual(attempt.score, 0)
+
+    def test_save_attempt_clamps_absurd_question_counts(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        user = CustomUser.objects.create_user(username='estudianteabsurdo', email='estudianteabsurdo@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        StudentProfile.objects.create(user=user, name='Estudiante Absurdo', grade='1', current_level=level, reading_level=level)
+        game = Game.objects.create(level=level, grade='1', name='Quiz', slug='quiz-absurdo', description='Prueba', skill='Lectura', game_type=Game.GameType.DYSLEXIA_QUIZ)
+        self.client.force_login(user)
+
+        response = self.client.post(
+            reverse('games:save_attempt', args=[game.slug]),
+            data=json.dumps({'total_questions': 10**9, 'correct_answers': 10**9}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        attempt = GameAttempt.objects.get(game=game)
+        self.assertEqual(attempt.total_questions, MAX_GAME_QUESTIONS)
+        self.assertEqual(attempt.correct_answers, MAX_GAME_QUESTIONS)
+        self.assertEqual(attempt.score, 100)
 
 
 class GameStudentExperienceTests(TestCase):

@@ -24,6 +24,11 @@ TEMPLATE_BY_TYPE = {
 }
 
 
+# Games award no points; the score is computed server-side from these counts,
+# so clamping them keeps stored attempts sane and within column limits.
+MAX_GAME_QUESTIONS = 100
+
+
 def parse_positive_int(value, default=0):
     try:
         return max(int(value), 0)
@@ -98,7 +103,7 @@ def save_attempt(request, slug):
     except json.JSONDecodeError:
         return JsonResponse({'saved': False, 'reason': 'Datos invalidos.'}, status=400)
 
-    total_questions = parse_positive_int(payload.get('total_questions'))
+    total_questions = min(parse_positive_int(payload.get('total_questions')), MAX_GAME_QUESTIONS)
     correct_answers = min(parse_positive_int(payload.get('correct_answers')), total_questions)
     score = round((correct_answers / total_questions) * 100) if total_questions else 0
     attempt = GameAttempt.objects.create(

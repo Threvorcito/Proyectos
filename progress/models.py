@@ -24,6 +24,11 @@ class StudentProgress(models.Model):
     attempts = models.PositiveSmallIntegerField(default=0)
     last_activity_date = models.DateTimeField(blank=True, null=True)
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=['student', 'activity'], name='unique_progress_per_student_activity'),
+        ]
+
 
 class StudentDifficulty(models.Model):
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='difficulties')
@@ -34,3 +39,11 @@ class StudentDifficulty(models.Model):
     word = models.CharField(max_length=80, blank=True)
     error_count = models.PositiveIntegerField(default=0)
     last_error_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['student', 'difficulty_type', 'character_a', 'character_b', 'syllable', 'word'],
+                name='unique_difficulty_per_student_pattern',
+            ),
+        ]
