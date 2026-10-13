@@ -2022,3 +2022,61 @@ class AcademicRelationshipPermissionTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Alumno Ajeno')
+
+
+class CreationAndDeletionAtomicityTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial', order=1)
+        self.subject = Subject.objects.create(name='Lengua y Literatura')
+
+    def test_failing_parent_creation_leaves_no_orphan_student(self):
+        form = QuickStudentCreationForm(data={
+            'name': 'Hugo Orfano',
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+            'new_parent_first_name': 'Ana',
+            'new_parent_last_name': 'Orfano',
+            'new_parent_email': 'ana.orfano@example.com',
+        })
+        self.assertTrue(form.is_valid(), form.errors)
+
+        with patch('dashboard.forms.ParentProfile.objects.create', side_effect=RuntimeError('boom')):
+            with self.assertRaises(RuntimeError):
+                form.save()
+
+        self.assertFalse(StudentProfile.objects.filter(name='Hugo Orfano').exists())
+        self.assertFalse(CustomUser.objects.filter(username='hugo_orfano').exists())
+        self.assertFalse(CustomUser.objects.filter(email='ana.orfano@example.com').exists())
+
+    def test_protected_delete_leaves_no_audit_row(self):
+        from core.models import AuditLog
+        from django.db.models.deletion import ProtectedError
+
+        admin = CustomUser.objects.create_user(username='adminprotegido', email='adminprotegido@example.com', password='Admin12345!', role=CustomUser.Role.ADMIN, is_staff=True)
+        reading = Reading.objects.create(level=self.level, subject=self.subject, grade='1', title='Lectura protegida', content='Texto.', is_active=True)
+        self.client.force_login(admin)
+
+        with patch.object(Reading, 'delete', side_effect=ProtectedError('protegido', set())):
+            response = self.client.post(reverse('dashboard:admin_resource_delete', args=['lecturas', reading.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:admin_resource', args=['lecturas']))
+        self.assertTrue(Reading.objects.filter(pk=reading.pk).exists())
+        self.assertFalse(AuditLog.objects.filter(action='delete', model_name='Reading').exists())
+
+    def test_successful_delete_writes_audit_with_original_id(self):
+        from core.models import AuditLog
+
+        admin = CustomUser.objects.create_user(username='adminborra', email='adminborra@example.com', password='Admin12345!', role=CustomUser.Role.ADMIN, is_staff=True)
+        reading = Reading.objects.create(level=self.level, subject=self.subject, grade='1', title='Lectura borrable', content='Texto.', is_active=True)
+        reading_pk = reading.pk
+        self.client.force_login(admin)
+
+        self.client.post(reverse('dashboard:admin_resource_delete', args=['lecturas', reading_pk]))
+
+        self.assertFalse(Reading.objects.filter(pk=reading_pk).exists())
+        log = AuditLog.objects.get(action='delete', model_name='Reading')
+        self.assertEqual(log.object_id, str(reading_pk))
+        self.assertEqual(log.object_repr, 'Lectura borrable')

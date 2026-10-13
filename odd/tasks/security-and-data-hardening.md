@@ -20,7 +20,7 @@ The platform serves minors (grades 1-3). The audit found that any visitor can en
 - [x] T5 Roster exposure on public student login flow (3) — product decision: classroom code
 - [x] T6 `ensure_games` stops overwriting admin edits and stops writing on GET (8)
 - [x] T7 Progress race + point farming: unique constraints, atomic, F() updates, points only on first completion, server-side game score sanity (9, 13)
-- [ ] T8 Transactions in quick student creation and admin delete audit order (12)
+- [x] T8 Transactions in quick student creation and admin delete audit order (12)
 - [ ] T9 Admin plan teacher assignment; tutor password shown on creation (10, 11)
 - [ ] T10 Report N+1 queries; JSON endpoints return 400 on bad input; unreachable branch removal (15, 16, 18)
 
@@ -36,7 +36,8 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 | T4 | delegated | writer | 53118fd | pending |
 | T5 | delegated | writer | eb70684 | pending |
 | T6 | delegated | writer | 29d541a | pending |
-| T7 | delegated | writer | `fix(progress): award activity points once and prevent duplicate rows` | pending |
+| T7 | delegated | writer | 40510b0 | pending |
+| T8 | delegated | writer | `fix(dashboard): make student creation and resource deletion atomic` | pending |
 
 ## Follow-ups noted
 - Done in T3b: staff switch is rendered only when the form has `is_staff`; the dead "Superusuario" switch is removed; `seed_demo` no longer sets `TeacherProfile.set_password` (verified against a throwaway SQLite via `SQLITE_NAME`).
@@ -60,5 +61,9 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 - `register_attempt` runs in `transaction.atomic()` and locks the student row (`select_for_update`), so attempt numbers, progress and points are serialized per student; counters use `F()`. Points/stars/experience are awarded only when progress flips to completed. The activity page says "Ya ganaste los puntos de esta actividad." on repeats.
 - Games award no points (only `GameAttempt` rows, score computed server-side 0-100). Anti-farming there is a clamp: `total_questions` is capped at `MAX_GAME_QUESTIONS = 100`.
 
+## T8 notes
+- `QuickStudentCreationForm.save` wraps the whole creation (student user, profile, visual key, teacher link, tutor) in `transaction.atomic()`.
+- `admin_resource_delete` runs each branch inside `transaction.atomic()`; `delete` audit rows are written after the delete with the pk and label captured beforehand (`write_audit` gained `object_id`/`object_repr`). A `ProtectedError` rolls back and leaves no audit row.
+
 ## Next step
-T8.
+T9.

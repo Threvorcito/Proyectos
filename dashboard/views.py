@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db import transaction
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -133,13 +134,15 @@ def require_any_teacher_permission(request, permissions, message):
     return redirect('dashboard:teacher')
 
 
-def write_audit(request, action, instance, metadata=None):
+def write_audit(request, action, instance, metadata=None, object_id=None, object_repr=None):
+    if object_id is None:
+        object_id = getattr(instance, 'pk', '') or ''
     AuditLog.objects.create(
         actor=request.user if request.user.is_authenticated else None,
         action=action,
         model_name=instance.__class__.__name__,
-        object_id=str(getattr(instance, 'pk', '') or ''),
-        object_repr=str(instance),
+        object_id=str(object_id),
+        object_repr=object_repr if object_repr is not None else str(instance),
         metadata=metadata or {},
     )
 
@@ -380,52 +383,57 @@ def admin_resource_delete(request, resource, pk):
         return redirect(redirect_name, resource=resource)
 
     label = str(instance)
+    instance_pk = instance.pk
     action_message = f'Se eliminó correctamente {label}.'
     try:
-        if isinstance(instance, CustomUser):
-            teacher = getattr(instance, 'teacher_profile', None)
-            if user_has_academic_history(instance):
+        # Audit rows are written after the change inside one transaction, so a
+        # ProtectedError rolls everything back and leaves no audit row behind.
+        with transaction.atomic():
+            if isinstance(instance, CustomUser):
+                teacher = getattr(instance, 'teacher_profile', None)
+                if user_has_academic_history(instance):
+                    instance.is_active = False
+                    instance.save(update_fields=['is_active'])
+                    if teacher and teacher.is_active:
+                        teacher.is_active = False
+                        teacher.save(update_fields=['is_active'])
+                    write_audit(request, 'deactivate_with_history', instance, {'resource': resource})
+                    action_message = f'Se desactivó correctamente la cuenta de {label}. Su historial se conservó.'
+                else:
+                    if teacher:
+                        teacher.delete()
+                    instance.delete()
+                    write_audit(request, 'delete', instance, {'resource': resource}, object_id=instance_pk, object_repr=label)
+            elif isinstance(instance, (StudentProfile, ParentProfile)):
+                user = instance.user
+                if user == request.user:
+                    messages.error(request, 'No puedes eliminar tu propia cuenta desde aquí.')
+                    return redirect(redirect_name, resource=resource)
+                if resource_has_history(instance):
+                    user.is_active = False
+                    user.save(update_fields=['is_active'])
+                    write_audit(request, 'deactivate_with_history', instance, {'resource': resource, 'user_id': user.pk})
+                    action_message = f'Se desactivó correctamente {label}. Su historial académico se conservó.'
+                else:
+                    user_pk = user.pk
+                    user.delete()
+                    write_audit(request, 'delete', instance, {'resource': resource, 'user_id': user_pk}, object_id=instance_pk, object_repr=label)
+            elif isinstance(instance, TeacherProfile):
+                user = instance.user
                 instance.is_active = False
                 instance.save(update_fields=['is_active'])
-                if teacher and teacher.is_active:
-                    teacher.is_active = False
-                    teacher.save(update_fields=['is_active'])
-                write_audit(request, 'deactivate_with_history', instance, {'resource': resource})
-                action_message = f'Se desactivó correctamente la cuenta de {label}. Su historial se conservó.'
+                if user and user != request.user:
+                    user.is_active = False
+                    user.save(update_fields=['is_active'])
+                write_audit(request, 'deactivate_teacher', instance, {'resource': resource, 'preserved_plans': instance.lesson_plans.count()})
+                action_message = f'Se desactivó correctamente el docente {label}. Sus planes y reportes se conservaron.'
+            elif resource_has_history(instance):
+                deactivate_resource(instance)
+                write_audit(request, 'archive_with_history', instance, {'resource': resource})
+                action_message = f'Se archivó correctamente {label}. Su historial se conservó.'
             else:
-                write_audit(request, 'delete', instance, {'resource': resource})
-                if teacher:
-                    teacher.delete()
                 instance.delete()
-        elif isinstance(instance, (StudentProfile, ParentProfile)):
-            user = instance.user
-            if user == request.user:
-                messages.error(request, 'No puedes eliminar tu propia cuenta desde aquí.')
-                return redirect(redirect_name, resource=resource)
-            if resource_has_history(instance):
-                user.is_active = False
-                user.save(update_fields=['is_active'])
-                write_audit(request, 'deactivate_with_history', instance, {'resource': resource, 'user_id': user.pk})
-                action_message = f'Se desactivó correctamente {label}. Su historial académico se conservó.'
-            else:
-                write_audit(request, 'delete', instance, {'resource': resource, 'user_id': user.pk})
-                user.delete()
-        elif isinstance(instance, TeacherProfile):
-            user = instance.user
-            instance.is_active = False
-            instance.save(update_fields=['is_active'])
-            if user and user != request.user:
-                user.is_active = False
-                user.save(update_fields=['is_active'])
-            write_audit(request, 'deactivate_teacher', instance, {'resource': resource, 'preserved_plans': instance.lesson_plans.count()})
-            action_message = f'Se desactivó correctamente el docente {label}. Sus planes y reportes se conservaron.'
-        elif resource_has_history(instance):
-            deactivate_resource(instance)
-            write_audit(request, 'archive_with_history', instance, {'resource': resource})
-            action_message = f'Se archivó correctamente {label}. Su historial se conservó.'
-        else:
-            write_audit(request, 'delete', instance, {'resource': resource})
-            instance.delete()
+                write_audit(request, 'delete', instance, {'resource': resource}, object_id=instance_pk, object_repr=label)
     except ProtectedError:
         messages.error(request, f'No se puede eliminar {label} porque está relacionado con otros registros.')
     else:

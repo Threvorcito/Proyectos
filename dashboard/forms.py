@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.db import transaction
 from django.forms import modelform_factory
 from django.utils.crypto import get_random_string
 from django.utils.text import slugify
@@ -348,6 +349,11 @@ class QuickStudentCreationForm(forms.Form):
             parent.students.add(student)
 
     def save(self, teacher=None):
+        # One transaction so a failing parent/tutor creation leaves no orphan student.
+        with transaction.atomic():
+            return self._save(teacher)
+
+    def _save(self, teacher):
         username = self._build_username()
         password = get_random_string(4, allowed_chars='23456789')
         name_parts = self.cleaned_data['name'].split(' ', 1)
