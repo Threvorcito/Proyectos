@@ -192,8 +192,6 @@ def resource_has_history(instance):
         return instance.student_progress.exists() or instance.student_answers.exists() or instance.lesson_plans.exists()
     if isinstance(instance, Game):
         return instance.attempts.exists() or instance.lesson_plans.exists()
-    if isinstance(instance, (Reading, Game)):
-        return instance.lesson_plans.exists()
     return False
 
 
@@ -720,18 +718,27 @@ def student_report(request, pk):
     completed_count = student.progress_items.filter(completed=True).count()
     total_progress = student.progress_items.count()
     completion_percentage = round((completed_count / total_progress) * 100) if total_progress else 0
-    reading_progress = ReadingProgress.objects.filter(student=student).select_related('reading', 'reading__level', 'reading__subject').order_by('-started_at')[:10]
+    reading_progress = list(
+        ReadingProgress.objects.filter(student=student)
+        .select_related('reading', 'reading__level', 'reading__subject')
+        .annotate(total_questions=Count('reading__questions', distinct=True))
+        .order_by('-started_at')[:10]
+    )
+    answer_counts = {
+        row['reading_id']: row
+        for row in ReadingComprehensionAnswer.objects.filter(student=student, reading_id__in=[item.reading_id for item in reading_progress])
+        .values('reading_id')
+        .annotate(answered=Count('id'), correct=Count('id', filter=Q(is_correct=True)))
+    }
     reading_rows = []
     for item in reading_progress:
-        total_questions = item.reading.questions.count()
-        correct_answers = ReadingComprehensionAnswer.objects.filter(student=student, reading=item.reading, is_correct=True).count()
-        answered_questions = ReadingComprehensionAnswer.objects.filter(student=student, reading=item.reading).count()
+        counts = answer_counts.get(item.reading_id, {})
         reading_rows.append({
             'progress': item,
             'reading': item.reading,
-            'total_questions': total_questions,
-            'answered_questions': answered_questions,
-            'correct_answers': correct_answers,
+            'total_questions': item.total_questions,
+            'answered_questions': counts.get('answered', 0),
+            'correct_answers': counts.get('correct', 0),
         })
     quiz_subject_progress = []
     answer_rows = GameAttemptAnswer.objects.filter(attempt__student=student).values('subject').annotate(

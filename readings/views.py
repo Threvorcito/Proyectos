@@ -1,5 +1,3 @@
-import json
-
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -7,6 +5,7 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
+from core.json_payload import parse_id, parse_json_object
 from learning.models import Subject
 
 from .models import Reading, ReadingAnswer, ReadingComprehensionAnswer, ReadingProgress, ReadingQuestion
@@ -62,13 +61,14 @@ def save_comprehension_answer(request, pk):
     if student is None:
         return JsonResponse({'saved': False, 'reason': 'Solo estudiantes pueden guardar comprensión.'}, status=403)
     reading = get_object_or_404(Reading.objects.filter(is_active=True, grade=student.grade), pk=pk)
-    try:
-        payload = json.loads(request.body.decode('utf-8'))
-    except json.JSONDecodeError:
+    payload = parse_json_object(request)
+    question_id = parse_id(payload.get('question_id')) if payload is not None else None
+    answer_id = parse_id(payload.get('answer_id')) if payload is not None else None
+    if question_id is None or answer_id is None:
         return JsonResponse({'saved': False, 'reason': 'Datos invalidos.'}, status=400)
 
-    question = get_object_or_404(ReadingQuestion, pk=payload.get('question_id'), reading=reading)
-    answer = get_object_or_404(ReadingAnswer, pk=payload.get('answer_id'), question=question)
+    question = get_object_or_404(ReadingQuestion, pk=question_id, reading=reading)
+    answer = get_object_or_404(ReadingAnswer, pk=answer_id, question=question)
     ReadingComprehensionAnswer.objects.update_or_create(
         student=student,
         question=question,

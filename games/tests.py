@@ -233,3 +233,20 @@ class EnsureGamesTests(TestCase):
         ensure_games()
 
         self.assertTrue(Game.objects.filter(slug='cazador-de-letras').exists())
+
+
+class GameAttemptPayloadValidationTests(TestCase):
+    def test_bad_payloads_return_json_400(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        user = CustomUser.objects.create_user(username='estudiantepayload', email='estudiantepayload@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        StudentProfile.objects.create(user=user, name='Estudiante Payload', grade='1', current_level=level, reading_level=level)
+        game = Game.objects.create(level=level, grade='1', name='Quiz', slug='quiz-payload', description='Prueba', skill='Lectura', game_type=Game.GameType.DYSLEXIA_QUIZ)
+        self.client.force_login(user)
+
+        for body in ('[1, 2]', '"texto"', '42', '{no es json', bytes([0xFF, 0xFE])):
+            with self.subTest(body=body):
+                response = self.client.post(reverse('games:save_attempt', args=[game.slug]), data=body, content_type='application/json')
+
+                self.assertEqual(response.status_code, 400)
+                self.assertFalse(response.json()['saved'])
+        self.assertFalse(GameAttempt.objects.exists())

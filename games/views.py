@@ -1,11 +1,10 @@
-import json
-
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
+from core.json_payload import parse_json_object
 from learning.models import Subject
 
 from .content import GAME_CHALLENGES
@@ -98,9 +97,8 @@ def save_attempt(request, slug):
         return JsonResponse({'saved': False, 'reason': 'Solo estudiantes autenticados pueden guardar progreso.'}, status=403)
     game = get_object_or_404(games_for_student(Game.objects.filter(is_active=True), student), slug=slug)
 
-    try:
-        payload = json.loads(request.body.decode('utf-8'))
-    except json.JSONDecodeError:
+    payload = parse_json_object(request)
+    if payload is None:
         return JsonResponse({'saved': False, 'reason': 'Datos invalidos.'}, status=400)
 
     total_questions = min(parse_positive_int(payload.get('total_questions')), MAX_GAME_QUESTIONS)

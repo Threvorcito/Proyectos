@@ -2168,3 +2168,44 @@ class PlanTeacherAndTutorCredentialTests(TestCase):
         tutor = CustomUser.objects.get(email='tutora.rapida@example.com')
         self.assertContains(response, tutor.username)
         self.assertContains(response, 'Contraseña del tutor')
+
+
+class StudentReportQueryCountTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial', order=1)
+        self.admin = CustomUser.objects.create_user(username='adminreporte', email='adminreporte@example.com', password='Admin12345!', role=CustomUser.Role.ADMIN, is_staff=True)
+        user = CustomUser.objects.create_user(username='alumnoreporte', email='alumnoreporte@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        self.student = StudentProfile.objects.create(user=user, name='Alumno Reporte Consultas', grade='1', reading_level=self.level, current_level=self.level)
+        self.counter = 0
+
+    def add_reading_row(self):
+        self.counter += 1
+        reading = Reading.objects.create(level=self.level, grade='1', title=f'Lectura {self.counter}', content='Texto.')
+        question = ReadingQuestion.objects.create(reading=reading, question='¿Qué pasó?')
+        ReadingQuestion.objects.create(reading=reading, question='¿Quién fue?')
+        ReadingProgress.objects.create(student=self.student, reading=reading)
+        ReadingComprehensionAnswer.objects.create(student=self.student, reading=reading, question=question, selected_answer='Algo', is_correct=True)
+
+    def report_query_count(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(reverse('dashboard:student_report', args=[self.student.pk]))
+        self.assertEqual(response.status_code, 200)
+        return len(queries), response
+
+    def test_query_count_does_not_grow_with_reading_rows(self):
+        self.client.force_login(self.admin)
+        self.add_reading_row()
+        one_row_queries, _ = self.report_query_count()
+        for _ in range(4):
+            self.add_reading_row()
+
+        many_rows_queries, response = self.report_query_count()
+
+        self.assertEqual(many_rows_queries, one_row_queries)
+        row = response.context['reading_rows'][0]
+        self.assertEqual(row['total_questions'], 2)
+        self.assertEqual(row['answered_questions'], 1)
+        self.assertEqual(row['correct_answers'], 1)

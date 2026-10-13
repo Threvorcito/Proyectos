@@ -161,3 +161,33 @@ class ReadingProgressRegistrationTests(TestCase):
         evaluate_achievements(self.student)
 
         self.assertTrue(StudentAchievement.objects.filter(student=self.student, achievement=achievement).exists())
+
+
+class ComprehensionPayloadValidationTests(TestCase):
+    setUp = ReadingProgressRegistrationTests.setUp
+
+    def post_raw(self, body):
+        return self.client.post(
+            reverse('readings:save_comprehension_answer', args=[self.reading.pk]),
+            data=body,
+            content_type='application/json',
+        )
+
+    def test_bad_payloads_return_json_400(self):
+        self.client.force_login(self.user)
+        bad_bodies = [
+            '[1, 2]',
+            '"texto"',
+            '{no es json',
+            b'\xff\xfe',
+            json.dumps({'question_id': 'abc', 'answer_id': self.correct_one.pk}),
+            json.dumps({'question_id': self.question_one.pk, 'answer_id': [1]}),
+            json.dumps({'answer_id': self.correct_one.pk}),
+        ]
+        for body in bad_bodies:
+            with self.subTest(body=body):
+                response = self.post_raw(body)
+
+                self.assertEqual(response.status_code, 400)
+                self.assertFalse(response.json()['saved'])
+        self.assertFalse(ReadingComprehensionAnswer.objects.exists())
