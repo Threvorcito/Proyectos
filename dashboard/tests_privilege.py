@@ -76,3 +76,24 @@ class AdminUserPrivilegeTests(TestCase):
         created = CustomUser.objects.get(username='staffer')
         self.assertTrue(created.is_staff)
         self.assertFalse(created.is_superuser)
+
+    def test_admin_role_user_page_hides_staff_controls(self):
+        CustomUser.objects.create_user(
+            username='tutor', email='tutor@example.com', password='Demo12345!', role=CustomUser.Role.PARENT,
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get(reverse('dashboard:admin_resource', args=['usuarios']))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'Superusuario')
+        self.assertNotContains(response, 'Acceso administrativo')
+        self.assertNotContains(response, 'Acceso al administrador Django')
+
+    def test_superuser_user_page_shows_staff_control(self):
+        self.client.force_login(self.superuser)
+
+        response = self.client.get(reverse('dashboard:admin_resource', args=['usuarios']))
+
+        self.assertContains(response, 'Acceso administrativo')
+        self.assertNotContains(response, 'Superusuario')

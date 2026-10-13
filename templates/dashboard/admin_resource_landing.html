@@ -394,7 +394,9 @@
                 </div>
                 <div class="admin-dialog__switch-row admin-dialog__switch-row--user">
                   <label>{{ row.form.is_active }}<span><strong>{{ row.form.is_active.label }}</strong><small>{{ row.form.is_active.help_text }}</small></span></label>
-                  <label>{{ row.form.is_staff }}<span><strong>{{ row.form.is_staff.label }}</strong><small>{{ row.form.is_staff.help_text }}</small></span></label>
+                  {% if row.form.is_staff %}
+                    <label>{{ row.form.is_staff }}<span><strong>{{ row.form.is_staff.label }}</strong><small>{{ row.form.is_staff.help_text }}</small></span></label>
+                  {% endif %}
                 </div>
               {% else %}
                 <div class="admin-dialog__grid admin-dialog__grid--resource">{{ row.form.as_p }}</div>
@@ -434,8 +436,9 @@
                 <p>{{ create_form.role.label_tag }}{{ create_form.role }}{{ create_form.role.errors }}</p>
               </div>
               <div class="admin-dialog__switch-row">
-                <label>{{ create_form.is_staff }}<span><strong>Acceso administrativo</strong><small>Permite entrar al panel de administración.</small></span></label>
-                <label>{{ create_form.is_superuser }}<span><strong>Superusuario</strong><small>Úsalo solo para cuentas principales.</small></span></label>
+                {% if create_form.is_staff %}
+                  <label>{{ create_form.is_staff }}<span><strong>Acceso administrativo</strong><small>Permite entrar al panel de administración.</small></span></label>
+                {% endif %}
               </div>
             {% elif resource == 'profesores' %}
               <div class="admin-dialog__section-title">

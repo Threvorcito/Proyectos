@@ -128,7 +128,6 @@ class Command(BaseCommand):
         teacher_profile.last_name = 'Martínez'
         teacher_profile.email = 'docente_demo@example.com'
         teacher_profile.name = 'Laura Martínez'
-        teacher_profile.set_password('Demo12345!')
         teacher_profile.can_create_students = True
         teacher_profile.can_view_student_reports = True
         teacher_profile.can_create_lesson_plans = True
@@ -139,7 +138,7 @@ class Command(BaseCommand):
         teacher_profile.can_manage_readings = True
         teacher_profile.can_manage_games = True
         teacher_profile.save(update_fields=[
-            'first_name', 'last_name', 'email', 'name', 'password',
+            'first_name', 'last_name', 'email', 'name',
             'can_create_students', 'can_view_student_reports',
             'can_create_lesson_plans', 'can_edit_lesson_plans', 'can_assign_lesson_plans',
             'can_manage_lessons', 'can_manage_activities', 'can_manage_readings', 'can_manage_games',

@@ -31,11 +31,11 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 |------|-------|----------|--------|-------------|
 | T1 | delegated | writer | 5502f6e | pending |
 | T2 | delegated | writer | 3578cd6 | pending |
-| T3 | delegated | writer | `fix(auth): block privilege escalation and stale teacher passwords` | pending |
+| T3 | delegated | writer | 41f74ad | pending |
+| T3b | delegated | writer | `fix(dashboard): hide staff controls from non-superuser admins` | pending |
 
 ## Follow-ups noted
-- `templates/dashboard/admin_resource_landing.html` still renders the "Superusuario" label (and the staff switch label) after those fields were removed from the form for non-superusers; wrap them in `{% if create_form.is_superuser %}` / `{% if row.form.is_staff %}` or drop them.
-- `core/management/commands/seed_demo.py` still sets `TeacherProfile.set_password`; harmless now (user has a usable password, so the profile hash is ignored) but can be removed.
+- Done in T3b: staff switch is rendered only when the form has `is_staff`; the dead "Superusuario" switch is removed; `seed_demo` no longer sets `TeacherProfile.set_password` (verified against a throwaway SQLite via `SQLITE_NAME`).
 - Role ADMIN set by a non-superuser admin still implies `is_staff=True` in `AdminUserCreationForm.save` (by design).
 - `TeacherCreationForm` still stores a pending profile password because the account is created lazily on first login; that login moves it to `CustomUser` and clears the profile hash.
 
