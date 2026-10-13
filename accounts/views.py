@@ -14,12 +14,13 @@ from readings.models import Reading
 from learning.models import Level, ParentProfile, StudentProfile, TeacherProfile
 from learning.models import LessonPlan
 
+from . import lockout
 from .forms import EmailAuthenticationForm, ProfileUpdateForm, RegistrationForm, StudentProfileForm
 from .models import CustomUser
 
 
 def _clear_student_access_session(request):
-    for key in ('student_access_teacher_id', 'student_access_student_id', 'student_access_parent_id', 'student_access_attempts'):
+    for key in ('student_access_teacher_id', 'student_access_student_id', 'student_access_parent_id'):
         request.session.pop(key, None)
 
 
@@ -74,7 +75,6 @@ def student_access_students(request):
             return redirect('accounts:student_access_students')
         request.session['student_access_student_id'] = student.pk
         request.session.pop('student_access_parent_id', None)
-        request.session['student_access_attempts'] = 0
         return redirect('accounts:student_access_parents')
 
     students = list(teacher.students.select_related('user', 'current_level').filter(user__is_active=True).order_by('name'))
@@ -113,18 +113,23 @@ def student_access_key(request):
         messages.error(request, 'Pide a tu docente que cree tus dibujos secretos.')
         return redirect('accounts:student_access_students')
 
+    lock_key = lockout.student_key(student.pk)
     if request.method == 'POST':
+        if lockout.is_locked(lock_key):
+            _clear_student_access_session(request)
+            messages.error(request, 'Tus dibujos secretos están descansando un ratito. Pide ayuda a tu docente.')
+            return redirect('accounts:student_access')
         selected_codes = [request.POST.get(f'symbol_{index}', '') for index in range(1, 4)]
         if student.check_visual_key(selected_codes):
+            lockout.reset(lock_key)
             _clear_student_access_session(request)
             login(request, student.user, backend='django.contrib.auth.backends.ModelBackend')
             messages.success(request, '¡Muy bien! Vamos a aprender.')
             return redirect('dashboard:student')
-        attempts = int(request.session.get('student_access_attempts', 0)) + 1
-        request.session['student_access_attempts'] = attempts
-        if attempts >= 5:
+        lockout.register_failure(lock_key)
+        if lockout.is_locked(lock_key):
             _clear_student_access_session(request)
-            messages.error(request, 'Vamos a intentarlo de nuevo desde el inicio.')
+            messages.error(request, 'Tus dibujos secretos están descansando un ratito. Pide ayuda a tu docente.')
             return redirect('accounts:student_access')
         messages.error(request, 'Intenta otra vez con tus dibujos secretos.')
 

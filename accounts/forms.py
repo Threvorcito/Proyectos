@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 
+from . import lockout
 from .models import CustomUser
 
 
@@ -8,6 +9,7 @@ class EmailAuthenticationForm(AuthenticationForm):
     error_messages = {
         'invalid_login': 'No pudimos iniciar sesión con ese usuario/correo y PIN o contraseña.',
         'inactive': 'Esta cuenta está inactiva.',
+        'locked': 'Esta cuenta quedó bloqueada por varios intentos fallidos. Espera 15 minutos o pide ayuda a tu docente.',
     }
 
     def __init__(self, *args, **kwargs):
@@ -24,6 +26,18 @@ class EmailAuthenticationForm(AuthenticationForm):
             'placeholder': 'PIN del estudiante o contraseña',
             'autocomplete': 'current-password',
         })
+
+    def clean(self):
+        key = lockout.password_login_key(self.cleaned_data.get('username'))
+        if lockout.is_locked(key):
+            raise forms.ValidationError(self.error_messages['locked'], code='locked')
+        try:
+            cleaned_data = super().clean()
+        except forms.ValidationError:
+            lockout.register_failure(key)
+            raise
+        lockout.reset(key)
+        return cleaned_data
 
 
 class RegistrationForm(UserCreationForm):

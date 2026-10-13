@@ -22,3 +22,19 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.get_full_name() or self.username
+
+
+class LoginAttempt(models.Model):
+    """Failed sign-in counter per target (account, student or client).
+
+    Stored in the database so the limit holds across worker processes and
+    cannot be reset by discarding the session cookie.
+    """
+
+    key = models.CharField(max_length=255, unique=True)
+    failures = models.PositiveIntegerField(default=0)
+    window_started_at = models.DateTimeField(blank=True, null=True)
+    locked_until = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        return self.key

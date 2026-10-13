@@ -16,7 +16,7 @@ The platform serves minors (grades 1-3). The audit found that any visitor can en
 - [x] T1 Untrack SQLite DBs, remove lock file, dead `myapp/`, unused crispy deps, pin Django version (findings 6, 18, 19)
 - [x] T2 Safe settings defaults: DEBUG False by default, require SECRET_KEY when not DEBUG, secure cookies/HSTS when not DEBUG; fast hasher for tests (7, 17)
 - [x] T3 Privilege escalation: drop `is_superuser` from admin form, `is_staff` only by superusers; single teacher password (4, 5)
-- [ ] T4 Per-account login lockout (DB/cache backed) for visual-key and PIN/password login (1, 2)
+- [x] T4 Per-account login lockout (DB/cache backed) for visual-key and PIN/password login (1, 2)
 - [ ] T5 Roster exposure on public student login flow (3) — needs product decision
 - [ ] T6 `ensure_games` stops overwriting admin edits and stops writing on GET (8)
 - [ ] T7 Progress race + point farming: unique constraints, atomic, F() updates, points only on first completion, server-side game score sanity (9, 13)
@@ -32,12 +32,17 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 | T1 | delegated | writer | 5502f6e | pending |
 | T2 | delegated | writer | 3578cd6 | pending |
 | T3 | delegated | writer | 41f74ad | pending |
-| T3b | delegated | writer | `fix(dashboard): hide staff controls from non-superuser admins` | pending |
+| T3b | delegated | writer | ef48832 | pending |
+| T4 | delegated | writer | `fix(auth): lock accounts after repeated failed logins` | pending |
 
 ## Follow-ups noted
 - Done in T3b: staff switch is rendered only when the form has `is_staff`; the dead "Superusuario" switch is removed; `seed_demo` no longer sets `TeacherProfile.set_password` (verified against a throwaway SQLite via `SQLITE_NAME`).
 - Role ADMIN set by a non-superuser admin still implies `is_staff=True` in `AdminUserCreationForm.save` (by design).
 - `TeacherCreationForm` still stores a pending profile password because the account is created lazily on first login; that login moves it to `CustomUser` and clears the profile hash.
 
+## T4 notes
+- Lockout lives in `accounts.LoginAttempt` (DB table) via `accounts/lockout.py`: no CACHES are configured, so the default LocMemCache would be per-process and reset on restart. Keys: `student:<id>` (visual key), `user:<pk>` for password login (username and email share one counter), `login:<identifier>` for unknown identifiers. The session attempt counter was removed as redundant.
+- Known trade-off: anyone can lock a student for 15 minutes by guessing wrong; T5 classroom code limits who can reach the visual-key step.
+
 ## Next step
-T4.
+T5.

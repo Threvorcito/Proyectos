@@ -43,7 +43,7 @@
 
           {% if form.non_field_errors %}
             <div class="login-page__alert" role="alert">
-              No pudimos iniciar sesión con esos datos. Revisa el usuario/correo y el PIN o contraseña.
+              {% for error in form.non_field_errors.as_data %}{% if error.code == 'locked' %}{{ error.message }}{% else %}No pudimos iniciar sesión con esos datos. Revisa el usuario/correo y el PIN o contraseña.{% endif %}{% endfor %}
             </div>
           {% endif %}
 
