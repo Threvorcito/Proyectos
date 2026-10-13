@@ -1276,7 +1276,7 @@ a { text-decoration: none; }
 .activity-learning-compass__tips {
   display: grid;
   gap: .85rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
 }
 .activity-learning-compass__tips article {
   background: #f8fafc;
@@ -5345,4 +5345,18 @@ a { text-decoration: none; }
   .form-select { font-size: max(1rem, 16px); }
   .btn-close { padding: calc((var(--touch-target) - 1em) / 2); }
   .navbar-toggler { min-height: var(--touch-target); min-width: var(--touch-target); }
+}
+
+/* ------------------------------------------------------------------
+   Tablet reflow (sweep at 768px).
+   ------------------------------------------------------------------ */
+@media (min-width: 576px) and (max-width: 991.98px) {
+  /* Two kid cards per row leave ~120px for text: move the action pill
+     under the text as a full-width button instead. */
+  .student-choice-card { grid-template-columns: auto minmax(0, 1fr); }
+  .student-choice-card__action { grid-column: 1 / -1; text-align: center; }
+  /* Seven-column teacher tables: let headers wrap rather than overflow. */
+  .teacher-table th { white-space: normal; }
+  .teacher-table th,
+  .teacher-table td { padding-left: .65rem; padding-right: .65rem; }
 }
