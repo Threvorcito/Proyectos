@@ -39,7 +39,7 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 | T7 | delegated | writer | 40510b0 | pending |
 | T8 | delegated | writer | 9d6f652 | pending |
 | T9 | delegated | writer | 230b5ce | pending |
-| T10 | delegated | writer | `fix: return 400 on bad JSON and remove report N+1 queries` | pending |
+| T10 | delegated | writer | 1540769 | pending |
 
 ## Follow-ups noted
 - Done in T3b: staff switch is rendered only when the form has `is_staff`; the dead "Superusuario" switch is removed; `seed_demo` no longer sets `TeacherProfile.set_password` (verified against a throwaway SQLite via `SQLITE_NAME`).
@@ -78,4 +78,4 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 - Removed the unreachable `isinstance(instance, (Reading, Game))` branch in `resource_has_history` (both types return earlier). The unused `TeacherStudentUpdateForm` was removed in T9; no other dead code listed in this doc remains.
 
 ## Next step
-All tasks done; review tiers pending, then PR/slicing decision (user).
+All tasks done. Native review of e978fd2..41f74ad (lineage review-b2e45b1e50be41bf) granted but blocked: `claude` CLI not on PATH; retry once installed, then review T3b-T10. Manual smoke test on a DB copy passed (classroom code flow, teacher dashboard). Then PR/slicing decision (user).
