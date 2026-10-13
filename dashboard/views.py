@@ -19,7 +19,7 @@ from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, L
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading, ReadingComprehensionAnswer, ReadingProgress
 
-from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherStudentModalForm, TeacherStudentUpdateForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
+from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherStudentModalForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
 
 
 TEACHER_IMPERSONATION_USER_KEY = 'teacher_impersonation_user_id'
@@ -132,6 +132,12 @@ def require_any_teacher_permission(request, permissions, message):
         return None
     messages.error(request, message)
     return redirect('dashboard:teacher')
+
+
+def add_parent_credentials_message(request, form):
+    parent_credentials = getattr(form, 'created_parent_credentials', None)
+    if parent_credentials:
+        messages.success(request, f"Tutor: {parent_credentials['username']} / Contraseña: {parent_credentials['password']} (entrégala al tutor; no se volverá a mostrar)")
 
 
 def write_audit(request, action, instance, metadata=None, object_id=None, object_repr=None):
@@ -331,6 +337,7 @@ def admin_resource_create(request, resource):
         if request.POST.get('_from_modal'):
             if credentials:
                 messages.success(request, f"Credenciales creadas - Usuario: {credentials['username']} / Contraseña: {credentials['password']}")
+                add_parent_credentials_message(request, form)
             return redirect(redirect_name, resource=resource)
         if credentials is None:
             return redirect(redirect_name, resource=resource)
@@ -485,7 +492,7 @@ def lesson_plan_list(request):
             messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
             return redirect('dashboard:teacher')
         plans = plans.filter(teacher=teacher)
-    return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans, 'create_form': LessonPlanForm(teacher=teacher)})
+    return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans, 'create_form': LessonPlanForm(teacher=teacher, choose_teacher=teacher is None)})
 
 
 @login_required
@@ -494,16 +501,13 @@ def lesson_plan_create(request):
     permission_response = require_teacher_permission(request, 'can_create_lesson_plans', 'No tienes permiso para crear planes de clase.')
     if permission_response:
         return permission_response
-    teacher = None if is_admin_user(request.user) else getattr(request.user, 'teacher_profile', None)
-    form = LessonPlanForm(request.POST or None, teacher=teacher)
+    is_admin = is_admin_user(request.user)
+    teacher = None if is_admin else getattr(request.user, 'teacher_profile', None)
+    form = LessonPlanForm(request.POST or None, teacher=teacher, choose_teacher=is_admin)
     if request.method == 'POST' and form.is_valid():
         plan = form.save(commit=False)
-        if is_admin_user(request.user):
-            teacher = TeacherProfile.objects.first()
-            if teacher is None:
-                messages.error(request, 'Debe existir al menos un profesor para crear un plan de clase.')
-                return redirect('dashboard:lesson_plans')
-            plan.teacher = teacher
+        if is_admin:
+            plan.teacher = form.cleaned_data['plan_teacher']
         else:
             if teacher is None:
                 messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
@@ -696,8 +700,8 @@ def quick_student_create(request):
         return redirect('dashboard:teacher')
     form = QuickStudentCreationForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        user, password = form.save(teacher=teacher)
-        credentials = {'username': user.username, 'password': password}
+        form.save(teacher=teacher)
+        credentials = form.created_credentials
         messages.success(request, 'Alumno creado correctamente. Entrega estos datos al estudiante o tutor.')
         form = QuickStudentCreationForm()
     return render(request, 'dashboard/quick_student_form.html', {'form': form, 'credentials': credentials})
@@ -814,6 +818,7 @@ def teacher_students(request):
         if create_form.is_valid():
             user, password = create_form.save(teacher=teacher_profile)
             messages.success(request, f"Alumno creado correctamente. Usuario: {user.username} / PIN: {password}")
+            add_parent_credentials_message(request, create_form)
             return redirect('dashboard:teacher_students')
         students = get_teacher_students_for_page(teacher_profile)
         return render(request, 'dashboard/teacher_students.html', {

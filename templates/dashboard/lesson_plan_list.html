@@ -157,6 +157,7 @@
               <span>Materia, nivel y alcance</span>
             </div>
             <div class="admin-dialog__grid">
+              {% if create_form.plan_teacher %}<p>{{ create_form.plan_teacher.label_tag }}{{ create_form.plan_teacher }}{{ create_form.plan_teacher.errors }}</p>{% endif %}
               <p>{{ create_form.subject.label_tag }}{{ create_form.subject }}{{ create_form.subject.errors }}</p>
               <p>{{ create_form.competency.label_tag }}{{ create_form.competency }}{{ create_form.competency.errors }}</p>
               <p>{{ create_form.level.label_tag }}{{ create_form.level }}{{ create_form.level.errors }}</p>

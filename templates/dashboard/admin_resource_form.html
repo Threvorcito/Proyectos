@@ -23,6 +23,10 @@
             <strong>Usuario creado para iniciar sesión:</strong>
             <div>Usuario: <code>{{ credentials.username }}</code></div>
             <div>Contraseña: <code>{{ credentials.password }}</code></div>
+            {% if credentials.parent_username %}
+              <div>Usuario del tutor: <code>{{ credentials.parent_username }}</code></div>
+              <div>Contraseña del tutor: <code>{{ credentials.parent_password }}</code></div>
+            {% endif %}
           </div>
         {% endif %}
         <form method="post" enctype="multipart/form-data" class="feature-card mt-4">

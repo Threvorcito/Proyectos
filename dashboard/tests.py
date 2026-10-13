@@ -2080,3 +2080,91 @@ class CreationAndDeletionAtomicityTests(TestCase):
         log = AuditLog.objects.get(action='delete', model_name='Reading')
         self.assertEqual(log.object_id, str(reading_pk))
         self.assertEqual(log.object_repr, 'Lectura borrable')
+
+
+class PlanTeacherAndTutorCredentialTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial', order=1)
+        self.subject = Subject.objects.create(name='Lengua y Literatura')
+        self.admin = CustomUser.objects.create_user(username='adminplanes', email='adminplanes@example.com', password='Admin12345!', role=CustomUser.Role.ADMIN, is_staff=True)
+        self.first_teacher = TeacherProfile.objects.create(name='Docente Primero')
+        self.teacher_user = CustomUser.objects.create_user(username='docenteelegido', email='docenteelegido@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        self.teacher = TeacherProfile.objects.create(user=self.teacher_user, name='Docente Elegido', can_create_students=True, can_create_lesson_plans=True)
+        self.inactive_teacher = TeacherProfile.objects.create(name='Docente Inactivo', is_active=False)
+
+    def plan_data(self, title, **extra):
+        data = {
+            'subject': self.subject.pk,
+            'level': self.level.pk,
+            'grade': '1',
+            'title': title,
+            'topic': 'Lectura',
+            'objective': 'Leer.',
+            'status': LessonPlan.Status.ACTIVE,
+            'is_active': 'on',
+        }
+        data.update(extra)
+        return data
+
+    def test_admin_creates_plan_for_chosen_teacher(self):
+        self.client.force_login(self.admin)
+
+        self.client.post(reverse('dashboard:lesson_plan_create'), data=self.plan_data('Plan elegido', plan_teacher=self.teacher.pk))
+
+        self.assertEqual(LessonPlan.objects.get(title='Plan elegido').teacher, self.teacher)
+
+    def test_admin_must_choose_an_active_teacher(self):
+        self.client.force_login(self.admin)
+
+        missing = self.client.post(reverse('dashboard:lesson_plan_create'), data=self.plan_data('Plan sin docente'))
+        inactive = self.client.post(reverse('dashboard:lesson_plan_create'), data=self.plan_data('Plan inactivo', plan_teacher=self.inactive_teacher.pk))
+
+        self.assertEqual(missing.status_code, 200)
+        self.assertEqual(inactive.status_code, 200)
+        self.assertFalse(LessonPlan.objects.filter(title__in=['Plan sin docente', 'Plan inactivo']).exists())
+
+    def test_teacher_cannot_pick_another_teacher(self):
+        self.client.force_login(self.teacher_user)
+
+        self.client.post(reverse('dashboard:lesson_plan_create'), data=self.plan_data('Plan propio', plan_teacher=self.first_teacher.pk))
+
+        self.assertEqual(LessonPlan.objects.get(title='Plan propio').teacher, self.teacher)
+
+    def student_with_new_tutor(self, name, email):
+        return {
+            'name': name,
+            'grade': '1',
+            'school': 'public',
+            'modality': 'regular',
+            'zone': 'urban',
+            'reading_level': self.level.pk,
+            'new_parent_first_name': 'Laura',
+            'new_parent_last_name': 'Tutora',
+            'new_parent_email': email,
+        }
+
+    def test_teacher_sees_new_tutor_password_once_and_it_authenticates(self):
+        import re
+        from django.contrib.auth import authenticate
+
+        self.client.force_login(self.teacher_user)
+        response = self.client.post(reverse('dashboard:teacher_students'), data=self.student_with_new_tutor('Alumno Con Tutora', 'laura.tutora@example.com'), follow=True)
+
+        text = ' '.join(str(message) for message in response.context['messages'])
+        match = re.search(r'Tutor: (\S+) / Contraseña: (\S+)', text)
+        self.assertIsNotNone(match, text)
+        username, password = match.groups()
+        self.assertEqual(CustomUser.objects.get(email='laura.tutora@example.com').username, username)
+        self.assertIsNotNone(authenticate(username=username, password=password))
+
+        again = self.client.get(reverse('dashboard:teacher_students'))
+        self.assertNotContains(again, password)
+
+    def test_quick_student_page_shows_new_tutor_credentials(self):
+        self.client.force_login(self.teacher_user)
+
+        response = self.client.post(reverse('dashboard:quick_student_create'), data=self.student_with_new_tutor('Alumno Rapido', 'tutora.rapida@example.com'))
+
+        tutor = CustomUser.objects.get(email='tutora.rapida@example.com')
+        self.assertContains(response, tutor.username)
+        self.assertContains(response, 'Contraseña del tutor')

@@ -21,7 +21,7 @@ The platform serves minors (grades 1-3). The audit found that any visitor can en
 - [x] T6 `ensure_games` stops overwriting admin edits and stops writing on GET (8)
 - [x] T7 Progress race + point farming: unique constraints, atomic, F() updates, points only on first completion, server-side game score sanity (9, 13)
 - [x] T8 Transactions in quick student creation and admin delete audit order (12)
-- [ ] T9 Admin plan teacher assignment; tutor password shown on creation (10, 11)
+- [x] T9 Admin plan teacher assignment; tutor password shown on creation (10, 11)
 - [ ] T10 Report N+1 queries; JSON endpoints return 400 on bad input; unreachable branch removal (15, 16, 18)
 
 Each task closes with its own regression tests (14) and a work-unit commit.
@@ -37,7 +37,8 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 | T5 | delegated | writer | eb70684 | pending |
 | T6 | delegated | writer | 29d541a | pending |
 | T7 | delegated | writer | 40510b0 | pending |
-| T8 | delegated | writer | `fix(dashboard): make student creation and resource deletion atomic` | pending |
+| T8 | delegated | writer | 9d6f652 | pending |
+| T9 | delegated | writer | `fix(dashboard): let admins choose plan teacher and show tutor credentials` | pending |
 
 ## Follow-ups noted
 - Done in T3b: staff switch is rendered only when the form has `is_staff`; the dead "Superusuario" switch is removed; `seed_demo` no longer sets `TeacherProfile.set_password` (verified against a throwaway SQLite via `SQLITE_NAME`).
@@ -65,5 +66,10 @@ Each task closes with its own regression tests (14) and a work-unit commit.
 - `QuickStudentCreationForm.save` wraps the whole creation (student user, profile, visual key, teacher link, tutor) in `transaction.atomic()`.
 - `admin_resource_delete` runs each branch inside `transaction.atomic()`; `delete` audit rows are written after the delete with the pk and label captured beforehand (`write_audit` gained `object_id`/`object_repr`). A `ProtectedError` rolls back and leaves no audit row.
 
+## T9 notes
+- `LessonPlanForm(choose_teacher=True)` adds a required `plan_teacher` field (active teachers only); `lesson_plan_create` uses it for admins. Teachers never get the field and always own their plans. Plan edit keeps the current owner.
+- New tutors created from `QuickStudentCreationForm` expose `created_parent_credentials`; the teacher students page and admin modal flash "Tutor: <usuario> / Contraseña: <clave>" once, and the quick student page/admin form page render it in the credentials card (quick page now also gets the visual key it already tried to show).
+- Removed the unused `TeacherStudentUpdateForm` (the other tutor-creation site; never instantiated).
+
 ## Next step
-T9.
+T10.

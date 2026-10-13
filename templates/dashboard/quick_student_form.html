@@ -56,6 +56,14 @@
             </div>
             <strong class="fs-2 d-block">PIN: {{ credentials.password }}</strong>
           </div>
+          {% if credentials.parent_username %}
+            <div class="feature-card mb-3">
+              <strong class="d-block">Acceso del tutor</strong>
+              <div>Usuario del tutor: <code>{{ credentials.parent_username }}</code></div>
+              <div>Contraseña del tutor: <code>{{ credentials.parent_password }}</code></div>
+              <small class="text-muted">No se volverá a mostrar.</small>
+            </div>
+          {% endif %}
           <p class="small text-muted mb-0">Guarda esta tarjeta en un lugar seguro. El niño no necesita correo electrónico.</p>
         </div>
         <div class="modal-footer">

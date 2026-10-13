@@ -35,6 +35,7 @@
           <div class="lesson-plan-dialog__section">
             <div class="lesson-plan-dialog__section-title"><strong>Datos generales</strong><span>Materia, nivel y alcance</span></div>
             <div class="admin-dialog__grid">
+              {% if form.plan_teacher %}<p>{{ form.plan_teacher.label_tag }}{{ form.plan_teacher }}{{ form.plan_teacher.errors }}</p>{% endif %}
               <p>{{ form.subject.label_tag }}{{ form.subject }}{{ form.subject.errors }}</p>
               <p>{{ form.competency.label_tag }}{{ form.competency }}{{ form.competency.errors }}</p>
               <p>{{ form.level.label_tag }}{{ form.level }}{{ form.level.errors }}</p>
