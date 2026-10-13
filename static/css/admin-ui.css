@@ -1,0 +1,328 @@
+/* ==================================================================
+   Admin UI: table and dialog design ported from SistemaBodega.
+   Everything is scoped under .admin-ui so the student and teacher
+   screens that share main.css are unaffected. Font stays Lexend
+   (inherited from the app); Bodega's look comes from its palette,
+   density, uppercase table heads and soft surfaces, not its font.
+   ================================================================== */
+
+.admin-ui {
+  --aui-primary: #173b68;
+  --aui-primary-dark: #0e2748;
+  --aui-primary-light: #e9f1fb;
+  --aui-surface: #ffffff;
+  --aui-muted: #f8fafc;
+  --aui-head: #f7f9fc;
+  --aui-border: #dce5f0;
+  --aui-text: #142033;
+  --aui-text-cell: #26354d;
+  --aui-text-2: #5b6b80;
+  --aui-success: #287a4f;
+  --aui-success-bg: #e8f5ee;
+  --aui-danger: #a43b32;
+  --aui-danger-bg: #fff0ee;
+  --aui-neutral-bg: #eef2f7;
+  --aui-focus: 0 0 0 4px rgba(23, 59, 104, .14);
+  --aui-shadow-soft: 0 14px 34px rgba(15, 23, 42, .07);
+  --aui-radius: 16px;
+  color: var(--aui-text);
+}
+
+.admin-ui ::selection { background: var(--aui-primary-light); color: var(--aui-primary-dark); }
+
+/* ------------------------------------------------------------------
+   Buttons (Bodega: 11px radius, heavy weight, navy primary)
+   ------------------------------------------------------------------ */
+.admin-ui .btn {
+  align-items: center;
+  border-radius: 11px;
+  display: inline-flex;
+  font-weight: 800;
+  gap: .4rem;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 14px;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+}
+.admin-ui .btn-sm { font-size: .8rem; min-height: 34px; padding: 7px 11px; }
+.admin-ui .btn:focus-visible { box-shadow: var(--aui-focus); outline: none; }
+.admin-ui .btn-primary {
+  background: var(--aui-primary);
+  border: 1px solid var(--aui-primary);
+  color: #fff;
+}
+.admin-ui .btn-primary:hover,
+.admin-ui .btn-primary:active { background: var(--aui-primary-dark); border-color: var(--aui-primary-dark); color: #fff; }
+.admin-ui .btn-outline-primary,
+.admin-ui .btn-outline-secondary {
+  background: var(--aui-surface);
+  border: 1px solid var(--aui-border);
+  color: var(--aui-primary);
+}
+.admin-ui .btn-outline-primary:hover,
+.admin-ui .btn-outline-secondary:hover { background: var(--aui-muted); border-color: #c6d4e5; color: var(--aui-primary-dark); }
+.admin-ui .btn-outline-danger {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--aui-danger);
+}
+.admin-ui .btn-outline-danger:hover { background: var(--aui-danger-bg); border-color: #f1c8c2; color: var(--aui-danger); }
+.admin-ui .btn-danger { background: var(--aui-danger); border: 1px solid var(--aui-danger); color: #fff; }
+.admin-ui .btn-danger:hover { background: #8c3029; border-color: #8c3029; color: #fff; }
+.admin-ui .btn:disabled { cursor: not-allowed; opacity: .6; }
+
+/* ------------------------------------------------------------------
+   Page head
+   ------------------------------------------------------------------ */
+.admin-ui .resource-page-head h1 { color: var(--aui-text); letter-spacing: -.02em; }
+.admin-ui .resource-page-head p { color: var(--aui-text-2); }
+
+/* ------------------------------------------------------------------
+   Card + toolbar (Bodega .card and .toolbar)
+   ------------------------------------------------------------------ */
+.admin-ui .aui-card {
+  background: var(--aui-surface);
+  border: 1px solid var(--aui-border);
+  border-radius: var(--aui-radius);
+  box-shadow: var(--aui-shadow-soft);
+  min-width: 0;
+  padding: 20px;
+}
+.admin-ui .aui-toolbar {
+  align-items: center;
+  background: var(--aui-muted);
+  border: 1px solid var(--aui-border);
+  border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 12px;
+}
+.admin-ui .aui-search {
+  flex: 1 1 260px;
+  max-width: 420px;
+  position: relative;
+}
+.admin-ui .aui-search span {
+  color: var(--aui-text-2);
+  left: 12px;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.admin-ui .aui-search input {
+  background: var(--aui-surface);
+  border: 1px solid var(--aui-border);
+  border-radius: 11px;
+  color: var(--aui-text);
+  min-height: 42px;
+  padding: 10px 12px 10px 34px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  width: 100%;
+}
+.admin-ui .aui-search input::placeholder { color: #6b7a8f; }
+.admin-ui .aui-search input:focus { border-color: #77a6d8; box-shadow: var(--aui-focus); outline: none; }
+.admin-ui .resource-scroll-tools {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+  margin: 0;
+}
+.admin-ui .resource-scroll-tools span { color: var(--aui-text-2); font-size: .85rem; font-weight: 700; }
+.admin-ui .resource-scroll-btn {
+  border-radius: 999px;
+  font-size: 1.1rem;
+  height: 36px;
+  min-height: 36px;
+  padding: 0;
+  width: 36px;
+}
+
+/* ------------------------------------------------------------------
+   Data table (Bodega .data-table inside .table-wrap.table-scroll-area)
+   ------------------------------------------------------------------ */
+.admin-ui .aui-table-wrap {
+  max-height: clamp(320px, calc(100vh - 330px), 640px);
+  max-width: 100%;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.admin-ui .data-table {
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: transparent;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--aui-text-cell);
+  font-size: .9rem;
+  margin: 0;
+  min-width: 760px;
+  width: 100%;
+}
+.admin-ui .data-table > :not(caption) > * > * { box-shadow: none; }
+.admin-ui .data-table thead th {
+  background: var(--aui-head);
+  border: 0;
+  color: var(--aui-text-2);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  padding: 12px 14px;
+  position: sticky;
+  text-align: left;
+  text-transform: uppercase;
+  top: 0;
+  white-space: nowrap;
+  z-index: 2;
+}
+.admin-ui .data-table thead th:first-child { border-radius: 12px 0 0 12px; }
+.admin-ui .data-table thead th:last-child { border-radius: 0 12px 12px 0; text-align: right; }
+.admin-ui .data-table tbody td {
+  background: var(--aui-surface);
+  border-bottom: 1px solid var(--aui-border);
+  color: var(--aui-text-cell);
+  overflow-wrap: anywhere;
+  padding: 14px;
+  vertical-align: middle;
+}
+.admin-ui .data-table tbody tr:last-child td { border-bottom: 0; }
+.admin-ui .data-table tbody tr:hover td { background: #fbfdff; }
+.admin-ui .data-table tbody tr[hidden] { display: none; }
+
+/* Actions column stays pinned while the wide table scrolls sideways. */
+.admin-ui .data-table th:last-child,
+.admin-ui .data-table td:last-child {
+  position: sticky;
+  right: 0;
+}
+.admin-ui .data-table thead th:last-child { z-index: 3; }
+.admin-ui .data-table tbody td:last-child {
+  box-shadow: -12px 0 16px -12px rgba(15, 23, 42, .14);
+  z-index: 1;
+}
+.admin-ui .data-table tbody td[colspan] { box-shadow: none; position: static; }
+
+.admin-ui .resource-title-cell strong,
+.admin-ui .resource-title-cell span { display: block; }
+.admin-ui .resource-title-cell strong {
+  color: var(--aui-text);
+  font-weight: 800;
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.admin-ui .resource-title-cell span {
+  color: var(--aui-text-2);
+  font-size: .82rem;
+  margin-top: 3px;
+  max-width: 460px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Badges (Bodega .badge pills) */
+.admin-ui .resource-badge,
+.admin-ui .resource-status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: .75rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+.admin-ui .resource-badge { background: var(--aui-primary-light); color: var(--aui-primary); }
+.admin-ui .resource-status { background: var(--aui-success-bg); color: var(--aui-success); }
+.admin-ui .resource-status::before { content: none; }
+.admin-ui .resource-status--inactive { background: var(--aui-neutral-bg); color: var(--aui-text-2); }
+
+.admin-ui .table-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.admin-ui .table-actions form { margin: 0; }
+
+/* Empty state (Bodega .empty-state.compact) */
+.admin-ui .aui-empty {
+  align-items: center;
+  background: var(--aui-muted);
+  border: 1px dashed var(--aui-border);
+  border-radius: var(--aui-radius);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 26px 18px;
+  text-align: center;
+}
+.admin-ui .aui-empty strong { color: var(--aui-text); font-size: 1rem; }
+.admin-ui .aui-empty__icon {
+  align-items: center;
+  background: var(--aui-primary-light);
+  border-radius: 12px;
+  color: var(--aui-primary);
+  display: inline-flex;
+  font-weight: 800;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+
+/* ------------------------------------------------------------------
+   Phones: keep the stacked-row table from main.css (.table-stack +
+   data-label) and give it Bodega's surfaces instead of a wide grid.
+   ------------------------------------------------------------------ */
+@media (max-width: 639.98px) {
+  .admin-ui .aui-card { padding: 12px; }
+  .admin-ui .aui-toolbar { align-items: stretch; flex-direction: column; }
+  .admin-ui .aui-search { flex-basis: auto; max-width: none; }
+  .admin-ui .resource-scroll-tools { display: none; }
+  .admin-ui .aui-table-wrap { max-height: none; overflow: visible; }
+  .admin-ui .data-table { min-width: 0; }
+  .admin-ui .data-table.table-stack > tbody > tr {
+    background: var(--aui-surface);
+    border: 1px solid var(--aui-border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    padding: 8px 0;
+  }
+  .admin-ui .data-table.table-stack > tbody > tr:last-child { border-bottom: 1px solid var(--aui-border); margin-bottom: 0; }
+  .admin-ui .data-table.table-stack > tbody > tr > td {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding-bottom: .35rem;
+    padding-top: .35rem;
+    position: relative;
+    right: auto;
+  }
+  .admin-ui .data-table.table-stack > tbody > tr > td:first-child { padding-bottom: .5rem; }
+  .admin-ui .data-table.table-stack > tbody > tr > td::before { color: var(--aui-text-2); font-size: .72rem; letter-spacing: .05em; }
+  .admin-ui .data-table.table-stack > tbody > tr:hover td { background: transparent; }
+  .admin-ui .data-table.table-stack > tbody > tr > td[colspan] { padding: 0; }
+  .admin-ui .data-table.table-stack > tbody > tr:has(> td[colspan]) { border: 0; padding: 0; }
+  .admin-ui .resource-title-cell strong,
+  .admin-ui .resource-title-cell span { max-width: none; white-space: normal; }
+  .admin-ui .table-actions { flex-wrap: wrap; justify-content: flex-start; }
+}
+
+/* Touch: keep 44px targets (Bodega's compact sizes are pointer-only). */
+@media (pointer: coarse) {
+  .admin-ui .btn,
+  .admin-ui .btn-sm,
+  .admin-ui .resource-scroll-btn { min-height: var(--touch-target, 44px); }
+  .admin-ui .resource-scroll-btn { width: var(--touch-target, 44px); }
+  .admin-ui .aui-search input { font-size: 16px; min-height: var(--touch-target, 44px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-ui .btn,
+  .admin-ui .aui-search input { transition: none; }
+}

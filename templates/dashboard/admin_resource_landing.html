@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ config.title }}{% endblock %}
 {% block extra_css %}
 <style>
@@ -33,177 +34,20 @@
     gap: .65rem;
     justify-content: flex-end;
   }
-  .resource-actions .btn {
-    border-radius: 10px;
-    font-weight: 800;
-    min-height: 42px;
-    padding-left: 1rem;
-    padding-right: 1rem;
-  }
-  .resource-search {
-    margin-bottom: 1rem;
-    max-width: 520px;
-    position: relative;
-  }
-  .resource-search span {
-    color: #8a96a6;
-    left: 1rem;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  .resource-search input {
-    background: #fff;
-    border: 1px solid #dfe5ec;
-    border-radius: 12px;
-    box-shadow: 0 3px 10px rgba(16, 24, 40, .04);
-    color: #344054;
-    height: 46px;
-    padding: 0 1rem 0 2.65rem;
-    width: 100%;
-  }
-  .resource-table-card {
-    background: #fff;
-    border: 1px solid #dfe5ec;
-    border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(16, 24, 40, .06);
-    overflow: hidden;
-  }
-  .resource-table-wrap {
-    max-height: calc(100vh - 315px);
-    overflow: auto;
-  }
-  .resource-table {
-    margin: 0;
-    min-width: 880px;
-  }
-  .resource-table thead th {
-    background: #f8fafc;
-    border-bottom: 1px solid #e5eaf0;
-    color: #465466;
-    font-size: .85rem;
-    font-weight: 900;
-    padding: .95rem 1.1rem;
-    position: sticky;
-    top: 0;
-    z-index: 1;
-  }
-  .resource-table tbody td {
-    border-bottom: 1px solid #edf0f5;
-    color: #4b596b;
-    padding: 1rem 1.1rem;
-    vertical-align: middle;
-  }
-  .resource-table tbody tr:last-child td { border-bottom: 0; }
-  .resource-table tbody tr:hover { background: #fbfcff; }
-  .resource-table th:last-child,
-  .resource-table td:last-child {
-    background: inherit;
-    box-shadow: -10px 0 18px rgba(16, 24, 40, .06);
-    position: sticky;
-    right: 0;
-    z-index: 2;
-  }
-  .resource-table thead th:last-child {
-    background: #f8fafc;
-    z-index: 3;
-  }
-  .resource-table tbody td:last-child {
-    background: #fff;
-  }
-  .resource-table tbody tr:hover td:last-child {
-    background: #fbfcff;
-  }
-  .resource-title-cell strong,
-  .resource-title-cell span { display: block; }
-  .resource-title-cell strong {
-    color: #344054;
-    font-weight: 900;
-    max-width: 460px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .resource-title-cell span {
-    color: #7b8794;
-    font-size: .88rem;
-    margin-top: .2rem;
-    max-width: 520px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .resource-badge {
-    background: #e9edff;
-    border-radius: 999px;
-    color: #4f54c8;
-    display: inline-flex;
-    font-size: .78rem;
-    font-weight: 900;
-    padding: .35rem .75rem;
-  }
-  .resource-status {
-    color: #16a35b;
-    font-weight: 900;
-    white-space: nowrap;
-  }
-  .resource-status::before { content: "✓ "; }
-  .resource-status--inactive {
-    color: #b42318;
-  }
-  .resource-status--inactive::before { content: "× "; }
-  .resource-row-actions {
-    align-items: center;
-    display: flex;
-    gap: .5rem;
-    justify-content: flex-end;
-    white-space: nowrap;
-  }
-  .resource-row-actions .btn {
-    border-radius: 8px;
-    font-weight: 800;
-  }
-  .resource-empty {
-    color: #667085;
-    padding: 2rem;
-    text-align: center;
-  }
-  .resource-scroll-tools {
-    align-items: center;
-    display: flex;
-    gap: .5rem;
-    justify-content: flex-end;
-    margin: 0 0 .75rem;
-  }
-  .resource-scroll-tools span {
-    color: #667085;
-    font-size: .9rem;
-    font-weight: 700;
-  }
-  .resource-scroll-btn {
-    align-items: center;
-    border-radius: 999px;
-    display: inline-flex;
-    font-weight: 900;
-    height: 36px;
-    justify-content: center;
-    width: 36px;
-  }
   @media (max-width: 900px) {
     .resource-page-head { flex-direction: column; }
     .resource-actions { justify-content: flex-start; width: 100%; }
     .resource-actions .btn { flex: 1 1 180px; }
-    .resource-search { max-width: none; }
-    .resource-table-wrap { max-height: none; }
   }
 </style>
+<link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261013-admin-ui">
 {% endblock %}
 {% block content %}
 <div class="{% if teacher_resource_page %}teacher-dashboard{% else %}admin-console{% endif %}">
   {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_sidebar.html' %}{% endif %}
   <section class="{% if teacher_resource_page %}container py-5{% else %}admin-main{% endif %}">
     {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}{% endif %}
-    <div class="admin-content">
+    <div class="admin-content admin-ui">
       <div class="resource-page-head">
         <div>
           <h1>{{ config.title }}</h1>
@@ -219,26 +63,27 @@
         </div>
       </div>
 
-      <div class="resource-search">
-        <span>⌕</span>
-        <input type="search" id="resourceSearchInput" placeholder="Buscar en {{ config.title|lower }}..." aria-label="Buscar registros">
-      </div>
-
-      <div class="resource-table-card">
-        <div class="resource-scroll-tools" aria-label="Desplazar tabla">
-          <span>Ver más columnas</span>
-          <button class="btn btn-outline-secondary resource-scroll-btn" type="button" data-resource-scroll="left" aria-label="Mover tabla a la izquierda">‹</button>
-          <button class="btn btn-outline-secondary resource-scroll-btn" type="button" data-resource-scroll="right" aria-label="Mover tabla a la derecha">›</button>
+      <div class="aui-card">
+        <div class="aui-toolbar">
+          <div class="aui-search">
+            <span aria-hidden="true">⌕</span>
+            <input type="search" id="resourceSearchInput" placeholder="Buscar en {{ config.title|lower }}..." aria-label="Buscar registros">
+          </div>
+          <div class="resource-scroll-tools" aria-label="Desplazar tabla">
+            <span>Ver más columnas</span>
+            <button class="btn btn-outline-secondary resource-scroll-btn" type="button" data-resource-scroll="left" aria-label="Mover tabla a la izquierda">‹</button>
+            <button class="btn btn-outline-secondary resource-scroll-btn" type="button" data-resource-scroll="right" aria-label="Mover tabla a la derecha">›</button>
+          </div>
         </div>
-        <div class="resource-table-wrap" data-resource-table-wrap>
-          <table class="table table-stack resource-table align-middle">
+        <div class="aui-table-wrap" data-resource-table-wrap>
+          <table class="table table-stack data-table resource-table">
             <thead>
               <tr>
                 <th>{% if resource == 'actividades' %}Actividad{% elif resource == 'lecturas' %}Lectura{% elif resource == 'juegos' %}Juego{% else %}Registro{% endif %}</th>
                 <th>Descripción</th>
                 <th>Tipo</th>
                 <th>Estado</th>
-                <th class="text-end">Acciones</th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody id="resourceTableBody">
@@ -253,7 +98,7 @@
             <td data-label="Tipo"><span class="resource-badge">{% if item.activity_type %}{{ item.get_activity_type_display }}{% elif item.resource_type %}{{ item.get_resource_type_display }}{% elif item.role %}{{ item.get_role_display }}{% elif item.grade %}{{ item.get_grade_display }}{% else %}{{ config.singular|capfirst }}{% endif %}</span></td>
             <td data-label="Estado"><span class="resource-status {% if item.is_active == False %}resource-status--inactive{% endif %}">{% if resource == 'alumnos' or resource == 'padres' or resource == 'palabras' or resource == 'silabas' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
             <td data-label="Acciones">
-              <div class="resource-row-actions">
+              <div class="table-actions">
               {% if resource == 'profesores' %}
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#permissionsModal{{ item.pk }}">Permisos</button>
               {% endif %}
@@ -273,15 +118,17 @@
               <td data-label="Descripción" class="resource-title-cell"><span>Sin descripción registrada</span></td>
               <td data-label="Tipo"><span class="resource-badge">{{ config.singular|capfirst }}</span></td>
               <td data-label="Estado"><span class="resource-status">Registrado</span></td>
-              <td data-label="Acciones" class="text-end">
+              <td data-label="Acciones">
+                <div class="table-actions">
                 <form method="post" action="{% url resource_delete_route resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
                   {% csrf_token %}
                   <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
                 </form>
+                </div>
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="5"><div class="resource-empty">No hay registros todavía.</div></td></tr>
+            <tr><td colspan="5"><div class="aui-empty"><span class="aui-empty__icon" aria-hidden="true">{{ config.singular|first|upper }}</span><strong>No hay registros todavía.</strong>{% if create_form %}<button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createResourceModal">Agregar {{ config.singular }}</button>{% endif %}</div></td></tr>
           {% endfor %}
         {% endfor %}
             </tbody>
