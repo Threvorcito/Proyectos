@@ -63,7 +63,7 @@
             </div>
           </div>
           <div class="table-responsive">
-            <table class="table lesson-report__table align-middle">
+            <table class="table table-stack lesson-report__table align-middle">
               <thead>
                 <tr>
                   <th>Plan</th>
@@ -80,31 +80,31 @@
               <tbody>
                 {% for plan in plans %}
                   <tr>
-                    <td>
+                    <td data-label="Plan">
                       <strong>{{ plan.title }}</strong>
                       <small>{{ plan.topic|default:'Sin tema definido' }}</small>
                     </td>
-                    <td>
+                    <td data-label="Docente">
                       <strong>{{ plan.teacher.name|default:'Sin docente' }}</strong>
                       <small>{{ plan.teacher.email|default:'Correo no registrado' }}</small>
                     </td>
-                    <td>{{ plan.subject }}</td>
-                    <td>{{ plan.level }}</td>
-                    <td>{{ plan.get_grade_display }}</td>
-                    <td>{{ plan.planned_date|date:'d/m/Y'|default:'Sin fecha' }}</td>
-                    <td>
+                    <td data-label="Materia">{{ plan.subject }}</td>
+                    <td data-label="Nivel">{{ plan.level }}</td>
+                    <td data-label="Grado">{{ plan.get_grade_display }}</td>
+                    <td data-label="Fecha">{{ plan.planned_date|date:'d/m/Y'|default:'Sin fecha' }}</td>
+                    <td data-label="Recursos">
                       <span class="lesson-report__pill">{{ plan.activities.count }} actividades</span>
                       <span class="lesson-report__pill">{{ plan.readings.count }} lecturas</span>
                       <span class="lesson-report__pill">{{ plan.games.count }} juegos</span>
                     </td>
-                    <td>
+                    <td data-label="Estado">
                       {% if plan.is_active and plan.status != 'archived' %}
                         <span class="lesson-report__status lesson-report__status--active">{{ plan.get_status_display }}</span>
                       {% else %}
                         <span class="lesson-report__status">{{ plan.get_status_display|default:'Inactivo' }}</span>
                       {% endif %}
                     </td>
-                    <td class="text-end">
+                    <td data-label="Acciones" class="text-end">
                       <div class="lesson-report__row-actions">
                         {% if request.user.is_staff or request.user.is_superuser or request.user.role == 'ADMIN' or request.user.teacher_profile.can_assign_lesson_plans %}<a class="btn btn-sm btn-primary" href="{% url 'dashboard:lesson_plan_implementation' plan.pk %}">Implementar</a>{% endif %}
                         {% if request.user.is_staff or request.user.is_superuser or request.user.role == 'ADMIN' or request.user.teacher_profile.can_assign_lesson_plans or request.user.teacher_profile.can_view_student_reports %}<a class="btn btn-sm btn-outline-success" href="{% url 'dashboard:lesson_plan_report' plan.pk %}">Reporte</a>{% endif %}

@@ -5256,3 +5256,93 @@ a { text-decoration: none; }
 
 .site-footer { padding-bottom: env(safe-area-inset-bottom); }
 
+
+/* ------------------------------------------------------------------
+   Data tables on phones: each row becomes a labelled block. Labels
+   come from data-label on every <td> (mirrors the column header).
+   ------------------------------------------------------------------ */
+@media (max-width: 639.98px) {
+  .table-responsive:has(> .table-stack) { overflow: visible; }
+  .table.table-stack { min-width: 0; }
+  .table-stack > thead {
+    clip: rect(0 0 0 0);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+  }
+  .table-stack > tbody,
+  .table-stack > tbody > tr { display: block; }
+  .table-stack > tbody > tr {
+    border-bottom: 1px solid var(--border);
+    padding: .75rem 0;
+  }
+  .table-stack > tbody > tr:last-child { border-bottom: 0; }
+  /* Label sits in a fixed left column; any cell content flows on the right. */
+  .table-stack > tbody > tr > td {
+    border: 0;
+    display: block;
+    font-size: 1rem;
+    min-height: 2rem;
+    padding: .35rem 1rem .35rem calc(38% + 1.5rem);
+    position: relative;
+    text-align: left;
+    white-space: normal;
+    width: auto;
+  }
+  .table-stack > tbody > tr > td::before {
+    color: #64748b;
+    content: attr(data-label);
+    font-size: .8rem;
+    font-weight: 800;
+    left: 1rem;
+    letter-spacing: .03em;
+    line-height: 1.3;
+    position: absolute;
+    text-transform: uppercase;
+    top: .55rem;
+    width: 38%;
+  }
+  /* First cell names the row: full width, no label. Empty-label and
+     empty-state cells span the whole row too. */
+  .table-stack > tbody > tr > td:first-child,
+  .table-stack > tbody > tr > td[data-label=""],
+  .table-stack > tbody > tr > td[colspan] { padding-left: 1rem; }
+  .table-stack > tbody > tr > td:first-child::before,
+  .table-stack > tbody > tr > td[data-label=""]::before,
+  .table-stack > tbody > tr > td[colspan]::before { content: none; }
+  .table-stack > tbody > tr > td:first-child { font-size: 1.05rem; padding-bottom: .5rem; }
+  .table-stack .teacher-students-actions { justify-content: flex-start; }
+  .table-stack > tbody > tr > td.text-end { text-align: left !important; }
+  .table-stack > tbody > tr > td .d-flex.justify-content-end { justify-content: flex-start !important; }
+  .table-stack .teacher-students-table__actions-cell { min-width: 0; width: auto; }
+}
+
+/* ------------------------------------------------------------------
+   Touch: 44px targets and 16px form text (no iOS zoom on focus).
+   ------------------------------------------------------------------ */
+@media (pointer: coarse) {
+  .btn:not(.btn-link),
+  .site-navbar .nav-link,
+  .site-navbar .nav-action,
+  .dropdown-item,
+  .form-control,
+  .form-select {
+    min-height: var(--touch-target);
+  }
+  .btn:not(.btn-link) {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+  }
+  .site-navbar .nav-link,
+  .dropdown-item {
+    align-items: center;
+    display: flex;
+  }
+  .form-control,
+  .form-select { font-size: max(1rem, 16px); }
+  .btn-close { padding: calc((var(--touch-target) - 1em) / 2); }
+  .navbar-toggler { min-height: var(--touch-target); min-width: var(--touch-target); }
+}

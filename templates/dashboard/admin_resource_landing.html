@@ -194,6 +194,7 @@
     .resource-actions { justify-content: flex-start; width: 100%; }
     .resource-actions .btn { flex: 1 1 180px; }
     .resource-search { max-width: none; }
+    .resource-table-wrap { max-height: none; }
   }
 </style>
 {% endblock %}
@@ -230,7 +231,7 @@
           <button class="btn btn-outline-secondary resource-scroll-btn" type="button" data-resource-scroll="right" aria-label="Mover tabla a la derecha">›</button>
         </div>
         <div class="resource-table-wrap" data-resource-table-wrap>
-          <table class="table resource-table align-middle">
+          <table class="table table-stack resource-table align-middle">
             <thead>
               <tr>
                 <th>{% if resource == 'actividades' %}Actividad{% elif resource == 'lecturas' %}Lectura{% elif resource == 'juegos' %}Juego{% else %}Registro{% endif %}</th>
@@ -244,14 +245,14 @@
         {% for row in edit_rows %}
           {% with item=row.object %}
           <tr data-resource-row data-search="{{ item }} {{ item.description|default:'' }} {{ item.email|default:'' }} {{ item.name|default:'' }} {{ item.title|default:'' }}">
-            <td class="resource-title-cell">
+            <td data-label="{% if resource == 'actividades' %}Actividad{% elif resource == 'lecturas' %}Lectura{% elif resource == 'juegos' %}Juego{% else %}Registro{% endif %}" class="resource-title-cell">
               <strong>{{ item }}</strong>
               <span>{% if item.email %}{{ item.email }}{% elif item.topic %}{{ item.topic }}{% elif item.subject %}{{ item.subject }}{% else %}{{ config.singular|capfirst }}{% endif %}</span>
             </td>
-            <td class="resource-title-cell"><span>{% if item.description %}{{ item.description }}{% elif item.bio %}{{ item.bio }}{% elif item.objective %}{{ item.objective }}{% else %}Sin descripción registrada{% endif %}</span></td>
-            <td><span class="resource-badge">{% if item.activity_type %}{{ item.get_activity_type_display }}{% elif item.resource_type %}{{ item.get_resource_type_display }}{% elif item.role %}{{ item.get_role_display }}{% elif item.grade %}{{ item.get_grade_display }}{% else %}{{ config.singular|capfirst }}{% endif %}</span></td>
-            <td><span class="resource-status {% if item.is_active == False %}resource-status--inactive{% endif %}">{% if resource == 'alumnos' or resource == 'padres' or resource == 'palabras' or resource == 'silabas' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
-            <td>
+            <td data-label="Descripción" class="resource-title-cell"><span>{% if item.description %}{{ item.description }}{% elif item.bio %}{{ item.bio }}{% elif item.objective %}{{ item.objective }}{% else %}Sin descripción registrada{% endif %}</span></td>
+            <td data-label="Tipo"><span class="resource-badge">{% if item.activity_type %}{{ item.get_activity_type_display }}{% elif item.resource_type %}{{ item.get_resource_type_display }}{% elif item.role %}{{ item.get_role_display }}{% elif item.grade %}{{ item.get_grade_display }}{% else %}{{ config.singular|capfirst }}{% endif %}</span></td>
+            <td data-label="Estado"><span class="resource-status {% if item.is_active == False %}resource-status--inactive{% endif %}">{% if resource == 'alumnos' or resource == 'padres' or resource == 'palabras' or resource == 'silabas' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
+            <td data-label="Acciones">
               <div class="resource-row-actions">
               {% if resource == 'profesores' %}
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#permissionsModal{{ item.pk }}">Permisos</button>
@@ -268,11 +269,11 @@
         {% empty %}
           {% for item in objects %}
             <tr data-resource-row data-search="{{ item }}">
-              <td class="resource-title-cell"><strong>{{ item }}</strong><span>{{ config.singular|capfirst }}</span></td>
-              <td class="resource-title-cell"><span>Sin descripción registrada</span></td>
-              <td><span class="resource-badge">{{ config.singular|capfirst }}</span></td>
-              <td><span class="resource-status">Registrado</span></td>
-              <td class="text-end">
+              <td data-label="{% if resource == 'actividades' %}Actividad{% elif resource == 'lecturas' %}Lectura{% elif resource == 'juegos' %}Juego{% else %}Registro{% endif %}" class="resource-title-cell"><strong>{{ item }}</strong><span>{{ config.singular|capfirst }}</span></td>
+              <td data-label="Descripción" class="resource-title-cell"><span>Sin descripción registrada</span></td>
+              <td data-label="Tipo"><span class="resource-badge">{{ config.singular|capfirst }}</span></td>
+              <td data-label="Estado"><span class="resource-status">Registrado</span></td>
+              <td data-label="Acciones" class="text-end">
                 <form method="post" action="{% url resource_delete_route resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
                   {% csrf_token %}
                   <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>

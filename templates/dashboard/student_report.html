@@ -189,11 +189,11 @@
         <h2 class="h4">Actividades</h2>
         <p class="text-muted mb-3">Prácticas realizadas y avance por actividad.</p>
         <div class="table-responsive mt-3">
-          <table class="table align-middle mb-0">
+          <table class="table table-stack align-middle mb-0">
             <thead><tr><th>Actividad</th><th>Progreso</th><th>Intentos</th></tr></thead>
             <tbody>
               {% for item in progress_items %}
-                <tr><td><strong>{{ item.activity.title }}</strong><br><small>Nivel {{ item.activity.level.number }}</small></td><td>{{ item.progress_percentage }}%</td><td>{{ item.attempts }}</td></tr>
+                <tr><td data-label="Actividad"><strong>{{ item.activity.title }}</strong><br><small>Nivel {{ item.activity.level.number }}</small></td><td data-label="Progreso">{{ item.progress_percentage }}%</td><td data-label="Intentos">{{ item.attempts }}</td></tr>
               {% empty %}
                 <tr><td colspan="3">Todavía no hay actividades registradas.</td></tr>
               {% endfor %}
@@ -207,11 +207,11 @@
         <h2 class="h4">Juegos</h2>
         <p class="text-muted mb-3">Juegos completados o intentados.</p>
         <div class="table-responsive mt-3">
-          <table class="table align-middle mb-0">
+          <table class="table table-stack align-middle mb-0">
             <thead><tr><th>Juego</th><th>Resultado</th><th>Fecha</th></tr></thead>
             <tbody>
               {% for attempt in game_attempts %}
-                <tr><td><strong>{{ attempt.game.name }}</strong><br><small>{% if attempt.game.subject %}{{ attempt.game.subject.name }}{% else %}Sin materia{% endif %}</small></td><td>{{ attempt.correct_answers }}/{{ attempt.total_questions }} · {{ attempt.score }}%</td><td>{% if attempt.completed_at %}{{ attempt.completed_at|date:'d/m/Y' }}{% else %}{{ attempt.started_at|date:'d/m/Y' }}{% endif %}</td></tr>
+                <tr><td data-label="Juego"><strong>{{ attempt.game.name }}</strong><br><small>{% if attempt.game.subject %}{{ attempt.game.subject.name }}{% else %}Sin materia{% endif %}</small></td><td data-label="Resultado">{{ attempt.correct_answers }}/{{ attempt.total_questions }} · {{ attempt.score }}%</td><td data-label="Fecha">{% if attempt.completed_at %}{{ attempt.completed_at|date:'d/m/Y' }}{% else %}{{ attempt.started_at|date:'d/m/Y' }}{% endif %}</td></tr>
               {% empty %}
                 <tr><td colspan="3">Todavía no hay juegos registrados.</td></tr>
               {% endfor %}
@@ -226,15 +226,15 @@
     <h2 class="h4">Lecturas y comprensión</h2>
     <p class="text-muted mb-3">Lecturas iniciadas o completadas con sus respuestas de comprensión.</p>
     <div class="table-responsive">
-      <table class="table align-middle mb-0">
+      <table class="table table-stack align-middle mb-0">
         <thead><tr><th>Lectura</th><th>Estado</th><th>Comprensión</th><th>Respuestas</th></tr></thead>
         <tbody>
           {% for row in reading_rows %}
             <tr>
-              <td><strong>{{ row.reading.title }}</strong><br><small>{% if row.reading.subject %}{{ row.reading.subject.name }}{% else %}Sin materia{% endif %} · Nivel {{ row.reading.level.number }}</small></td>
-              <td>{% if row.progress.completed %}Completada{% else %}En progreso{% endif %}</td>
-              <td>{{ row.progress.comprehension_percentage }}%</td>
-              <td>{{ row.correct_answers }}/{{ row.total_questions }} correctas · {{ row.answered_questions }} respondidas</td>
+              <td data-label="Lectura"><strong>{{ row.reading.title }}</strong><br><small>{% if row.reading.subject %}{{ row.reading.subject.name }}{% else %}Sin materia{% endif %} · Nivel {{ row.reading.level.number }}</small></td>
+              <td data-label="Estado">{% if row.progress.completed %}Completada{% else %}En progreso{% endif %}</td>
+              <td data-label="Comprensión">{{ row.progress.comprehension_percentage }}%</td>
+              <td data-label="Respuestas">{{ row.correct_answers }}/{{ row.total_questions }} correctas · {{ row.answered_questions }} respondidas</td>
             </tr>
           {% empty %}
             <tr><td colspan="4">Todavía no hay lecturas registradas.</td></tr>
@@ -248,14 +248,14 @@
     <h2 class="h4">Progreso del quiz por materia</h2>
     <p class="text-muted mb-3">Resumen de aciertos guardados en el Quiz de agilidad lectora.</p>
     <div class="table-responsive">
-      <table class="table align-middle mb-0">
+      <table class="table table-stack align-middle mb-0">
         <thead><tr><th>Materia</th><th>Aciertos</th><th>Resultado</th></tr></thead>
         <tbody>
           {% for row in quiz_subject_progress %}
             <tr>
-              <td>{{ row.subject }}</td>
-              <td>{{ row.correct }}/{{ row.total }}</td>
-              <td><progress max="100" value="{{ row.percentage }}"></progress> {{ row.percentage }}%</td>
+              <td data-label="Materia">{{ row.subject }}</td>
+              <td data-label="Aciertos">{{ row.correct }}/{{ row.total }}</td>
+              <td data-label="Resultado"><progress max="100" value="{{ row.percentage }}"></progress> {{ row.percentage }}%</td>
             </tr>
           {% empty %}
             <tr><td colspan="3">Todavía no hay respuestas de quiz guardadas.</td></tr>
