@@ -40,7 +40,7 @@
     .resource-actions .btn { flex: 1 1 180px; }
   }
 </style>
-<link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261013-admin-ui">
+<link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261013-admin-ui-2">
 {% endblock %}
 {% block content %}
 <div class="{% if teacher_resource_page %}teacher-dashboard{% else %}admin-console{% endif %}">
@@ -55,7 +55,7 @@
         </div>
         <div class="resource-actions">
           {% if create_form %}
-            <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#createResourceModal">Agregar {{ config.singular }}</button>
+            <button class="btn btn-primary" type="button" data-dialog-open="createResourceModal">Agregar {{ config.singular }}</button>
           {% else %}
             <a class="btn btn-primary" href="{% url resource_create_route resource %}">Agregar {{ config.singular }}</a>
           {% endif %}
@@ -100,13 +100,10 @@
             <td data-label="Acciones">
               <div class="table-actions">
               {% if resource == 'profesores' %}
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#permissionsModal{{ item.pk }}">Permisos</button>
+                <button class="btn btn-sm btn-outline-secondary" type="button" data-dialog-open="permissionsModal{{ item.pk }}">Permisos</button>
               {% endif %}
-              <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#editResourceModal{{ item.pk }}">Editar</button>
-              <form method="post" action="{% url resource_delete_route resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
-                {% csrf_token %}
-                <button class="btn btn-sm btn-outline-danger" type="submit">{% if resource == 'profesores' %}Desactivar{% else %}Eliminar{% endif %}</button>
-              </form>
+              <button class="btn btn-sm btn-outline-primary" type="button" data-dialog-open="editResourceModal{{ item.pk }}">Editar</button>
+              <button class="btn btn-sm btn-outline-danger" type="button" data-dialog-open="deleteResourceModal{{ item.pk }}">{% if resource == 'profesores' %}Desactivar{% else %}Eliminar{% endif %}</button>
               </div>
             </td>
           </tr>
@@ -120,15 +117,12 @@
               <td data-label="Estado"><span class="resource-status">Registrado</span></td>
               <td data-label="Acciones">
                 <div class="table-actions">
-                <form method="post" action="{% url resource_delete_route resource item.pk %}" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');">
-                  {% csrf_token %}
-                  <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
-                </form>
+                <button class="btn btn-sm btn-outline-danger" type="button" data-dialog-open="deleteResourceModal{{ item.pk }}">Eliminar</button>
                 </div>
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="5"><div class="aui-empty"><span class="aui-empty__icon" aria-hidden="true">{{ config.singular|first|upper }}</span><strong>No hay registros todavía.</strong>{% if create_form %}<button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#createResourceModal">Agregar {{ config.singular }}</button>{% endif %}</div></td></tr>
+            <tr><td colspan="5"><div class="aui-empty"><span class="aui-empty__icon" aria-hidden="true">{{ config.singular|first|upper }}</span><strong>No hay registros todavía.</strong>{% if create_form %}<button class="btn btn-primary btn-sm" type="button" data-dialog-open="createResourceModal">Agregar {{ config.singular }}</button>{% endif %}</div></td></tr>
           {% endfor %}
         {% endfor %}
             </tbody>
@@ -150,22 +144,21 @@
   });
 </script>
 
+<div class="admin-ui">
 {% for row in edit_rows %}
   {% with item=row.object %}
     {% if resource == 'profesores' %}
-      <div class="modal fade admin-dialog permissions-dialog" id="permissionsModal{{ item.pk }}" tabindex="-1" aria-labelledby="permissionsModalTitle{{ item.pk }}" aria-hidden="true" data-bs-backdrop="static">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-          <div class="modal-content">
-            <form method="post" action="{% url 'dashboard:teacher_permissions_update' item.pk %}" data-permission-dialog>
+      <dialog class="dialog-root permissions-dialog" id="permissionsModal{{ item.pk }}" aria-labelledby="permissionsModalTitle{{ item.pk }}" data-aui-dialog>
+            <form class="dialog-content dialog-lg" method="post" action="{% url 'dashboard:teacher_permissions_update' item.pk %}" data-permission-dialog>
               {% csrf_token %}
-              <div class="modal-header">
+              <div class="dialog-header">
                 <div>
-                  <h2 class="modal-title" id="permissionsModalTitle{{ item.pk }}">Permisos del usuario</h2>
-                  <p>Configura los accesos disponibles para este docente dentro de los módulos de Lectura Sin Límites.</p>
+                  <h2 class="dialog-title" id="permissionsModalTitle{{ item.pk }}">Permisos del usuario</h2>
+                  <p class="dialog-description">Configura los accesos disponibles para este docente dentro de los módulos de Lectura Sin Límites.</p>
                 </div>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                <button class="dialog-close" type="button" aria-label="Cerrar" data-dialog-close>&times;</button>
               </div>
-              <div class="modal-body permissions-dialog__body">
+              <div class="dialog-body permissions-dialog__body">
                 <div class="permissions-dialog__user">
                   <div><strong>{{ item.name|default:'Docente seleccionado' }}</strong><span>{% firstof item.email item.user.email 'Sin correo' %}</span></div>
                   <label class="permissions-dialog__select-all"><input class="form-check-input" type="checkbox" data-permission-select-all><span>Seleccionar todo</span></label>
@@ -191,19 +184,15 @@
                   </section>
                 </div>
               </div>
-              <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Listo</button></div>
+              <div class="dialog-footer"><button type="button" class="btn btn-outline-secondary" data-dialog-close>Cancelar</button><button type="submit" class="btn btn-primary">Listo</button></div>
             </form>
-          </div>
-        </div>
-      </div>
+      </dialog>
     {% endif %}
-    <div class="modal fade admin-dialog" id="editResourceModal{{ item.pk }}" tabindex="-1" aria-labelledby="editResourceModalTitle{{ item.pk }}" aria-hidden="true" data-bs-backdrop="static">
-      <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' or resource == 'competencias' %}modal-xl{% else %}modal-lg{% endif %}">
-        <div class="modal-content">
-          <form method="post" action="{% url resource_update_route resource item.pk %}" enctype="multipart/form-data">
+    <dialog class="dialog-root" id="editResourceModal{{ item.pk }}" aria-labelledby="editResourceModalTitle{{ item.pk }}" data-aui-dialog>
+          <form class="dialog-content {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' or resource == 'competencias' %}dialog-xl{% else %}dialog-lg{% endif %}" method="post" action="{% url resource_update_route resource item.pk %}" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="modal-header"><div><h2 class="modal-title" id="editResourceModalTitle{{ item.pk }}">Editar {{ config.singular }}</h2><p>{% if resource == 'usuarios' %}Administra el acceso de esta cuenta. Desactivar conserva el historial; reactivar restaura el perfil correspondiente si hace falta.{% elif resource == 'profesores' %}Administra el perfil docente. Desactivar conserva sus planes, reportes y evidencias académicas.{% else %}Actualiza la información de este registro. Haz clic en guardar cuando termines.{% endif %}</p></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
-            <div class="modal-body admin-dialog__body admin-dialog__body--scroll">
+            <div class="dialog-header"><div><h2 class="dialog-title" id="editResourceModalTitle{{ item.pk }}">Editar {{ config.singular }}</h2><p class="dialog-description">{% if resource == 'usuarios' %}Administra el acceso de esta cuenta. Desactivar conserva el historial; reactivar restaura el perfil correspondiente si hace falta.{% elif resource == 'profesores' %}Administra el perfil docente. Desactivar conserva sus planes, reportes y evidencias académicas.{% else %}Actualiza la información de este registro. Haz clic en guardar cuando termines.{% endif %}</p></div><button class="dialog-close" type="button" aria-label="Cerrar" data-dialog-close>&times;</button></div>
+            <div class="dialog-body admin-dialog__body">
               {% if resource == 'profesores' %}
                 <div class="admin-dialog__section-title"><strong>Datos del docente</strong><span>Información principal y acceso.</span></div>
                 <div class="teacher-form-grid">
@@ -249,29 +238,25 @@
                 <div class="admin-dialog__grid admin-dialog__grid--resource">{{ row.form.as_p }}</div>
               {% endif %}
             </div>
-            <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button><button type="submit" class="btn btn-primary">Guardar cambios</button></div>
+            <div class="dialog-footer"><button type="button" class="btn btn-outline-secondary" data-dialog-close>Cancelar</button><button type="submit" class="btn btn-primary">Guardar cambios</button></div>
           </form>
-        </div>
-      </div>
-    </div>
+    </dialog>
   {% endwith %}
 {% endfor %}
 
 {% if create_form %}
-  <div class="modal fade admin-dialog {% if resource == 'profesores' %}admin-dialog--teacher{% endif %}" id="createResourceModal" tabindex="-1" aria-labelledby="createResourceModalTitle" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' %}modal-xl{% else %}modal-lg{% endif %}">
-      <div class="modal-content">
-        <form id="createResourceForm" method="post" action="{% url resource_create_route resource %}" enctype="multipart/form-data" data-submit-once>
+  <dialog class="dialog-root" id="createResourceModal" aria-labelledby="createResourceModalTitle" data-aui-dialog>
+        <form id="createResourceForm" class="dialog-content {% if resource == 'actividades' or resource == 'lecturas' or resource == 'juegos' %}dialog-xl{% else %}dialog-lg{% endif %}" method="post" action="{% url resource_create_route resource %}" enctype="multipart/form-data" data-submit-once>
           {% csrf_token %}
           <input type="hidden" name="_from_modal" value="1">
-          <div class="modal-header">
+          <div class="dialog-header">
             <div>
-              <h2 class="modal-title" id="createResourceModalTitle">{% if resource == 'profesores' %}Registrar docente{% else %}Crear {{ config.singular }}{% endif %}</h2>
-              <p>{% if resource == 'profesores' %}Registra al docente, crea su usuario de acceso y define los permisos que tendrá dentro del sistema.{% else %}Completa los datos para registrar este recurso. Haz clic en guardar cuando termines.{% endif %}</p>
+              <h2 class="dialog-title" id="createResourceModalTitle">{% if resource == 'profesores' %}Registrar docente{% else %}Crear {{ config.singular }}{% endif %}</h2>
+              <p class="dialog-description">{% if resource == 'profesores' %}Registra al docente, crea su usuario de acceso y define los permisos que tendrá dentro del sistema.{% else %}Completa los datos para registrar este recurso. Haz clic en guardar cuando termines.{% endif %}</p>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            <button class="dialog-close" type="button" aria-label="Cerrar" data-dialog-close>&times;</button>
           </div>
-          <div class="modal-body admin-dialog__body">
+          <div class="dialog-body admin-dialog__body">
             {% if resource == 'usuarios' %}
               <div class="admin-dialog__grid">
                 <p>{{ create_form.username.label_tag }}{{ create_form.username }}{{ create_form.username.errors }}</p>
@@ -304,7 +289,7 @@
                   <strong>Permisos</strong>
                   <span>Define qué podrá gestionar este docente.</span>
                 </div>
-                <button class="btn btn-outline-secondary" type="button" data-bs-toggle="modal" data-bs-target="#createTeacherPermissionsModal">Configurar permisos</button>
+                <button class="btn btn-outline-secondary" type="button" data-dialog-open="createTeacherPermissionsModal">Configurar permisos</button>
               </div>
             {% elif resource == 'lecturas' %}
               <div class="admin-dialog__grid admin-dialog__grid--resource">
@@ -328,26 +313,23 @@
               </div>
             {% endif %}
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <div class="dialog-footer">
+            <button type="button" class="btn btn-outline-secondary" data-dialog-close>Cancelar</button>
             <button type="submit" class="btn btn-primary">{% if resource == 'profesores' %}Registrar docente{% else %}Crear {{ config.singular }}{% endif %}</button>
           </div>
         </form>
-      </div>
-    </div>
-  </div>
+  </dialog>
   {% if resource == 'profesores' %}
-    <div class="modal fade admin-dialog permissions-dialog permissions-dialog--compact" id="createTeacherPermissionsModal" tabindex="-1" aria-labelledby="createTeacherPermissionsModalTitle" aria-hidden="true" data-bs-backdrop="static">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
+    <dialog class="dialog-root permissions-dialog" id="createTeacherPermissionsModal" aria-labelledby="createTeacherPermissionsModalTitle" data-aui-dialog>
+        <div class="dialog-content dialog-lg">
+          <div class="dialog-header">
             <div>
-              <h2 class="modal-title" id="createTeacherPermissionsModalTitle">Permisos del usuario</h2>
-              <p>Configura los accesos disponibles para este docente dentro de los módulos de Lectura Sin Límites.</p>
+              <h2 class="dialog-title" id="createTeacherPermissionsModalTitle">Permisos del usuario</h2>
+              <p class="dialog-description">Configura los accesos disponibles para este docente dentro de los módulos de Lectura Sin Límites.</p>
             </div>
-            <button type="button" class="btn-close" data-bs-toggle="modal" data-bs-target="#createResourceModal" aria-label="Cerrar"></button>
+            <button class="dialog-close" type="button" aria-label="Cerrar" data-dialog-close>&times;</button>
           </div>
-          <div class="modal-body permissions-dialog__body" data-permission-dialog>
+          <div class="dialog-body permissions-dialog__body" data-permission-dialog>
             <div class="permissions-dialog__user">
               <div>
                 <strong>Nuevo docente</strong>
@@ -380,17 +362,47 @@
               </section>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createResourceModal">Listo</button>
+          <div class="dialog-footer">
+            <button type="button" class="btn btn-primary" data-dialog-close>Listo</button>
           </div>
         </div>
-      </div>
-    </div>
+    </dialog>
   {% endif %}
 {% endif %}
+
+{% for item in objects %}
+  <dialog class="dialog-root" id="deleteResourceModal{{ item.pk }}" aria-labelledby="deleteResourceModalTitle{{ item.pk }}" data-aui-dialog>
+    <div class="dialog-content dialog-compact">
+      <div class="dialog-header">
+        <div>
+          <h2 class="dialog-title" id="deleteResourceModalTitle{{ item.pk }}">{% if resource == 'profesores' %}Desactivar{% else %}Eliminar{% endif %} {{ config.singular }}</h2>
+        </div>
+        <button class="dialog-close" type="button" aria-label="Cerrar" data-dialog-close>&times;</button>
+      </div>
+      <form class="dialog-form" method="post" action="{% url resource_delete_route resource item.pk %}">
+        {% csrf_token %}
+        <div class="dialog-body">
+          <div class="confirm-dialog-body">
+            <span class="confirm-alert-icon" aria-hidden="true">!</span>
+            <div class="confirm-alert-text">
+              <p>¿Seguro que deseas eliminar este registro?</p>
+              <div class="confirm-reference">{{ item }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="dialog-footer">
+          <button class="btn btn-outline-secondary" type="button" data-dialog-close autofocus>Cancelar</button>
+          <button class="btn btn-danger" type="submit">{% if resource == 'profesores' %}Desactivar{% else %}Eliminar{% endif %}</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+{% endfor %}
+</div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/admin-ui.js' %}?v=20261013-admin-ui-2"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('resourceSearchInput');

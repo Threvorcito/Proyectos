@@ -313,11 +313,207 @@
   .admin-ui .table-actions { flex-wrap: wrap; justify-content: flex-start; }
 }
 
+/* ------------------------------------------------------------------
+   Dialogs (Bodega .dialog-root / .dialog-content): native <dialog>,
+   blurred navy backdrop, header / scrolling body / muted footer.
+   ------------------------------------------------------------------ */
+body.aui-dialog-open { overflow: hidden; }
+.admin-ui .dialog-root {
+  background: transparent;
+  border: 0;
+  color: var(--aui-text);
+  margin: auto;
+  max-height: 100dvh;
+  max-width: 100vw;
+  overflow: visible;
+  padding: 24px;
+}
+.admin-ui .dialog-root::backdrop {
+  animation: auiOverlayIn .2s ease-out forwards;
+  backdrop-filter: blur(3px);
+  background: rgba(15, 23, 42, .42);
+}
+.admin-ui .dialog-root[data-closing="true"]::backdrop { animation: auiOverlayOut .18s ease-in forwards; }
+.admin-ui .dialog-content {
+  animation: auiContentIn .22s cubic-bezier(.16, 1, .3, 1) forwards;
+  background: var(--aui-surface);
+  border: 1px solid var(--aui-border);
+  border-radius: 18px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .24);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  margin: 0;
+  max-height: calc(100dvh - 48px);
+  overflow: hidden;
+  width: min(580px, calc(100vw - 48px));
+}
+.admin-ui .dialog-content.dialog-lg { width: min(760px, calc(100vw - 48px)); }
+.admin-ui .dialog-content.dialog-xl { width: min(1120px, calc(100vw - 48px)); }
+.admin-ui .dialog-content.dialog-compact { width: min(500px, calc(100vw - 32px)); }
+.admin-ui .dialog-root[data-closing="true"] .dialog-content { animation: auiContentOut .18s ease-in forwards; }
+.admin-ui .dialog-header {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--aui-border);
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 20px 22px 16px;
+}
+.admin-ui .dialog-title {
+  color: var(--aui-text);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+.admin-ui .dialog-description {
+  color: var(--aui-text-2);
+  font-size: .92rem;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 68ch;
+}
+.admin-ui .dialog-close {
+  align-items: center;
+  background: var(--aui-muted);
+  border: 1px solid var(--aui-border);
+  border-radius: 999px;
+  color: var(--aui-text-2);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1.3rem;
+  height: 36px;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  width: 36px;
+}
+.admin-ui .dialog-close:hover { color: var(--aui-text); }
+.admin-ui .dialog-close:focus-visible { box-shadow: var(--aui-focus); outline: none; }
+.admin-ui .dialog-body {
+  display: grid;
+  gap: 14px;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 18px 22px;
+}
+.admin-ui .dialog-footer {
+  align-items: center;
+  background: var(--aui-muted);
+  border-top: 1px solid var(--aui-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 14px 22px;
+}
+/* A form wrapping body + footer inside the panel keeps the grid rows. */
+.admin-ui .dialog-content > form.dialog-form { display: contents; }
+
+/* Fields inside dialogs: Bodega inputs (11px radius, soft focus ring). */
+.admin-ui .dialog-body label { color: #25344d; font-size: .85rem; font-weight: 800; }
+.admin-ui .dialog-body .form-control,
+.admin-ui .dialog-body .form-select {
+  border: 1px solid var(--aui-border);
+  border-radius: 11px;
+  color: var(--aui-text);
+  min-height: 42px;
+}
+.admin-ui .dialog-body .form-control:focus,
+.admin-ui .dialog-body .form-select:focus,
+.admin-ui .dialog-body .form-check-input:focus {
+  border-color: #77a6d8;
+  box-shadow: var(--aui-focus);
+}
+.admin-ui .dialog-body .form-check-input:checked { background-color: var(--aui-primary); border-color: var(--aui-primary); }
+.admin-ui .dialog-body ul.errorlist { color: var(--aui-danger); font-weight: 600; }
+.admin-ui .dialog-body .helptext { color: var(--aui-text-2); }
+.admin-ui .admin-dialog__switch-row label,
+.admin-ui .admin-dialog__permission-trigger,
+.admin-ui .permissions-dialog__user { background: var(--aui-muted); border-color: var(--aui-border); }
+.admin-ui .permissions-dialog__card { border-color: var(--aui-border); }
+
+/* Confirm delete (Bodega .confirm-dialog-body) */
+.admin-ui .confirm-dialog-body { align-items: flex-start; display: flex; gap: 14px; }
+.admin-ui .confirm-alert-icon {
+  align-items: center;
+  background: var(--aui-danger-bg);
+  border: 1px solid #f1c8c2;
+  border-radius: 999px;
+  color: var(--aui-danger);
+  display: inline-flex;
+  flex: 0 0 42px;
+  font-weight: 900;
+  height: 42px;
+  justify-content: center;
+}
+.admin-ui .confirm-alert-text { display: grid; gap: 8px; min-width: 0; }
+.admin-ui .confirm-alert-text p { color: var(--aui-text-2); margin: 0; }
+.admin-ui .confirm-reference {
+  background: var(--aui-muted);
+  border: 1px solid var(--aui-border);
+  border-radius: 12px;
+  color: var(--aui-text);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+  padding: 10px 12px;
+}
+
+@keyframes auiOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes auiOverlayOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes auiContentIn { from { opacity: 0; transform: translateY(6px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes auiContentOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(.97); } }
+
+/* Phones: dialogs fill the screen with an 8px margin; footer buttons share the row. */
+@media (max-width: 639.98px) {
+  .admin-ui .dialog-root { padding: 8px; }
+  .admin-ui .dialog-content,
+  .admin-ui .dialog-content.dialog-lg,
+  .admin-ui .dialog-content.dialog-xl,
+  .admin-ui .dialog-content.dialog-compact {
+    border-radius: 16px;
+    max-height: calc(100dvh - 16px);
+    width: calc(100vw - 16px);
+  }
+  .admin-ui .dialog-header { padding: 16px 16px 12px; }
+  .admin-ui .dialog-body { padding: 14px 16px; }
+  .admin-ui .dialog-footer { padding: 12px 16px; }
+  .admin-ui .dialog-footer .btn { flex: 1 1 0; }
+}
+
+/* Standalone create/edit page (shown when a dialog submit has errors). */
+.admin-ui .aui-form-card {
+  background: var(--aui-surface);
+  border: 1px solid var(--aui-border);
+  border-radius: var(--aui-radius);
+  box-shadow: var(--aui-shadow-soft);
+  padding: 22px;
+}
+.admin-ui .aui-form-card p { display: grid; gap: 6px; margin: 0 0 14px; }
+.admin-ui .aui-form-card label { color: #25344d; font-size: .85rem; font-weight: 800; }
+.admin-ui .aui-form-card :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea) {
+  background: var(--aui-surface);
+  border: 1px solid var(--aui-border);
+  border-radius: 11px;
+  color: var(--aui-text);
+  min-height: 42px;
+  padding: 10px 12px;
+  width: 100%;
+}
+.admin-ui .aui-form-card :is(input, select, textarea):focus { border-color: #77a6d8; box-shadow: var(--aui-focus); outline: none; }
+.admin-ui .aui-form-card ul.errorlist { color: var(--aui-danger); font-weight: 600; margin: 0; padding-left: 1rem; }
+.admin-ui .aui-form-card .helptext { color: var(--aui-text-2); font-size: .82rem; }
+
 /* Touch: keep 44px targets (Bodega's compact sizes are pointer-only). */
 @media (pointer: coarse) {
   .admin-ui .btn,
   .admin-ui .btn-sm,
   .admin-ui .resource-scroll-btn { min-height: var(--touch-target, 44px); }
+  .admin-ui .dialog-close { height: var(--touch-target, 44px); width: var(--touch-target, 44px); }
   .admin-ui .resource-scroll-btn { width: var(--touch-target, 44px); }
   .admin-ui .aui-search input { font-size: 16px; min-height: var(--touch-target, 44px); }
 }
@@ -325,4 +521,6 @@
 @media (prefers-reduced-motion: reduce) {
   .admin-ui .btn,
   .admin-ui .aui-search input { transition: none; }
+  .admin-ui .dialog-root::backdrop,
+  .admin-ui .dialog-content { animation: none; }
 }

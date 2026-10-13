@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{% if is_edit %}Editar{% else %}Agregar{% endif %} {{ config.singular }}{% endblock %}
 {% block extra_css %}
 <style>
@@ -8,13 +9,14 @@
   .page-shell { min-height: 100vh; }
   body { background: #f6f7fb; }
 </style>
+<link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261013-admin-ui-2">
 {% endblock %}
 {% block content %}
 <div class="{% if teacher_resource_page %}teacher-dashboard{% else %}admin-console{% endif %}">
   {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_sidebar.html' %}{% endif %}
   <section class="{% if teacher_resource_page %}container py-5{% else %}admin-main{% endif %}">
     {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}{% endif %}
-    <div class="admin-content">
+    <div class="admin-content admin-ui">
       <div class="mx-auto" style="max-width: 860px;">
         <span class="eyebrow">{{ config.title }}</span>
         <h1>{% if is_edit %}Editar{% else %}Agregar{% endif %} {{ config.singular }}</h1>
@@ -29,7 +31,7 @@
             {% endif %}
           </div>
         {% endif %}
-        <form method="post" enctype="multipart/form-data" class="feature-card mt-4">
+        <form method="post" enctype="multipart/form-data" class="aui-form-card mt-4">
           {% csrf_token %}
           {{ form.as_p }}
           <div class="d-flex flex-wrap gap-2 mt-3">
