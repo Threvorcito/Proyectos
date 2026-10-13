@@ -9,6 +9,16 @@
   --border: #e5e7eb;
   --radius: 16px;
   --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+
+  /* Layout tokens: one fluid gutter and rhythm shared by every page. */
+  --page-gutter: clamp(16px, 4vw, 48px);
+  --page-max: 1360px;          /* content width for dashboards and grids */
+  --page-max-narrow: 56rem;    /* text-heavy pages (readings, forms) */
+  --measure: 68ch;             /* comfortable line length for body copy */
+  --section-space-lg: clamp(2rem, 1.2rem + 3.2vw, 3.5rem);   /* was py-5 (3rem) */
+  --section-space: clamp(1.5rem, 1rem + 2vw, 2.5rem);        /* was py-4 (1.5rem) */
+  --section-space-sm: clamp(1.25rem, 1rem + 1vw, 1.75rem);   /* stacked home bands */
+  --touch-target: 44px;
 }
 
 * { box-sizing: border-box; }
@@ -1811,8 +1821,8 @@ a { text-decoration: none; }
 
 .admin-dashboard {
   margin: 0 auto;
-  max-width: 1180px;
-  padding: 2.5rem 1rem;
+  max-width: calc(var(--page-max) + 2 * var(--page-gutter));
+  padding: var(--section-space-lg) var(--page-gutter);
 }
 .admin-hero {
   align-items: flex-end;
@@ -2087,7 +2097,7 @@ a { text-decoration: none; }
   display: flex;
   height: 68px;
   justify-content: space-between;
-  padding: 0 1.55rem;
+  padding: 0 var(--page-gutter);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -2145,8 +2155,8 @@ a { text-decoration: none; }
 .admin-user-menu__dropdown form { margin: 0; }
 .admin-content {
   margin: 0 auto;
-  max-width: 1240px;
-  padding: 3rem 2rem;
+  max-width: calc(var(--page-max) + 2 * var(--page-gutter));
+  padding: var(--section-space-lg) var(--page-gutter);
 }
 .admin-welcome-card,
 .admin-metric-card,
@@ -3794,9 +3804,8 @@ a { text-decoration: none; }
   .admin-menu small { grid-column: 1 / -1; }
   .admin-topbar,
   .admin-welcome-card { align-items: flex-start; flex-direction: column; height: auto; }
-  .admin-topbar { gap: .65rem; padding: .9rem 1rem; position: static; }
+  .admin-topbar { gap: .65rem; padding: .9rem var(--page-gutter); position: static; }
   .admin-breadcrumb { flex-wrap: wrap; }
-  .admin-content { padding: 1.5rem 1rem; }
   .admin-welcome-actions a { flex: 1 1 170px; text-align: center; }
   .admin-metric-grid,
   .admin-insight-grid { grid-template-columns: 1fr; }
@@ -3883,7 +3892,6 @@ a { text-decoration: none; }
     grid-column: 1 / -1;
     padding: .8rem .35rem .25rem;
   }
-  .admin-content { padding: 1rem .75rem; }
   .admin-content h1 { font-size: clamp(1.75rem, 9vw, 2.25rem); }
   .admin-control-section { border-radius: 18px; padding: .9rem; }
   .admin-control-card { min-height: auto; }
@@ -5213,3 +5221,38 @@ a { text-decoration: none; }
   font-weight: 900;
   letter-spacing: .25em;
 }
+
+/* ------------------------------------------------------------------
+   Layout system: fluid gutter, content width and section rhythm.
+   Overrides Bootstrap's stepped container widths and 12px gutter so
+   navbar, page sections and footer share one edge at every width.
+   ------------------------------------------------------------------ */
+.container {
+  max-width: calc(var(--page-max) + 2 * var(--page-gutter));
+  padding-left: max(var(--page-gutter), env(safe-area-inset-left));
+  padding-right: max(var(--page-gutter), env(safe-area-inset-right));
+}
+
+/* Page sections: map Bootstrap's fixed py-4/py-5 bands on top-level
+   containers to the fluid rhythm (less dead space on phones, a bit
+   more air on wide screens). */
+.page-shell .container.py-4 {
+  padding-bottom: var(--section-space) !important;
+  padding-top: var(--section-space) !important;
+}
+.page-shell .container.py-5,
+.page-shell .container.py-md-5,
+.page-shell .container.py-lg-5 {
+  padding-bottom: var(--section-space-lg) !important;
+  padding-top: var(--section-space-lg) !important;
+}
+
+/* Text-heavy pages read better on a narrower column. */
+/* Containers that carry their own cap keep it (this block loads last). */
+.reading-page.container { --page-max: var(--page-max-narrow); }
+.auth-wrap.container { --page-max: 680px; }
+.system-messages.container { max-width: 920px; }
+.reading-page .reading-content { max-width: var(--measure); }
+
+.site-footer { padding-bottom: env(safe-area-inset-bottom); }
+

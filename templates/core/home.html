@@ -34,9 +34,9 @@
   }
 
   .home-hero .home-hero__inner {
-    max-width: 1120px;
-    padding-bottom: 2.25rem !important;
-    padding-top: 2.25rem !important;
+    max-width: calc(1120px + 2 * var(--page-gutter));
+    padding-bottom: var(--section-space) !important;
+    padding-top: var(--section-space) !important;
     position: relative;
     z-index: 1;
   }
@@ -315,8 +315,8 @@
   .home-info.container,
   .home-levels.container,
   .home-benefits.container {
-    padding-bottom: 1.2rem !important;
-    padding-top: 1.2rem !important;
+    padding-bottom: var(--section-space-sm) !important;
+    padding-top: var(--section-space-sm) !important;
   }
 
   .home-levels .home-levels__header {
@@ -682,21 +682,10 @@
   }
 
   @media (max-width: 767.98px) {
-    .home-hero .home-hero__inner {
-      padding-bottom: 2rem !important;
-      padding-top: 2rem !important;
-    }
-
     .home-hero h1 {
       font-size: clamp(2rem, 8vw, 2.55rem);
     }
 
-    .home-info.container,
-    .home-levels.container,
-    .home-benefits.container {
-      padding-bottom: 1.5rem !important;
-      padding-top: 1.5rem !important;
-    }
 
     .home-parent-cta {
       align-items: stretch;
