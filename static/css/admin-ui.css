@@ -1,7 +1,9 @@
 /* ==================================================================
-   Admin UI: table and dialog design ported from SistemaBodega.
+   Admin UI: buttons and dialog design ported from SistemaBodega.
    Everything is scoped under .admin-ui so the student and teacher
-   screens that share main.css are unaffected. Font stays Lexend
+   screens that share main.css are unaffected. The card, toolbar,
+   table, badges, empty state and viewport fit live in the shared
+   data-table.css (.dt scope, loaded from base.html). Font stays Lexend
    (inherited from the app); Bodega's look comes from its palette,
    density, uppercase table heads and soft surfaces, not its font.
    ================================================================== */
@@ -80,63 +82,7 @@
 .admin-ui .resource-page-head h1 { color: var(--aui-text); letter-spacing: -.02em; }
 .admin-ui .resource-page-head p { color: var(--aui-text-2); }
 
-/* ------------------------------------------------------------------
-   Card + toolbar (Bodega .card and .toolbar)
-   ------------------------------------------------------------------ */
-.admin-ui .aui-card {
-  background: var(--aui-surface);
-  border: 1px solid var(--aui-border);
-  border-radius: var(--aui-radius);
-  box-shadow: var(--aui-shadow-soft);
-  min-width: 0;
-  padding: 20px;
-}
-.admin-ui .aui-toolbar {
-  align-items: center;
-  background: var(--aui-muted);
-  border: 1px solid var(--aui-border);
-  border-radius: 14px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: space-between;
-  margin-bottom: 16px;
-  padding: 12px;
-}
-.admin-ui .aui-search-form {
-  align-items: center;
-  display: flex;
-  flex: 1 1 360px;
-  gap: 10px;
-  margin: 0;
-  max-width: 470px;
-}
-.admin-ui .aui-search {
-  flex: 1 1 auto;
-  max-width: 360px;
-  min-width: 0;
-  position: relative;
-}
-.admin-ui .aui-search span {
-  color: var(--aui-text-2);
-  left: 12px;
-  pointer-events: none;
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.admin-ui .aui-search input {
-  background: var(--aui-surface);
-  border: 1px solid var(--aui-border);
-  border-radius: 11px;
-  color: var(--aui-text);
-  min-height: 42px;
-  padding: 10px 12px 10px 34px;
-  transition: border-color .15s ease, box-shadow .15s ease;
-  width: 100%;
-}
-.admin-ui .aui-search input::placeholder { color: #6b7a8f; }
-.admin-ui .aui-search input:focus { border-color: #77a6d8; box-shadow: var(--aui-focus); outline: none; }
+/* Admin-only toolbar tools (the card and toolbar are in data-table.css). */
 .admin-ui .resource-scroll-tools {
   align-items: center;
   display: flex;
@@ -153,68 +99,9 @@
   width: 36px;
 }
 
-/* ------------------------------------------------------------------
-   Data table (Bodega .data-table inside .table-wrap.table-scroll-area)
-   ------------------------------------------------------------------ */
-.admin-ui .aui-table-wrap {
-  max-height: clamp(320px, calc(100vh - 360px), 520px);
-  max-width: 100%;
-  min-width: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-}
-.admin-ui .data-table {
-  --bs-table-bg: transparent;
-  --bs-table-hover-bg: transparent;
-  border-collapse: separate;
-  border-spacing: 0;
-  color: var(--aui-text-cell);
-  font-size: .9rem;
-  margin: 0;
-  min-width: 760px;
-  width: 100%;
-}
-.admin-ui .data-table > :not(caption) > * > * { box-shadow: none; }
-.admin-ui .data-table thead th {
-  background: var(--aui-head);
-  border: 0;
-  color: var(--aui-text-2);
-  font-size: .72rem;
-  font-weight: 800;
-  letter-spacing: .05em;
-  padding: 12px 14px;
-  position: sticky;
-  text-align: left;
-  text-transform: uppercase;
-  top: 0;
-  white-space: nowrap;
-  z-index: 2;
-}
-.admin-ui .data-table thead th:first-child { border-radius: 12px 0 0 12px; }
-.admin-ui .data-table thead th:last-child { border-radius: 0 12px 12px 0; text-align: right; }
-.admin-ui .data-table tbody td {
-  background: var(--aui-surface);
-  border-bottom: 1px solid var(--aui-border);
-  color: var(--aui-text-cell);
-  overflow-wrap: anywhere;
-  padding: 14px;
-  vertical-align: middle;
-}
-.admin-ui .data-table tbody tr:last-child td { border-bottom: 0; }
-.admin-ui .data-table tbody tr:hover td { background: #fbfdff; }
-
-/* Actions column stays pinned while the wide table scrolls sideways. */
-.admin-ui .data-table th:last-child,
-.admin-ui .data-table td:last-child {
-  position: sticky;
-  right: 0;
-}
-.admin-ui .data-table thead th:last-child { z-index: 3; }
-.admin-ui .data-table tbody td:last-child {
-  box-shadow: -12px 0 16px -12px rgba(15, 23, 42, .14);
-  z-index: 1;
-}
-.admin-ui .data-table tbody td[colspan] { box-shadow: none; position: static; }
+/* Resource tables are wide; below this they scroll sideways with the
+   actions column pinned (data-table.css). */
+.admin-ui .data-table { min-width: 760px; }
 
 .admin-ui .resource-title-cell strong,
 .admin-ui .resource-title-cell span { display: block; }
@@ -246,109 +133,17 @@
   white-space: normal;
 }
 
-/* Badges (Bodega .badge pills) */
-.admin-ui .resource-badge,
-.admin-ui .resource-status {
-  border-radius: 999px;
-  display: inline-flex;
-  font-size: .75rem;
-  font-weight: 800;
-  line-height: 1;
-  padding: 7px 10px;
-  white-space: nowrap;
-}
-.admin-ui .resource-badge { background: var(--aui-primary-light); color: var(--aui-primary); }
-.admin-ui .resource-status { background: var(--aui-success-bg); color: var(--aui-success); }
-.admin-ui .resource-status::before { content: none; }
-.admin-ui .resource-status--inactive { background: var(--aui-neutral-bg); color: var(--aui-text-2); }
-
-.admin-ui .table-actions {
-  align-items: center;
-  display: flex;
-  flex-wrap: nowrap;
-  gap: 6px;
-  justify-content: flex-end;
-}
-.admin-ui .table-actions form { margin: 0; }
-/* Actions never break mid-word: the column sizes to its buttons. */
-.admin-ui .data-table td:last-child { overflow-wrap: normal; white-space: nowrap; width: 1%; }
-.admin-ui .table-actions .btn { flex: 0 0 auto; white-space: nowrap; }
-/* Pinned action cells stack per row; lift the one whose kebab menu is open
-   so later rows' pinned cells never paint over its panel. */
-.admin-ui .data-table tbody td:last-child:has(.action-menu[open]) { z-index: 4; }
-
-/* Empty state (Bodega .empty-state.compact) */
-.admin-ui .aui-empty {
-  align-items: center;
-  background: var(--aui-muted);
-  border: 1px dashed var(--aui-border);
-  border-radius: var(--aui-radius);
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-  padding: 26px 18px;
-  text-align: center;
-}
-.admin-ui .aui-empty strong { color: var(--aui-text); font-size: 1rem; }
-.admin-ui .aui-empty__icon {
-  align-items: center;
-  background: var(--aui-primary-light);
-  border-radius: 12px;
-  color: var(--aui-primary);
-  display: inline-flex;
-  font-weight: 800;
-  height: 40px;
-  justify-content: center;
-  width: 40px;
-}
-
-/* ------------------------------------------------------------------
-   Phones: keep the stacked-row table from main.css (.table-stack +
-   data-label) and give it Bodega's surfaces instead of a wide grid.
-   ------------------------------------------------------------------ */
-/* Bodega <=820px: 18px page padding, toolbar stacks, shorter scroll area. */
+/* Bodega <=820px: 18px page padding (the toolbar and scroll area
+   rules are in data-table.css). */
 @media (max-width: 820px) {
   .admin-content.admin-ui { padding: 18px; }
-  .admin-ui .aui-toolbar { align-items: stretch; flex-direction: column; }
-  .admin-ui .aui-search-form { flex-basis: auto; max-width: none; }
-  .admin-ui .aui-search { max-width: none; }
-  .admin-ui .aui-table-wrap { max-height: clamp(260px, calc(100vh - 340px), 440px); }
 }
 
 @media (max-width: 639.98px) {
-  /* Rows become bordered cards here, so the outer card keeps 12px
-     instead of Bodega's 20px to leave the rows room at 375px. */
-  .admin-ui .aui-card { padding: 12px; }
   .admin-ui .resource-scroll-tools { display: none; }
-  .admin-ui .aui-table-wrap { max-height: none; overflow: visible; }
   .admin-ui .data-table { min-width: 0; }
-  .admin-ui .data-table.table-stack > tbody > tr {
-    background: var(--aui-surface);
-    border: 1px solid var(--aui-border);
-    border-radius: 14px;
-    margin-bottom: 10px;
-    padding: 8px 0;
-  }
-  .admin-ui .data-table.table-stack > tbody > tr:last-child { border-bottom: 1px solid var(--aui-border); margin-bottom: 0; }
-  .admin-ui .data-table.table-stack > tbody > tr > td {
-    background: transparent;
-    border: 0;
-    box-shadow: none;
-    /* Re-assert main.css's label column; the desktop cell padding outranks it. */
-    padding: .35rem 1rem .35rem calc(38% + 1.5rem);
-    position: relative;
-    right: auto;
-    white-space: normal;
-    width: auto;
-  }
-  .admin-ui .data-table.table-stack > tbody > tr > td:first-child { padding-bottom: .5rem; padding-left: 1rem; }
-  .admin-ui .data-table.table-stack > tbody > tr > td::before { color: var(--aui-text-2); font-size: .72rem; letter-spacing: .05em; }
-  .admin-ui .data-table.table-stack > tbody > tr:hover td { background: transparent; }
-  .admin-ui .data-table.table-stack > tbody > tr > td[colspan] { padding: 0; }
-  .admin-ui .data-table.table-stack > tbody > tr:has(> td[colspan]) { border: 0; padding: 0; }
   .admin-ui .resource-title-cell strong,
   .admin-ui .resource-title-cell span { max-width: none; white-space: normal; }
-  .admin-ui .table-actions { flex-wrap: wrap; justify-content: flex-start; }
 }
 
 /* ------------------------------------------------------------------
@@ -553,58 +348,10 @@ body.aui-dialog-open { overflow: hidden; }
   .admin-ui .resource-scroll-btn { min-height: var(--touch-target, 44px); }
   .admin-ui .dialog-close { height: var(--touch-target, 44px); width: var(--touch-target, 44px); }
   .admin-ui .resource-scroll-btn { width: var(--touch-target, 44px); }
-  .admin-ui .aui-search input { font-size: 16px; min-height: var(--touch-target, 44px); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .admin-ui .btn,
-  .admin-ui .aui-search input { transition: none; }
+  .admin-ui .btn { transition: none; }
   .admin-ui .dialog-root::backdrop,
   .admin-ui .dialog-content { animation: none; }
-}
-
-/* ------------------------------------------------------------------
-   Viewport-fit list pages (laptop and up): the page itself never
-   scrolls; the sidebar and the table area scroll on their own, and
-   the card keeps its full border and footer in view.
-   ------------------------------------------------------------------ */
-@media (min-width: 821px) and (min-height: 520px) {
-  .admin-console:has(.aui-table-wrap) {
-    height: 100dvh;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .admin-console:has(.aui-table-wrap) .admin-sidebar {
-    height: 100dvh;
-    position: static;
-  }
-  .admin-console:has(.aui-table-wrap) .admin-main {
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .admin-console:has(.aui-table-wrap) .admin-topbar { flex: 0 0 auto; }
-  .admin-content.admin-ui:has(.aui-table-wrap) {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    min-height: 0;
-    /* Auto side margins in a column flexbox shrink-wrap the item;
-       keep the full content width up to the main.css cap. */
-    width: 100%;
-  }
-  .admin-content.admin-ui:has(.aui-table-wrap) > * { flex: 0 0 auto; }
-  .admin-ui .aui-card:has(.aui-table-wrap) {
-    display: flex;
-    flex: 1 1 auto;
-    flex-direction: column;
-    min-height: 0;
-  }
-  .admin-ui .aui-card:has(.aui-table-wrap) > * { flex: 0 0 auto; }
-  .admin-ui .aui-card > .aui-table-wrap {
-    flex: 1 1 auto;
-    max-height: none;
-    min-height: 120px;
-  }
 }

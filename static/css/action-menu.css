@@ -1,18 +1,18 @@
 /* ==================================================================
    Row action menu ported from SistemaBodega (.action-menu): a
    <details> kebab whose panel lists the row actions. Shared by the
-   admin tables (.admin-ui, navy tokens) and the teacher tables
-   (main.css palette); colours fall back to the teacher palette when
-   the admin tokens are not in scope. Behaviour lives in action-menu.js.
+   admin tables (.admin-ui) and the shared .dt tables (same navy
+   tokens); colours fall back to the teacher palette when neither
+   scope is present. Behaviour lives in action-menu.js.
    ================================================================== */
 
 .action-menu {
-  --am-text: var(--aui-text, #102033);
-  --am-text-2: var(--aui-text-2, #5b6b80);
-  --am-surface: var(--aui-surface, #ffffff);
-  --am-hover: var(--aui-muted, #eef8fb);
-  --am-border: var(--aui-border, #dbe7ef);
-  --am-accent: var(--aui-primary, #1f7389);
+  --am-text: var(--aui-text, var(--dt-text, #102033));
+  --am-text-2: var(--aui-text-2, var(--dt-text-2, #5b6b80));
+  --am-surface: var(--aui-surface, var(--dt-surface, #ffffff));
+  --am-hover: var(--aui-muted, var(--dt-muted, #eef8fb));
+  --am-border: var(--aui-border, var(--dt-border, #dbe7ef));
+  --am-accent: var(--aui-primary, var(--dt-primary, #1f7389));
   --am-danger: var(--aui-danger, #a43b32);
   --am-danger-bg: var(--aui-danger-bg, #fff0ee);
   --am-shadow: 0 14px 34px rgba(15, 23, 42, .12);

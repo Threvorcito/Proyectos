@@ -15,7 +15,7 @@
       </div>
     </section>
 
-    <section class="implementation-grid mt-4">
+    <section class="implementation-grid mt-4 dt">
       <article class="implementation-card implementation-card--wide">
         <div class="lesson-report-detail__metrics">
           <div><span>Asignados</span><strong>{{ assigned_count }}</strong></div>
@@ -25,13 +25,13 @@
         </div>
       </article>
 
-      <article class="implementation-card implementation-card--wide">
+      <article class="implementation-card implementation-card--wide dt-card">
         <div class="implementation-card__header">
           <h2>Seguimiento por estudiante</h2>
           <span>Actualiza estado, fecha de cierre y notas docentes</span>
         </div>
-        <div class="table-responsive">
-          <table class="table table-stack lesson-report__table lesson-report-detail__table align-middle">
+        <div class="dt-wrap">
+          <table class="table table-stack lesson-report__table lesson-report-detail__table data-table align-middle">
             <thead>
               <tr>
                 <th>Estudiante</th>
@@ -39,7 +39,7 @@
                 <th>Estado</th>
                 <th>Notas del docente</th>
                 <th>Completado</th>
-                <th class="text-end">Acción</th>
+                <th class="text-end dt-actions">Acción</th>
               </tr>
             </thead>
             <tbody>
@@ -58,7 +58,7 @@
                         </select>
                       </form>
                     {% else %}
-                      <span class="lesson-report__status {% if assignment.status == 'completed' %}lesson-report__status--active{% endif %}">{{ assignment.get_status_display }}</span>
+                      <span class="dt-status {% if assignment.status != 'completed' %}dt-status--muted{% endif %}">{{ assignment.get_status_display }}</span>
                     {% endif %}
                   </td>
                   <td data-label="Notas del docente">
@@ -69,16 +69,18 @@
                     {% endif %}
                   </td>
                   <td data-label="Completado">{{ assignment.completed_at|date:'d/m/Y H:i'|default:'Pendiente' }}</td>
-                  <td data-label="Acción" class="text-end">
+                  <td data-label="Acción" class="text-end dt-actions">
+                    <div class="table-actions">
                     {% if can_update_assignments %}
                       <button class="btn btn-sm btn-primary" type="submit" form="assignment-form-{{ assignment.pk }}">Guardar</button>
                     {% else %}
                       <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:student_report' assignment.student.pk %}">Ver estudiante</a>
                     {% endif %}
+                    </div>
                   </td>
                 </tr>
               {% empty %}
-                <tr><td colspan="6"><div class="lesson-report__empty"><strong>No hay estudiantes asignados.</strong><span>Edita el plan y selecciona estudiantes para iniciar seguimiento.</span></div></td></tr>
+                <tr><td colspan="6"><div class="dt-empty"><strong>No hay estudiantes asignados.</strong><span>Edita el plan y selecciona estudiantes para iniciar seguimiento.</span></div></td></tr>
               {% endfor %}
             </tbody>
           </table>

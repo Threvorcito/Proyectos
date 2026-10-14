@@ -79,7 +79,7 @@
       </div>
 
       {% if teacher_profile %}
-        <section class="profile-report-card">
+        <section class="profile-report-card dt">
           <div class="profile-report-card__header">
             <div>
               <span class="eyebrow">Reporte docente</span>
@@ -120,9 +120,9 @@
                 <h3>Planes que has creado</h3>
                 <span>Últimos registros</span>
               </div>
-              <div class="table-responsive">
-                <table class="table table-stack align-middle">
-                  <thead><tr><th>Plan</th><th>Materia</th><th>Nivel</th><th>Fecha</th><th>Recursos</th><th></th></tr></thead>
+              <div class="dt-wrap">
+                <table class="table table-stack data-table align-middle">
+                  <thead><tr><th>Plan</th><th>Materia</th><th>Nivel</th><th>Fecha</th><th>Recursos</th><th class="dt-actions"></th></tr></thead>
                   <tbody>
                     {% for plan in teacher_lesson_plans %}
                       <tr>
@@ -131,12 +131,12 @@
                         <td data-label="Nivel">{{ plan.level }}</td>
                         <td data-label="Fecha">{{ plan.planned_date|date:'d/m/Y'|default:'Sin fecha' }}</td>
                         <td data-label="Recursos">{{ plan.activities.count }} act. · {{ plan.readings.count }} lect.</td>
-                        <td data-label="" class="text-end">
-                          {% if teacher_profile.can_edit_lesson_plans %}<a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>{% endif %}
+                        <td data-label="" class="dt-actions">
+                          <div class="table-actions">{% if teacher_profile.can_edit_lesson_plans %}<a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plan_update' plan.pk %}">Editar</a>{% endif %}</div>
                         </td>
                       </tr>
                     {% empty %}
-                      <tr><td colspan="6" class="profile-report-empty">Todavía no has creado planes.</td></tr>
+                      <tr><td colspan="6"><div class="dt-empty"><strong>Todavía no has creado planes.</strong></div></td></tr>
                     {% endfor %}
                   </tbody>
                 </table>
@@ -146,14 +146,14 @@
             {% if teacher_profile.can_manage_games %}
             <article class="profile-report-table">
               <div class="profile-report-table__title"><h3>Juegos activos</h3><span>Recursos lúdicos</span></div>
-              <div class="table-responsive">
-                <table class="table table-stack align-middle">
+              <div class="dt-wrap">
+                <table class="table table-stack data-table align-middle">
                   <thead><tr><th>Juego</th><th>Grado</th><th>Habilidad</th></tr></thead>
                   <tbody>
                     {% for game in teacher_games %}
                       <tr><td data-label="Juego"><strong>{{ game.name }}</strong></td><td data-label="Grado">{{ game.get_grade_display }}</td><td data-label="Habilidad">{{ game.skill }}</td></tr>
                     {% empty %}
-                      <tr><td colspan="3" class="profile-report-empty">No hay juegos activos.</td></tr>
+                      <tr><td colspan="3"><div class="dt-empty"><strong>No hay juegos activos.</strong></div></td></tr>
                     {% endfor %}
                   </tbody>
                 </table>
@@ -164,14 +164,14 @@
             {% if teacher_profile.can_manage_activities %}
             <article class="profile-report-table">
               <div class="profile-report-table__title"><h3>Actividades recientes</h3><span>Práctica guiada</span></div>
-              <div class="table-responsive">
-                <table class="table table-stack align-middle">
+              <div class="dt-wrap">
+                <table class="table table-stack data-table align-middle">
                   <thead><tr><th>Actividad</th><th>Materia</th><th>Puntos</th></tr></thead>
                   <tbody>
                     {% for activity in teacher_activities %}
                       <tr><td data-label="Actividad"><strong>{{ activity.title }}</strong><small>{{ activity.get_activity_type_display }}</small></td><td data-label="Materia">{{ activity.subject|default:'Sin materia' }}</td><td data-label="Puntos">{{ activity.points }}</td></tr>
                     {% empty %}
-                      <tr><td colspan="3" class="profile-report-empty">No hay actividades activas.</td></tr>
+                      <tr><td colspan="3"><div class="dt-empty"><strong>No hay actividades activas.</strong></div></td></tr>
                     {% endfor %}
                   </tbody>
                 </table>
@@ -182,14 +182,14 @@
             {% if teacher_profile.can_manage_readings %}
             <article class="profile-report-table">
               <div class="profile-report-table__title"><h3>Lecturas activas</h3><span>Biblioteca de apoyo</span></div>
-              <div class="table-responsive">
-                <table class="table table-stack align-middle">
+              <div class="dt-wrap">
+                <table class="table table-stack data-table align-middle">
                   <thead><tr><th>Lectura</th><th>Grado</th><th>Tiempo</th></tr></thead>
                   <tbody>
                     {% for reading in teacher_readings %}
                       <tr><td data-label="Lectura"><strong>{{ reading.title }}</strong></td><td data-label="Grado">{{ reading.get_grade_display }}</td><td data-label="Tiempo">{{ reading.estimated_time }} min</td></tr>
                     {% empty %}
-                      <tr><td colspan="3" class="profile-report-empty">No hay lecturas activas.</td></tr>
+                      <tr><td colspan="3"><div class="dt-empty"><strong>No hay lecturas activas.</strong></div></td></tr>
                     {% endfor %}
                   </tbody>
                 </table>

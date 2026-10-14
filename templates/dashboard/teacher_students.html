@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 {% block title %}Mis alumnos | {{ site_name }}{% endblock %}
 {% block content %}
-<div class="teacher-dashboard">
+<div class="teacher-dashboard dt">
   <div class="container py-5">
-    <section class="teacher-report-card teacher-students-card">
+    <section class="teacher-report-card teacher-students-card dt-card">
       <div class="teacher-report-card__header">
         <div>
           <span class="eyebrow">Panel docente</span>
@@ -16,10 +16,19 @@
         </div>
       </div>
 
-      <div class="table-responsive teacher-students-table-wrap mt-3">
-        <table class="table table-stack teacher-table teacher-students-table align-middle">
+      <div class="dt-toolbar">
+        <form class="dt-search-form" method="get" role="search">
+          <div class="dt-search">
+            <span aria-hidden="true">⌕</span>
+            <input type="search" name="q" value="{{ search_term }}" placeholder="Buscar alumnos por nombre o usuario..." aria-label="Buscar alumnos">
+          </div>
+          <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+        </form>
+      </div>
+      <div class="dt-wrap dt-wrap--page">
+        <table class="table table-stack teacher-table data-table align-middle">
           <thead>
-            <tr><th>Estudiante</th><th>Colegio</th><th>Nivel</th><th>Progreso</th><th>Puntos</th><th>Última actividad</th><th class="text-end">Acciones</th></tr>
+            <tr><th>Estudiante</th><th>Colegio</th><th>Nivel</th><th>Progreso</th><th>Puntos</th><th>Última actividad</th><th class="text-end dt-actions">Acciones</th></tr>
           </thead>
           <tbody>
             {% for student in students %}
@@ -42,10 +51,11 @@
                 </td>
                 <td data-label="Colegio">{{ student.get_school_display }}</td>
                 <td data-label="Nivel">{% if student.current_level %}Nivel {{ student.current_level.number }}{% else %}Sin nivel{% endif %}</td>
-                <td data-label="Progreso"><span class="teacher-badge">{{ student.completed_activities }} completadas</span></td>
+                <td data-label="Progreso"><span class="dt-badge">{{ student.completed_activities }} completadas</span></td>
                 <td data-label="Puntos">{{ student.points }}</td>
                 <td data-label="Última actividad">{{ student.last_activity_at|date:'d/m/Y H:i'|default:'Sin actividad' }}</td>
-                <td data-label="Acciones" class="teacher-students-table__actions-cell">
+                <td data-label="Acciones" class="dt-actions">
+                  <div class="table-actions">
                   <details class="action-menu">
                     {% include 'dashboard/partials/action_menu_toggle.html' with name=student.display_name %}
                     <div class="action-menu-panel">
@@ -68,11 +78,12 @@
                       {% endif %}
                     </div>
                   </details>
+                  </div>
                 </td>
               </tr>
             {% empty %}
               <tr>
-                <td colspan="7" class="teacher-table__empty">Todavía no tienes alumnos vinculados. Usa Agregar alumno para registrar el primero.</td>
+                <td colspan="7"><div class="dt-empty"><strong>{% if search_term %}No hay resultados para “{{ search_term }}”.{% else %}Todavía no tienes alumnos vinculados. Usa Agregar alumno para registrar el primero.{% endif %}</strong></div></td>
               </tr>
             {% endfor %}
           </tbody>

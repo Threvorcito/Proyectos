@@ -2303,3 +2303,67 @@ class ResourceListPaginationTests(TestCase):
         self.assertContains(response, 'Alumno Pag 11')
         self.assertNotContains(response, 'Alumno Pag 10')
         self.assertContains(response, 'Mostrando 11 a 12 de 12 registros')
+
+    def _teacher_with_students(self, count=12, **permissions):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        teacher_user = CustomUser.objects.create_user(
+            username='docentebuscar',
+            email='docentebuscar@example.com',
+            password='Docente123!',
+            role=CustomUser.Role.TEACHER,
+        )
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Buscar', **permissions)
+        for number in range(1, count + 1):
+            user = CustomUser.objects.create_user(
+                username=f'albus{number:02d}',
+                email=f'albus{number:02d}@example.com',
+                password=None,
+                role=CustomUser.Role.STUDENT,
+            )
+            teacher.students.add(StudentProfile.objects.create(
+                user=user, name=f'Alumno Pag {number:02d}', grade='1', reading_level=level, current_level=level,
+            ))
+        self.client.force_login(teacher_user)
+        return teacher, level
+
+    def test_teacher_students_search_filters_by_name(self):
+        teacher, level = self._teacher_with_students()
+        user = CustomUser.objects.create_user(username='zuleta', email='zuleta@example.com', password=None, role=CustomUser.Role.STUDENT)
+        teacher.students.add(StudentProfile.objects.create(user=user, name='Zuleta Especial', grade='1', reading_level=level, current_level=level))
+
+        response = self.client.get(reverse('dashboard:teacher_students'), {'q': 'zuleta'})
+
+        self.assertContains(response, 'Zuleta Especial')
+        self.assertNotContains(response, 'Alumno Pag 01')
+        self.assertContains(response, 'value="zuleta"')
+        self.assertContains(response, 'Mostrando 1 a 1 de 1 registros')
+
+    def test_lesson_plan_list_search_and_total(self):
+        teacher, level = self._teacher_with_students(count=0, can_create_lesson_plans=True)
+        subject = Subject.objects.create(name='Lengua y Literatura')
+        for number in range(1, 13):
+            LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title=f'Plan Pag {number:02d}', topic='Lectura', objective='Leer.')
+        LessonPlan.objects.create(teacher=teacher, subject=subject, level=level, grade='1', title='Fotosintesis', topic='Plantas', objective='Observar.')
+
+        response = self.client.get(reverse('dashboard:lesson_plans'))
+        self.assertContains(response, '<strong>13</strong>', html=False)
+
+        response = self.client.get(reverse('dashboard:lesson_plans'), {'q': 'fotosint'})
+        self.assertContains(response, 'Fotosintesis')
+        self.assertNotContains(response, 'Plan Pag 01')
+        self.assertContains(response, 'value="fotosint"')
+        self.assertContains(response, 'Mostrando 1 a 1 de 1 registros')
+
+    def test_teacher_dashboard_students_table_has_its_own_page_param(self):
+        self._teacher_with_students()
+
+        response = self.client.get(reverse('dashboard:teacher'))
+        self.assertContains(response, 'Alumno Pag 10')
+        self.assertNotContains(response, 'Alumno Pag 11')
+        self.assertContains(response, '?students_page=2')
+        self.assertEqual(response.context['summary']['students'], 12)
+
+        response = self.client.get(reverse('dashboard:teacher'), {'students_page': 2})
+        self.assertContains(response, 'Alumno Pag 11')
+        self.assertNotContains(response, 'Alumno Pag 10')
+        self.assertContains(response, 'Mostrando 11 a 12 de 12 registros')

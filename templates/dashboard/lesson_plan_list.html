@@ -21,7 +21,7 @@
 {% else %}
 <div class="container py-5">
 {% endif %}
-      <section class="lesson-report">
+      <section class="lesson-report dt">
         <div class="lesson-report__hero">
           <div>
             <span class="eyebrow">Planificación docente</span>
@@ -43,7 +43,7 @@
         <div class="lesson-report__metrics" aria-label="Resumen de planes">
           <article>
             <span>Total de planes</span>
-            <strong>{{ plans.count }}</strong>
+            <strong>{{ plans_total|default:page_obj.paginator.count }}</strong>
           </article>
           <article>
             <span>Vista</span>
@@ -55,15 +55,24 @@
           </article>
         </div>
 
-        <div class="lesson-report__table-card">
+        <div class="lesson-report__table-card dt-card">
           <div class="lesson-report__table-head">
             <div>
               <h2>Reporte de planificaciones</h2>
               <p>Revisa materia, nivel, grado, fecha y recursos vinculados.</p>
             </div>
           </div>
-          <div class="table-responsive">
-            <table class="table table-stack lesson-report__table align-middle">
+          <div class="dt-toolbar">
+            <form class="dt-search-form" method="get" role="search">
+              <div class="dt-search">
+                <span aria-hidden="true">⌕</span>
+                <input type="search" name="q" value="{{ search_term }}" placeholder="Buscar por plan, tema, materia o docente..." aria-label="Buscar planes de clase">
+              </div>
+              <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+            </form>
+          </div>
+          <div class="dt-wrap dt-wrap--page">
+            <table class="table table-stack lesson-report__table data-table align-middle">
               <thead>
                 <tr>
                   <th>Plan</th>
@@ -74,7 +83,7 @@
                   <th>Fecha</th>
                   <th>Recursos</th>
                   <th>Estado</th>
-                  <th class="text-end">Acciones</th>
+                  <th class="text-end dt-actions">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -93,19 +102,21 @@
                     <td data-label="Grado">{{ plan.get_grade_display }}</td>
                     <td data-label="Fecha">{{ plan.planned_date|date:'d/m/Y'|default:'Sin fecha' }}</td>
                     <td data-label="Recursos">
-                      <span class="lesson-report__pill">{{ plan.activities.count }} actividades</span>
-                      <span class="lesson-report__pill">{{ plan.readings.count }} lecturas</span>
-                      <span class="lesson-report__pill">{{ plan.games.count }} juegos</span>
+                      <span class="dt-badges">
+                        <span class="dt-badge">{{ plan.activities.count }} actividades</span>
+                        <span class="dt-badge">{{ plan.readings.count }} lecturas</span>
+                        <span class="dt-badge">{{ plan.games.count }} juegos</span>
+                      </span>
                     </td>
                     <td data-label="Estado">
                       {% if plan.is_active and plan.status != 'archived' %}
-                        <span class="lesson-report__status lesson-report__status--active">{{ plan.get_status_display }}</span>
+                        <span class="dt-status">{{ plan.get_status_display }}</span>
                       {% else %}
-                        <span class="lesson-report__status">{{ plan.get_status_display|default:'Inactivo' }}</span>
+                        <span class="dt-status dt-status--muted">{{ plan.get_status_display|default:'Inactivo' }}</span>
                       {% endif %}
                     </td>
-                    <td data-label="Acciones" class="text-end">
-                      <div class="lesson-report__row-actions">
+                    <td data-label="Acciones" class="text-end dt-actions">
+                      <div class="table-actions">
                         <details class="action-menu">
                           {% include 'dashboard/partials/action_menu_toggle.html' with name=plan.title %}
                           <div class="action-menu-panel">
@@ -120,9 +131,9 @@
                 {% empty %}
                   <tr>
                     <td colspan="9">
-                      <div class="lesson-report__empty">
-                        <strong>No hay planes creados todavía.</strong>
-                        <span>{% if request.user.teacher_profile.can_create_lesson_plans or request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}Usa el botón Agregar plan para registrar tu primera planificación.{% else %}No hay planes disponibles para tu perfil.{% endif %}</span>
+                      <div class="dt-empty">
+                        <strong>{% if search_term %}No hay resultados para “{{ search_term }}”.{% else %}No hay planes creados todavía.{% endif %}</strong>
+                        <span>{% if search_term %}Prueba con otro plan, tema, materia o docente.{% elif request.user.teacher_profile.can_create_lesson_plans or request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}Usa el botón Agregar plan para registrar tu primera planificación.{% else %}No hay planes disponibles para tu perfil.{% endif %}</span>
                       </div>
                     </td>
                   </tr>

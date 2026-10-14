@@ -1,0 +1,339 @@
+/* ==================================================================
+   Shared list tables (SistemaBodega look). Used by the admin console
+   (admin-ui.css only adds its buttons, dialogs and column caps) and by
+   every teacher/report table. Opt in with `.dt` on a wrapper; inside it:
+     .dt-card          card surface (put it on the section that owns the table)
+     .dt-toolbar       muted search bar: .dt-search-form > .dt-search + button
+     .dt-wrap          scroll area around the table (.dt-wrap--page: taller cap)
+     .data-table       Bodega table (with .table-stack + data-label for phones)
+     .dt-actions       pinned actions column (th and td)
+     .table-actions    flex row of row actions inside .dt-actions
+     .dt-badge         navy pill; .dt-badges groups several
+     .dt-status        green pill; --muted grey
+     .dt-empty         dashed empty state
+     .dt-fit / .dt-fit-col  admin-console viewport fit (see the end)
+   Specificity is .dt + class (two classes), same as the old .admin-ui
+   scope, so the admin console renders exactly as before.
+   ================================================================== */
+
+.dt {
+  --dt-primary: #173b68;
+  --dt-primary-light: #e9f1fb;
+  --dt-surface: #ffffff;
+  --dt-muted: #f8fafc;
+  --dt-head: #f7f9fc;
+  --dt-border: #dce5f0;
+  --dt-text: #142033;
+  --dt-text-cell: #26354d;
+  --dt-text-2: #5b6b80;
+  --dt-success: #287a4f;
+  --dt-success-bg: #e8f5ee;
+  --dt-neutral-bg: #eef2f7;
+  --dt-focus: 0 0 0 4px rgba(23, 59, 104, .14);
+  --dt-shadow-soft: 0 14px 34px rgba(15, 23, 42, .07);
+  --dt-radius: 16px;
+}
+
+/* ------------------------------------------------------------------
+   Card + toolbar (Bodega .card and .toolbar)
+   ------------------------------------------------------------------ */
+.dt .dt-card {
+  background: var(--dt-surface);
+  border: 1px solid var(--dt-border);
+  border-radius: var(--dt-radius);
+  box-shadow: var(--dt-shadow-soft);
+  min-width: 0;
+  padding: 20px;
+}
+.dt .dt-toolbar {
+  align-items: center;
+  background: var(--dt-muted);
+  border: 1px solid var(--dt-border);
+  border-radius: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 12px;
+}
+.dt .dt-search-form {
+  align-items: center;
+  display: flex;
+  flex: 1 1 360px;
+  gap: 10px;
+  margin: 0;
+  max-width: 470px;
+}
+.dt .dt-search {
+  flex: 1 1 auto;
+  max-width: 360px;
+  min-width: 0;
+  position: relative;
+}
+.dt .dt-search span {
+  color: var(--dt-text-2);
+  left: 12px;
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.dt .dt-search input {
+  background: var(--dt-surface);
+  border: 1px solid var(--dt-border);
+  border-radius: 11px;
+  color: var(--dt-text);
+  min-height: 42px;
+  padding: 10px 12px 10px 34px;
+  transition: border-color .15s ease, box-shadow .15s ease;
+  width: 100%;
+}
+.dt .dt-search input::placeholder { color: #6b7a8f; }
+.dt .dt-search input:focus { border-color: #77a6d8; box-shadow: var(--dt-focus); outline: none; }
+
+/* ------------------------------------------------------------------
+   Data table (Bodega .data-table inside .table-wrap.table-scroll-area)
+   ------------------------------------------------------------------ */
+.dt .dt-wrap {
+  max-height: clamp(320px, calc(100vh - 360px), 520px);
+  max-width: 100%;
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.dt .data-table {
+  --bs-table-bg: transparent;
+  --bs-table-hover-bg: transparent;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--dt-text-cell);
+  font-size: .9rem;
+  margin: 0;
+  width: 100%;
+}
+.dt .data-table > :not(caption) > * > * { box-shadow: none; }
+.dt .data-table thead th {
+  background: var(--dt-head);
+  border: 0;
+  color: var(--dt-text-2);
+  font-size: .72rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  padding: 12px 14px;
+  position: sticky;
+  text-align: left;
+  text-transform: uppercase;
+  top: 0;
+  white-space: nowrap;
+  z-index: 2;
+}
+.dt .data-table thead th:first-child { border-radius: 12px 0 0 12px; }
+.dt .data-table thead th:last-child { border-radius: 0 12px 12px 0; }
+.dt .data-table thead th:only-child { border-radius: 12px; }
+.dt .data-table tbody td {
+  background: var(--dt-surface);
+  border-bottom: 1px solid var(--dt-border);
+  color: var(--dt-text-cell);
+  overflow-wrap: anywhere;
+  padding: 14px;
+  vertical-align: middle;
+}
+.dt .data-table tbody tr:last-child td { border-bottom: 0; }
+.dt .data-table tbody tr:hover td { background: #fbfdff; }
+.dt .data-table td strong { color: var(--dt-text); }
+.dt .data-table td small { color: var(--dt-text-2); }
+
+/* Actions column stays pinned while a wide table scrolls sideways. */
+.dt .data-table .dt-actions {
+  position: sticky;
+  right: 0;
+}
+.dt .data-table thead th.dt-actions { text-align: right; z-index: 3; }
+.dt .data-table tbody td.dt-actions {
+  box-shadow: -12px 0 16px -12px rgba(15, 23, 42, .14);
+  overflow-wrap: normal;
+  white-space: nowrap;
+  width: 1%;
+  z-index: 1;
+}
+/* Pinned action cells stack per row; lift the one whose kebab menu is open
+   so later rows' pinned cells never paint over its panel. */
+.dt .data-table tbody td.dt-actions:has(.action-menu[open]) { z-index: 4; }
+
+.dt .table-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+.dt .table-actions form { margin: 0; }
+.dt .table-actions .btn { flex: 0 0 auto; white-space: nowrap; }
+
+/* Badges (Bodega .badge pills) */
+.dt .dt-badge,
+.dt .dt-status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: .75rem;
+  font-weight: 800;
+  line-height: 1;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+.dt .dt-badge { background: var(--dt-primary-light); color: var(--dt-primary); }
+.dt .dt-status { background: var(--dt-success-bg); color: var(--dt-success); }
+.dt .dt-status--muted { background: var(--dt-neutral-bg); color: var(--dt-text-2); }
+.dt .dt-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Empty state (Bodega .empty-state.compact) */
+.dt .dt-empty {
+  align-items: center;
+  background: var(--dt-muted);
+  border: 1px dashed var(--dt-border);
+  border-radius: var(--dt-radius);
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  padding: 26px 18px;
+  text-align: center;
+}
+.dt .dt-empty strong { color: var(--dt-text); font-size: 1rem; }
+.dt .dt-empty span { color: var(--dt-text-2); }
+.dt .dt-empty__icon {
+  align-items: center;
+  background: var(--dt-primary-light);
+  border-radius: 12px;
+  color: var(--dt-primary);
+  display: inline-flex;
+  font-weight: 800;
+  height: 40px;
+  justify-content: center;
+  width: 40px;
+}
+/* The empty cell spans the table; it is never a pinned actions cell. */
+.dt .data-table tbody td[colspan] { white-space: normal; }
+
+/* A list page outside the admin console (site navbar + footer): the table
+   area is capped to the viewport so its own scroll is used and the
+   pagination stays right under it. */
+@media (min-width: 640px) {
+  .dt .dt-wrap.dt-wrap--page { max-height: max(320px, calc(100dvh - 240px)); }
+}
+
+/* ------------------------------------------------------------------
+   Bodega <=820px: toolbar stacks, shorter scroll area.
+   ------------------------------------------------------------------ */
+@media (max-width: 820px) {
+  .dt .dt-toolbar { align-items: stretch; flex-direction: column; }
+  .dt .dt-search-form { flex-basis: auto; max-width: none; }
+  .dt .dt-search { max-width: none; }
+  .dt .dt-wrap { max-height: clamp(260px, calc(100vh - 340px), 440px); }
+}
+
+/* ------------------------------------------------------------------
+   Phones: keep the stacked-row table from main.css (.table-stack +
+   data-label) and give it Bodega's surfaces instead of a wide grid.
+   ------------------------------------------------------------------ */
+@media (max-width: 639.98px) {
+  /* Rows become bordered cards here, so the outer card keeps 12px
+     instead of Bodega's 20px to leave the rows room at 375px. */
+  .dt .dt-card { padding: 12px; }
+  .dt .dt-wrap { max-height: none; overflow: visible; }
+  .dt .data-table { min-width: 0; }
+  .dt .data-table.table-stack > tbody > tr {
+    background: var(--dt-surface);
+    border: 1px solid var(--dt-border);
+    border-radius: 14px;
+    margin-bottom: 10px;
+    padding: 8px 0;
+  }
+  .dt .data-table.table-stack > tbody > tr:last-child { border-bottom: 1px solid var(--dt-border); margin-bottom: 0; }
+  .dt .data-table.table-stack > tbody > tr > td {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    /* Re-assert main.css's label column; the desktop cell padding outranks it. */
+    padding: .35rem 1rem .35rem calc(38% + 1.5rem);
+    position: relative;
+    right: auto;
+    text-align: left;
+    white-space: normal;
+    width: auto;
+  }
+  .dt .data-table.table-stack > tbody > tr > td:first-child,
+  .dt .data-table.table-stack > tbody > tr > td[data-label=""] { padding-bottom: .5rem; padding-left: 1rem; }
+  .dt .data-table.table-stack > tbody > tr > td::before { color: var(--dt-text-2); font-size: .72rem; letter-spacing: .05em; }
+  .dt .data-table.table-stack > tbody > tr:hover td { background: transparent; }
+  .dt .data-table.table-stack > tbody > tr > td[colspan] { padding: 0; }
+  .dt .data-table.table-stack > tbody > tr:has(> td[colspan]) { border: 0; padding: 0; }
+  .dt .table-actions { flex-wrap: wrap; justify-content: flex-start; }
+}
+
+/* Touch: keep 44px targets (Bodega's compact sizes are pointer-only). */
+@media (pointer: coarse) {
+  .dt .dt-search input { font-size: 16px; min-height: var(--touch-target, 44px); }
+  .dt .table-actions .btn { min-height: var(--touch-target, 44px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dt .dt-search input { transition: none; }
+}
+
+/* ------------------------------------------------------------------
+   Viewport-fit list pages in the admin console (laptop and up): the
+   page itself never scrolls; the sidebar and the table area scroll on
+   their own, and the card keeps its full border and footer in view.
+   Mark the scroll area .dt-fit and every ancestor between it and
+   .admin-content .dt-fit-col.
+   ------------------------------------------------------------------ */
+@media (min-width: 821px) and (min-height: 520px) {
+  .admin-console:has(.dt-fit) {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .admin-console:has(.dt-fit) .admin-sidebar {
+    height: 100dvh;
+    position: static;
+  }
+  .admin-console:has(.dt-fit) .admin-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .admin-console:has(.dt-fit) .admin-topbar { flex: 0 0 auto; }
+  .admin-console:has(.dt-fit) .admin-content,
+  .admin-console:has(.dt-fit) .dt-fit-col {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    /* Auto side margins in a column flexbox shrink-wrap the item;
+       keep the full content width up to the main.css cap. */
+    width: 100%;
+  }
+  .admin-console:has(.dt-fit) :is(.admin-content, .dt-fit-col) > * { flex: 0 0 auto; }
+  .admin-console:has(.dt-fit) :is(.admin-content, .dt-fit-col) > .dt-fit-col { flex: 1 1 auto; }
+  .admin-console:has(.dt-fit) .dt-fit-col > .dt-fit {
+    flex: 1 1 auto;
+    max-height: none;
+    min-height: 120px;
+  }
+}
+
+/* ------------------------------------------------------------------
+   Existing page cards that now carry .dt-card: their header bands sit
+   inside the Bodega card padding instead of bleeding to its edges.
+   ------------------------------------------------------------------ */
+.dt .dt-card > :is(.teacher-report-card__header, .implementation-card__header, .lesson-report__table-head) {
+  background: none;
+  border-bottom: 0;
+  padding: 0 0 16px;
+}
+.dt .dt-card.feature-card:hover { transform: none; }
+.dt .dt-card.lesson-report__table-card,
+.dt .dt-card.teacher-report-card,
+.dt .dt-card.implementation-card { overflow: visible; }

@@ -1,8 +1,8 @@
 /* ==================================================================
    List tables shared by admin and teacher pages, ported from
    SistemaBodega: its cell spacing (th 12px 14px, td 14px) and its
-   pagination footer (partials/pagination.html). Colours fall back to
-   the teacher palette when the admin (.admin-ui) tokens are absent.
+   pagination footer (partials/pagination.html). Colours come from the
+   admin (.admin-ui) or shared table (.dt) tokens, else the teacher palette.
    ================================================================== */
 
 /* Bodega cell spacing on wide screens; phones keep the stacked rows. */
@@ -12,11 +12,11 @@
 }
 
 .list-pagination {
-  --pg-text: var(--aui-text-2, #5b6b80);
-  --pg-link: var(--aui-primary, #1f7389);
-  --pg-border: var(--aui-border, #dbe7ef);
-  --pg-surface: var(--aui-surface, #ffffff);
-  --pg-hover: var(--aui-muted, #eef8fb);
+  --pg-text: var(--aui-text-2, var(--dt-text-2, #5b6b80));
+  --pg-link: var(--aui-primary, var(--dt-primary, #1f7389));
+  --pg-border: var(--aui-border, var(--dt-border, #dbe7ef));
+  --pg-surface: var(--aui-surface, var(--dt-surface, #ffffff));
+  --pg-hover: var(--aui-muted, var(--dt-muted, #eef8fb));
   align-items: center;
   border-top: 1px solid var(--pg-border);
   color: var(--pg-text);
@@ -53,10 +53,10 @@
   .list-pagination .pagination-actions { width: 100%; }
   .list-pagination .pagination-link { flex: 1 1 0; }
 }
-/* Teacher cards drop their side padding on phones; keep the footer
-   text off the card edge. The admin card keeps its own padding. */
+/* Cards without their own padding on phones: keep the footer text off
+   the card edge. The shared .dt-card keeps its own padding. */
 @media (max-width: 639.98px) {
-  .list-pagination:not(.aui-card > .list-pagination) { padding-inline: 12px; }
+  .list-pagination:not(.dt-card > .list-pagination) { padding-inline: 12px; }
 }
 @media (pointer: coarse) {
   .list-pagination .pagination-link { min-height: 44px; }

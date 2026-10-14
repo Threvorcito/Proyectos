@@ -513,8 +513,15 @@ def lesson_plan_list(request):
             messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
             return redirect('dashboard:teacher')
         plans = plans.filter(teacher=teacher)
+    plans_total = plans.count()
+    search_term = request.GET.get('q', '').strip()
+    if search_term:
+        plans = plans.filter(
+            Q(title__icontains=search_term) | Q(topic__icontains=search_term)
+            | Q(subject__name__icontains=search_term) | Q(teacher__name__icontains=search_term)
+        )
     page_obj = Paginator(plans.order_by('-planned_date', '-created_at', '-pk'), RESOURCE_PAGE_SIZE).get_page(request.GET.get('page'))
-    return render(request, 'dashboard/lesson_plan_list.html', {'plans': page_obj, 'page_obj': page_obj, 'create_form': LessonPlanForm(teacher=teacher, choose_teacher=teacher is None)})
+    return render(request, 'dashboard/lesson_plan_list.html', {'plans': page_obj, 'page_obj': page_obj, 'search_term': search_term, 'plans_total': plans_total, 'create_form': LessonPlanForm(teacher=teacher, choose_teacher=teacher is None)})
 
 
 @login_required
@@ -861,16 +868,19 @@ def teacher_students(request):
             'create_student_form': create_form,
             'open_create_student_modal': True,
         })
-    students = get_teacher_students_for_page(teacher_profile, page_number=request.GET.get('page'))
-    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students, 'page_obj': students, 'create_student_form': create_form})
+    search_term = request.GET.get('q', '').strip()
+    students = get_teacher_students_for_page(teacher_profile, page_number=request.GET.get('page'), search_term=search_term)
+    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students, 'page_obj': students, 'search_term': search_term, 'create_student_form': create_form})
 
 
-def get_teacher_students_for_page(teacher_profile, edit_form=None, open_edit_student=None, page_number=None):
+def get_teacher_students_for_page(teacher_profile, edit_form=None, open_edit_student=None, page_number=None, search_term=''):
     students = teacher_profile.students.select_related('user', 'current_level').prefetch_related('parents').annotate(
         completed_activities=Count('progress_items', filter=Q(progress_items__completed=True), distinct=True),
         total_attempts=Count('attempts', distinct=True),
         detected_difficulties=Count('difficulties', distinct=True),
     ).order_by('name', 'pk')
+    if search_term:
+        students = students.filter(Q(name__icontains=search_term) | Q(user__username__icontains=search_term))
     if open_edit_student is not None:
         # Re-rendering a failed edit: show the page that holds that student.
         ordered_ids = list(teacher_profile.students.order_by('name', 'pk').values_list('pk', flat=True))
@@ -1025,8 +1035,16 @@ def teacher_dashboard(request):
     lesson_plan_queryset = LessonPlan.objects.filter(teacher=teacher_profile).select_related('subject', 'level').prefetch_related('activities', 'readings', 'games')
     summary['lesson_plans'] = lesson_plan_queryset.count()
     lesson_plans = lesson_plan_queryset[:5]
+    # The follow-up table grows with the class: page it with its own
+    # parameter so the rest of the dashboard keeps its query string.
+    students_page = Paginator(students, RESOURCE_PAGE_SIZE).get_page(request.GET.get('students_page'))
+    if students_page.has_previous():
+        students_page.previous_params = {'students_page': students_page.previous_page_number()}
+    if students_page.has_next():
+        students_page.next_params = {'students_page': students_page.next_page_number()}
     return render(request, 'dashboard/teacher_dashboard.html', {
-        'students': students,
+        'students': students_page,
+        'students_page': students_page,
         'summary': summary,
         'teacher_profile': teacher_profile,
         'lesson_plans': lesson_plans,

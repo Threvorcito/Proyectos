@@ -53,9 +53,9 @@
       <article><span>Dificultades</span><strong>{{ summary.difficulties }}</strong><small>Alertas detectadas</small></article>
     </section>
 
-    <div class="teacher-dashboard-grid">
+    <div class="teacher-dashboard-grid dt">
       {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans %}
-      <section class="teacher-report-card">
+      <section class="teacher-report-card dt-card">
         <div class="teacher-report-card__header">
           <div>
             <h2>Planes recientes</h2>
@@ -63,9 +63,9 @@
           </div>
           <a class="btn btn-sm btn-outline-primary" href="{% url 'dashboard:lesson_plans' %}">Ver todos</a>
         </div>
-        <div class="table-responsive">
-          <table class="table table-stack teacher-table align-middle">
-            <thead><tr><th>Plan</th><th>Materia</th><th>Nivel</th><th>Recursos</th><th></th></tr></thead>
+        <div class="dt-wrap">
+          <table class="table table-stack teacher-table data-table align-middle">
+            <thead><tr><th>Plan</th><th>Materia</th><th>Nivel</th><th>Recursos</th><th class="dt-actions"></th></tr></thead>
             <tbody>
               {% for plan in lesson_plans %}
                 <tr>
@@ -73,10 +73,10 @@
                   <td data-label="Materia">{{ plan.subject }}</td>
                   <td data-label="Nivel">{{ plan.level }}</td>
                   <td data-label="Recursos">{{ plan.activities.count }} act. · {{ plan.readings.count }} lect.</td>
-                  <td data-label="" class="text-end">{% if teacher_profile.can_assign_lesson_plans %}<a class="btn btn-sm btn-primary" href="{% url 'dashboard:lesson_plan_implementation' plan.pk %}">Implementar</a>{% endif %}</td>
+                  <td data-label="" class="dt-actions"><div class="table-actions">{% if teacher_profile.can_assign_lesson_plans %}<a class="btn btn-sm btn-primary" href="{% url 'dashboard:lesson_plan_implementation' plan.pk %}">Implementar</a>{% endif %}</div></td>
                 </tr>
               {% empty %}
-                <tr><td colspan="5" class="teacher-table__empty">No tienes planes recientes. Crea tu primera planificación.</td></tr>
+                <tr><td colspan="5"><div class="dt-empty"><strong>No tienes planes recientes. Crea tu primera planificación.</strong></div></td></tr>
               {% endfor %}
             </tbody>
           </table>
@@ -84,15 +84,15 @@
       </section>
       {% endif %}
 
-      <section class="teacher-report-card">
+      <section class="teacher-report-card dt-card" id="seguimiento-estudiantes">
         <div class="teacher-report-card__header">
           <div>
             <h2>Seguimiento de estudiantes</h2>
             <p>Resumen de progreso y actividad reciente.</p>
           </div>
         </div>
-        <div class="table-responsive">
-          <table class="table table-stack teacher-table align-middle">
+        <div class="dt-wrap">
+          <table class="table table-stack teacher-table data-table align-middle">
             <thead><tr><th>Estudiante</th><th>Colegio</th><th>Nivel</th><th>Progreso</th><th>Puntos</th><th>Última actividad</th></tr></thead>
             <tbody>
               {% for student in students %}
@@ -100,16 +100,17 @@
                   <td data-label="Estudiante"><a href="{% url 'dashboard:student_report' student.pk %}"><strong>{{ student.display_name }}</strong></a></td>
                   <td data-label="Colegio">{{ student.get_school_display }}</td>
                   <td data-label="Nivel">{% if student.current_level %}Nivel {{ student.current_level.number }}{% else %}Sin nivel{% endif %}</td>
-                  <td data-label="Progreso"><span class="teacher-badge">{{ student.completed_activities }} completadas</span></td>
+                  <td data-label="Progreso"><span class="dt-badge">{{ student.completed_activities }} completadas</span></td>
                   <td data-label="Puntos">{{ student.points }}</td>
                   <td data-label="Última actividad">{{ student.last_activity_at|date:'d/m/Y H:i'|default:'Sin actividad' }}</td>
                 </tr>
               {% empty %}
-                <tr><td colspan="6" class="teacher-table__empty">Todavía no tienes alumnos vinculados.</td></tr>
+                <tr><td colspan="6"><div class="dt-empty"><strong>Todavía no tienes alumnos vinculados.</strong></div></td></tr>
               {% endfor %}
             </tbody>
           </table>
         </div>
+        {% include 'partials/pagination.html' with page_obj=students_page pagination_anchor='#seguimiento-estudiantes' %}
       </section>
     </div>
   </div>

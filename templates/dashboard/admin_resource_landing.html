@@ -40,14 +40,14 @@
     .resource-actions .btn { flex: 1 1 180px; }
   }
 </style>
-<link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261014-admin-ui-9">
+<link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261014-admin-ui-10">
 {% endblock %}
 {% block content %}
 <div class="{% if teacher_resource_page %}teacher-dashboard{% else %}admin-console{% endif %}">
   {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_sidebar.html' %}{% endif %}
   <section class="{% if teacher_resource_page %}container py-5{% else %}admin-main{% endif %}">
     {% if not teacher_resource_page %}{% include 'dashboard/partials/admin_topbar.html' with current_title=config.title %}{% endif %}
-    <div class="admin-content admin-ui">
+    <div class="admin-content admin-ui dt">
       <div class="resource-page-head">
         <div>
           <h1>{{ config.title }}</h1>
@@ -63,10 +63,10 @@
         </div>
       </div>
 
-      <div class="aui-card">
-        <div class="aui-toolbar">
-          <form class="aui-search-form" method="get" role="search">
-            <div class="aui-search">
+      <div class="dt-card dt-fit-col">
+        <div class="dt-toolbar">
+          <form class="dt-search-form" method="get" role="search">
+            <div class="dt-search">
               <span aria-hidden="true">⌕</span>
               <input type="search" name="q" value="{{ search_term }}" placeholder="Buscar en {{ config.title|lower }}..." aria-label="Buscar registros">
             </div>
@@ -78,7 +78,7 @@
             <button class="btn btn-outline-secondary resource-scroll-btn" type="button" data-resource-scroll="right" aria-label="Mover tabla a la derecha">›</button>
           </div>
         </div>
-        <div class="aui-table-wrap" data-resource-table-wrap>
+        <div class="dt-wrap dt-fit" data-resource-table-wrap>
           <table class="table table-stack data-table resource-table">
             <thead>
               <tr>
@@ -86,7 +86,7 @@
                 <th>Descripción</th>
                 <th>Tipo</th>
                 <th>Estado</th>
-                <th>Acciones</th>
+                <th class="dt-actions">Acciones</th>
               </tr>
             </thead>
             <tbody id="resourceTableBody">
@@ -98,9 +98,9 @@
               <span>{% if item.email %}{{ item.email }}{% elif item.topic %}{{ item.topic }}{% elif item.subject %}{{ item.subject }}{% else %}{{ config.singular|capfirst }}{% endif %}</span>
             </td>
             <td data-label="Descripción" class="resource-title-cell"><span>{% if item.description %}{{ item.description }}{% elif item.bio %}{{ item.bio }}{% elif item.objective %}{{ item.objective }}{% else %}Sin descripción registrada{% endif %}</span></td>
-            <td data-label="Tipo"><span class="resource-badge">{% if item.activity_type %}{{ item.get_activity_type_display }}{% elif item.resource_type %}{{ item.get_resource_type_display }}{% elif item.role %}{{ item.get_role_display }}{% elif item.grade %}{{ item.get_grade_display }}{% else %}{{ config.singular|capfirst }}{% endif %}</span></td>
-            <td data-label="Estado"><span class="resource-status {% if item.is_active == False %}resource-status--inactive{% endif %}">{% if resource == 'alumnos' or resource == 'padres' or resource == 'palabras' or resource == 'silabas' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
-            <td data-label="Acciones">
+            <td data-label="Tipo"><span class="dt-badge">{% if item.activity_type %}{{ item.get_activity_type_display }}{% elif item.resource_type %}{{ item.get_resource_type_display }}{% elif item.role %}{{ item.get_role_display }}{% elif item.grade %}{{ item.get_grade_display }}{% else %}{{ config.singular|capfirst }}{% endif %}</span></td>
+            <td data-label="Estado"><span class="dt-status {% if item.is_active == False %}dt-status--muted{% endif %}">{% if resource == 'alumnos' or resource == 'padres' or resource == 'palabras' or resource == 'silabas' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
+            <td data-label="Acciones" class="dt-actions">
               <div class="table-actions">
                 <details class="action-menu">
                   {% include 'dashboard/partials/action_menu_toggle.html' with name=item %}
@@ -121,16 +121,16 @@
             <tr>
               <td data-label="{% if resource == 'actividades' %}Actividad{% elif resource == 'lecturas' %}Lectura{% elif resource == 'juegos' %}Juego{% else %}Registro{% endif %}" class="resource-title-cell"><strong>{{ item }}</strong><span>{{ config.singular|capfirst }}</span></td>
               <td data-label="Descripción" class="resource-title-cell"><span>Sin descripción registrada</span></td>
-              <td data-label="Tipo"><span class="resource-badge">{{ config.singular|capfirst }}</span></td>
-              <td data-label="Estado"><span class="resource-status">Registrado</span></td>
-              <td data-label="Acciones">
+              <td data-label="Tipo"><span class="dt-badge">{{ config.singular|capfirst }}</span></td>
+              <td data-label="Estado"><span class="dt-status">Registrado</span></td>
+              <td data-label="Acciones" class="dt-actions">
                 <div class="table-actions">
                 <button class="btn btn-sm btn-outline-danger" type="button" data-dialog-open="deleteResourceModal{{ item.pk }}">Eliminar</button>
                 </div>
               </td>
             </tr>
           {% empty %}
-            <tr><td colspan="5"><div class="aui-empty"><span class="aui-empty__icon" aria-hidden="true">{{ config.singular|first|upper }}</span><strong>{% if search_term %}No hay resultados para “{{ search_term }}”.{% else %}No hay registros todavía.{% endif %}</strong>{% if create_form and not search_term %}<button class="btn btn-primary btn-sm" type="button" data-dialog-open="createResourceModal">Agregar {{ config.singular }}</button>{% endif %}</div></td></tr>
+            <tr><td colspan="5"><div class="dt-empty"><span class="dt-empty__icon" aria-hidden="true">{{ config.singular|first|upper }}</span><strong>{% if search_term %}No hay resultados para “{{ search_term }}”.{% else %}No hay registros todavía.{% endif %}</strong>{% if create_form and not search_term %}<button class="btn btn-primary btn-sm" type="button" data-dialog-open="createResourceModal">Agregar {{ config.singular }}</button>{% endif %}</div></td></tr>
           {% endfor %}
         {% endfor %}
             </tbody>
