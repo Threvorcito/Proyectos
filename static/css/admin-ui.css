@@ -262,6 +262,9 @@
 /* Actions never break mid-word: the column sizes to its buttons. */
 .admin-ui .data-table td:last-child { overflow-wrap: normal; white-space: nowrap; width: 1%; }
 .admin-ui .table-actions .btn { flex: 0 0 auto; white-space: nowrap; }
+/* Pinned action cells stack per row; lift the one whose kebab menu is open
+   so later rows' pinned cells never paint over its panel. */
+.admin-ui .data-table tbody td:last-child:has(.action-menu[open]) { z-index: 4; }
 
 /* Empty state (Bodega .empty-state.compact) */
 .admin-ui .aui-empty {

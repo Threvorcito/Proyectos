@@ -28,12 +28,19 @@ Replace the look of the admin panel tables and dialogs (`/panel/admin/gestion/..
   - Detector (`impeccable detect` on admin-ui.css + templates/dashboard): 0 findings (it warns it cannot resolve the `{% static %}` link, so colour rules from admin-ui.css were not cross-checked in templates).
   - Not covered: real-device touch, the admin sidebar is 940px tall on phones (pre-existing, outside this task).
 
+- [x] B4 Replace row action buttons with Bodega's kebab action menu
+  - Source: `SistemaBodega/templates/accounts/user_list.html`, `inventario/tipo_producto_list.html` (`<details class="action-menu">` + `summary.action-menu-icon` "Más acciones" + `.action-menu-panel`, destructive item `text-danger`, no item icons), CSS `styles.css` `.action-menu*` + `.table-wrap/.table-scroll-area:has(.action-menu[open])`, JS `static/js/app.js` (one menu open, click outside closes, `positionActionMenu` flips up / caps height inside the scroll area, confirm handler closes the menu).
+  - New shared `static/css/action-menu.css` + `static/js/action-menu.js` (loaded from `base.html`), partial `templates/dashboard/partials/action_menu_toggle.html` (SVG kebab, `aria-label="Más acciones para <registro>"`). JS adds Escape (closes, focus back to kebab), closes the menu after an item runs, uses fixed placement (flip upward, clamp to 8px viewport edges, cap height) instead of Bodega's `:has` overflow rules so table scroll containers and pinned cells never clip it. `admin-ui.js` returns focus to the kebab when a dialog's trigger sits in a closed menu; Bootstrap modals get the same via `hidden.bs.modal`. Pinned admin action cell is lifted while its menu is open. Danger class is `action-menu-danger` (Bootstrap's `.text-danger` is `!important`).
+  - Kebab where a row has 2+ actions: admin resource tables (Editar / Permisos / Eliminar|Desactivar), teacher students (replaced the Bootstrap dropdown kebab; old `.teacher-students-actions*` CSS removed), lesson plan list (Implementar / Reporte / Editar, permission-guarded). Single-action rows stay buttons (teacher dashboard Implementar, lesson plan report Guardar|Ver estudiante, profile Editar, admin fallback rows with only Eliminar): a menu would hide the only action behind an extra tap. student_report has no action column.
+  - Check: browser at 1280 and 375 (usuarios, actividades, teacher students, lesson plans): menu opens, items fully hit-testable (not clipped), flips up at viewport bottom, only one open, click outside closes, edit/delete dialogs open from items with CSRF, Escape closes menu and returns focus, focus returns to kebab after admin dialog and Bootstrap modal, confirm() still guards destructive teacher forms, 44px targets on coarse pointer, page scrollWidth == clientWidth. Tests 206 OK. Detector 0 findings.
+
 ## Route log
 | Task | Route | Evidence | Commit |
 |------|-------|----------|--------|
 | B1 | delegated writer | Bodega CSS/markup read, 1280 render | e58e8c5 |
 | B2 | delegated writer | Bodega dialog markup/JS read, scripted dialog checks | a3fc8d0 |
-| B3 | delegated writer | 4-width iframe sweep, one fix batch, one confirm round | (this commit) |
+| B3 | delegated writer | 4-width iframe sweep, one fix batch, one confirm round | 54e71f2 |
+| B4 | delegated writer | Bodega action-menu markup/CSS/JS read, scripted 375/1280 checks | (this commit) |
 
 ## Next step
 Done. Optional: hide "Ver más columnas" when the table does not overflow; phone admin sidebar height.

@@ -40,7 +40,7 @@
     .resource-actions .btn { flex: 1 1 180px; }
   }
 </style>
-<link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261013-admin-ui-5">
+<link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261014-admin-ui-6">
 {% endblock %}
 {% block content %}
 <div class="{% if teacher_resource_page %}teacher-dashboard{% else %}admin-console{% endif %}">
@@ -99,11 +99,16 @@
             <td data-label="Estado"><span class="resource-status {% if item.is_active == False %}resource-status--inactive{% endif %}">{% if resource == 'alumnos' or resource == 'padres' or resource == 'palabras' or resource == 'silabas' %}Registrado{% elif item.is_active %}Activa{% else %}Inactiva{% endif %}</span></td>
             <td data-label="Acciones">
               <div class="table-actions">
-              {% if resource == 'profesores' %}
-                <button class="btn btn-sm btn-outline-secondary" type="button" data-dialog-open="permissionsModal{{ item.pk }}">Permisos</button>
-              {% endif %}
-              <button class="btn btn-sm btn-outline-primary" type="button" data-dialog-open="editResourceModal{{ item.pk }}">Editar</button>
-              <button class="btn btn-sm btn-outline-danger" type="button" data-dialog-open="deleteResourceModal{{ item.pk }}">{% if resource == 'profesores' %}Desactivar{% else %}Eliminar{% endif %}</button>
+                <details class="action-menu">
+                  {% include 'dashboard/partials/action_menu_toggle.html' with name=item %}
+                  <div class="action-menu-panel">
+                    <button type="button" data-dialog-open="editResourceModal{{ item.pk }}">Editar</button>
+                    {% if resource == 'profesores' %}
+                      <button type="button" data-dialog-open="permissionsModal{{ item.pk }}">Permisos</button>
+                    {% endif %}
+                    <button class="action-menu-danger" type="button" data-dialog-open="deleteResourceModal{{ item.pk }}">{% if resource == 'profesores' %}Desactivar{% else %}Eliminar{% endif %}</button>
+                  </div>
+                </details>
               </div>
             </td>
           </tr>
@@ -402,7 +407,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/admin-ui.js' %}?v=20261013-admin-ui-2"></script>
+<script src="{% static 'js/admin-ui.js' %}?v=20261014-admin-ui-3"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const input = document.getElementById('resourceSearchInput');

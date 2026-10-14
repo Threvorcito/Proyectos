@@ -35,7 +35,11 @@
     if (!document.querySelector(`${DIALOG}[open]`)) document.body.classList.remove('aui-dialog-open');
     const trigger = returnFocus.get(dialog);
     returnFocus.delete(dialog);
-    if (trigger && trigger.isConnected) trigger.focus({ preventScroll: true });
+    if (!trigger || !trigger.isConnected) return;
+    // A trigger inside a closed row action menu is hidden: focus its kebab.
+    const menu = trigger.closest('details.action-menu:not([open])');
+    const target = menu ? menu.querySelector(':scope > summary') : trigger;
+    if (target) target.focus({ preventScroll: true });
   };
 
   const finishClose = (dialog) => {

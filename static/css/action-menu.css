@@ -1,0 +1,111 @@
+/* ==================================================================
+   Row action menu ported from SistemaBodega (.action-menu): a
+   <details> kebab whose panel lists the row actions. Shared by the
+   admin tables (.admin-ui, navy tokens) and the teacher tables
+   (main.css palette); colours fall back to the teacher palette when
+   the admin tokens are not in scope. Behaviour lives in action-menu.js.
+   ================================================================== */
+
+.action-menu {
+  --am-text: var(--aui-text, #102033);
+  --am-text-2: var(--aui-text-2, #5b6b80);
+  --am-surface: var(--aui-surface, #ffffff);
+  --am-hover: var(--aui-muted, #eef8fb);
+  --am-border: var(--aui-border, #dbe7ef);
+  --am-accent: var(--aui-primary, #1f7389);
+  --am-danger: var(--aui-danger, #a43b32);
+  --am-danger-bg: var(--aui-danger-bg, #fff0ee);
+  --am-shadow: 0 14px 34px rgba(15, 23, 42, .12);
+  display: inline-block;
+  position: relative;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.action-menu > summary { cursor: pointer; list-style: none; }
+.action-menu > summary::-webkit-details-marker { display: none; }
+.action-menu > summary::marker { content: ''; }
+
+.action-menu-icon {
+  align-items: center;
+  background: var(--am-surface);
+  border: 1px solid var(--am-border);
+  border-radius: 11px;
+  color: var(--am-text);
+  display: inline-flex;
+  height: 36px;
+  justify-content: center;
+  transition: background-color .15s ease-out, border-color .15s ease-out;
+  width: 36px;
+}
+.action-menu-icon svg { height: 18px; width: 18px; }
+.action-menu-icon:hover,
+.action-menu[open] > .action-menu-icon { background: var(--am-hover); border-color: var(--am-accent); }
+.action-menu-icon:focus-visible { outline: 3px solid var(--am-accent); outline-offset: 2px; }
+
+/* Bodega panel: surface card anchored under the trigger's right edge.
+   action-menu.js upgrades it to .is-floating (fixed, flipped upward near
+   the viewport bottom) so table scroll containers never clip it. */
+.action-menu-panel {
+  background: var(--am-surface);
+  border: 1px solid var(--am-border);
+  border-radius: 14px;
+  box-shadow: var(--am-shadow);
+  display: grid;
+  gap: 2px;
+  max-height: var(--action-menu-max-height, none);
+  max-width: calc(100vw - 16px);
+  min-width: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 100;
+}
+.action-menu.dropdown-up .action-menu-panel { bottom: calc(100% + 6px); top: auto; }
+.action-menu.is-floating .action-menu-panel { bottom: auto; position: fixed; right: auto; z-index: 1040; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .action-menu[open] .action-menu-panel { animation: action-menu-in .14s cubic-bezier(.16, 1, .3, 1); }
+}
+@keyframes action-menu-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.action-menu-panel form { margin: 0; }
+.action-menu-panel a,
+.action-menu-panel button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  color: var(--am-text);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: .9rem;
+  font-weight: 600;
+  line-height: 1.3;
+  min-height: 40px;
+  padding: 10px;
+  text-align: left;
+  text-decoration: none;
+  white-space: normal;
+  width: 100%;
+}
+.action-menu-panel a:hover,
+.action-menu-panel button:hover { background: var(--am-hover); color: var(--am-text); }
+.action-menu-panel a:focus-visible,
+.action-menu-panel button:focus-visible { background: var(--am-hover); outline: 2px solid var(--am-accent); outline-offset: -2px; }
+.action-menu-panel .action-menu-danger { color: var(--am-danger); font-weight: 800; }
+.action-menu-panel .action-menu-danger:hover,
+.action-menu-panel .action-menu-danger:focus-visible { background: var(--am-danger-bg); color: var(--am-danger); }
+
+@media (pointer: coarse) {
+  .action-menu-icon { height: 44px; width: 44px; }
+  .action-menu-panel a,
+  .action-menu-panel button { min-height: 44px; }
+}

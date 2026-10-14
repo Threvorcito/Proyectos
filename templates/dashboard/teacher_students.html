@@ -46,28 +46,28 @@
                 <td data-label="Puntos">{{ student.points }}</td>
                 <td data-label="Última actividad">{{ student.last_activity_at|date:'d/m/Y H:i'|default:'Sin actividad' }}</td>
                 <td data-label="Acciones" class="teacher-students-table__actions-cell">
-                  <div class="dropdown teacher-students-actions">
-                    <button class="teacher-students-actions__toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Opciones de {{ student.display_name }}">⋮</button>
-                    <div class="dropdown-menu dropdown-menu-end teacher-students-actions__menu">
+                  <details class="action-menu">
+                    {% include 'dashboard/partials/action_menu_toggle.html' with name=student.display_name %}
+                    <div class="action-menu-panel">
                       <form method="post" action="{% url 'dashboard:teacher_student_login' student.pk %}">
                         {% csrf_token %}
-                        <button class="dropdown-item" type="submit">Ver como estudiante</button>
+                        <button type="submit">Ver como estudiante</button>
                       </form>
-                      <a class="dropdown-item" href="{% url 'dashboard:student_report' student.pk %}">Ver reporte</a>
+                      <a href="{% url 'dashboard:student_report' student.pk %}">Ver reporte</a>
                       <form method="post" action="{% url 'dashboard:teacher_student_visual_key_regenerate' student.pk %}" onsubmit="return confirm('¿Quieres crear nuevos dibujos secretos para este alumno? La clave anterior dejará de funcionar.');">
                         {% csrf_token %}
                         <input type="hidden" name="had_visual_key" value="{% if student.visual_key_hash %}1{% else %}0{% endif %}">
-                        <button class="dropdown-item" type="submit">Regenerar dibujos</button>
+                        <button type="submit">Regenerar dibujos</button>
                       </form>
                       {% if teacher_profile.can_create_students %}
-                        <button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#editStudentModal{{ student.pk }}">Editar</button>
+                        <button type="button" data-bs-toggle="modal" data-bs-target="#editStudentModal{{ student.pk }}">Editar</button>
                         <form method="post" action="{% url 'dashboard:teacher_student_delete' student.pk %}" onsubmit="return confirm('¿Quieres quitar a este estudiante de Mis alumnos? Su cuenta, progreso y demás información se conservarán.');">
                           {% csrf_token %}
-                          <button class="dropdown-item teacher-students-actions__danger" type="submit">Quitar de mis alumnos</button>
+                          <button class="action-menu-danger" type="submit">Quitar de mis alumnos</button>
                         </form>
                       {% endif %}
                     </div>
-                  </div>
+                  </details>
                 </td>
               </tr>
             {% empty %}
