@@ -2,11 +2,12 @@
 {% block content %}
 <div class="activities-page">
   <div class="container py-5">
-    <section class="activities-hero">
-      <span class="eyebrow">Actividades</span>
+    <section class="activities-hero" id="activities-intro">
+      <span class="eyebrow">Practicar</span>
       {% if student %}
         <h1>Estas son tus actividades</h1>
-        <p>Elige una práctica corta para tu grado. Lee con calma y escucha la instrucción si lo necesitas.</p>
+        <p>Elige una práctica corta. Puedes escuchar la instrucción.</p>
+        {% include 'partials/listen_button.html' with target='#activities-intro h1, #activities-intro p' extra_class='kid-listen--below' %}
       {% else %}
         <h1>Escoge tu grado y luego tu materia</h1>
         <p>Actividades clasificadas por grado y asignatura, con apoyo visual, repetición guiada y lectura accesible para estudiantes con dislexia.</p>
@@ -53,9 +54,9 @@
         <p>Elige una actividad, lee con calma y repite si lo necesitas.</p>
       </div>
       <div class="activity-learning-compass__tips">
-        <article><strong>1</strong><span>Observa</span><small>Identifica imagenes, palabras o numeros clave.</small></article>
-        <article><strong>2</strong><span>Practica</span><small>Resuelve una tarea breve con instrucciones simples.</small></article>
-        <article><strong>3</strong><span>Refuerza</span><small>Repite los errores frecuentes con apoyo del docente.</small></article>
+        <article><strong>1</strong><span>Observa</span><small>Mira las imágenes y las palabras.</small></article>
+        <article><strong>2</strong><span>Practica</span><small>Haz una tarea corta.</small></article>
+        <article><strong>3</strong><span>Repite</span><small>Vuelve a intentarlo cuando quieras.</small></article>
       </div>
     </section>
 

@@ -7,7 +7,7 @@
     <h1>¿Cuál eres tú?</h1>
     <p>Busca tu nombre y toca tu tarjeta.</p>
   </div>
-  <button class="btn btn-outline-primary kid-access__listen" type="button" data-speak-text="¿Cuál eres tú? Busca tu nombre y toca tu tarjeta.">Escuchar</button>
+  {% include 'partials/listen_button.html' with text="¿Cuál eres tú? Busca tu nombre y toca tu tarjeta." %}
 </div>
 <div class="kid-access__grid">
   {% for student in students %}

@@ -4,7 +4,7 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260827-scale-fix">{% endblock %}
 
 {% block content %}
-<main class="login-page">
+<div class="login-page">
   <div class="container">
     <div class="login-page__shell mx-auto">
       <aside class="login-page__visual" aria-label="Bienvenida">
@@ -35,7 +35,7 @@
           <span class="login-page__eyebrow">Acceso seguro</span>
           <h2 id="login-title">Entrar</h2>
           <p>Continúa tu camino en Lectura sin Límites</p>
-          <a class="btn btn-primary w-100 mt-3" href="{% url 'accounts:student_access' %}">Acceso para estudiantes</a>
+          <a class="btn btn-primary btn-lg w-100 mt-3" href="{% url 'accounts:student_access' %}">Soy estudiante</a>
         </div>
 
         <form method="post" class="login-page__form">
@@ -74,7 +74,7 @@
       </section>
     </div>
   </div>
-</main>
+</div>
 {% endblock %}
 
 {% block extra_js %}<script src="{% static 'js/login.js' %}"></script>{% endblock %}

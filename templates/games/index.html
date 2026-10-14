@@ -4,14 +4,15 @@
 {% block extra_css %}<link rel="stylesheet" href="{% static 'css/games.css' %}">{% endblock %}
 
 {% block content %}
-<main class="games-page">
+<div class="games-page">
   <section class="games-page__hero">
     <div class="container">
       <div class="games-page__hero-card">
-        <div>
-          <span class="games-page__eyebrow">Practica con retos cortos</span>
+        <div id="games-intro">
+          <span class="games-page__eyebrow">Retos cortos</span>
           <h1>Aprende jugando</h1>
-          <p>Practica letras, sonidos, sílabas y palabras mientras superas pequeños retos.</p>
+          <p>Juega con letras, sonidos, sílabas y palabras.</p>
+          {% include 'partials/listen_button.html' with target='#games-intro h1, #games-intro p' extra_class='kid-listen--below' %}
         </div>
         <a class="games-page__hero-visual games-page__hero-visual-link" href="{% url 'games:detail' 'quiz-agilidad-lectora' %}" aria-label="Jugar Quiz de agilidad lectora">
           <span>🔎</span><span>🧩</span><span>🎧</span><span>📖</span>
@@ -113,5 +114,5 @@
       {% endfor %}
     </div>
   </section>
-</main>
+</div>
 {% endblock %}

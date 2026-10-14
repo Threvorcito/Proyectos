@@ -1,12 +1,13 @@
 {% extends 'base.html' %}
 {% block content %}
-<main class="levels-page">
+<div class="levels-page">
   <div class="container py-5">
     <section class="kid-dashboard-hero">
-      <div>
-        <span class="eyebrow">Dashboard</span>
+      <div id="levels-intro">
+        <span class="eyebrow">Aprender</span>
         <h1>Hola{% if student %}, {{ student.display_name }}{% elif teacher %}, profe {{ teacher.name }}{% endif %}</h1>
-        <p>Elige un nivel para aprender con materias, juegos, lecturas y planes del profesor.</p>
+        <p>Elige un nivel. Dentro hay juegos, lecturas y prácticas.</p>
+        {% include 'partials/listen_button.html' with target='#levels-intro' extra_class='kid-listen--below' %}
       </div>
       <div class="kid-dashboard-hero__mascot" aria-hidden="true">🌈</div>
     </section>
@@ -59,5 +60,5 @@
       {% endfor %}
     </section>
   </div>
-</main>
+</div>
 {% endblock %}

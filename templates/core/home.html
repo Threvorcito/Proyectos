@@ -406,14 +406,14 @@
 
   .home-levels .home-levels__card--advance {
     background: linear-gradient(180deg, #f5f1ff 0%, #ffffff 82%);
-    border-top-color: #8b6ef2;
+    border-top-color: #6a45b0;
   }
 
   .home-levels .home-levels__card--advance::before,
-  .home-levels .home-levels__card--advance::after { background: #8b6ef2; }
+  .home-levels .home-levels__card--advance::after { background: #6a45b0; }
 
   .home-levels .home-levels__card--advance .home-levels__icon,
-  .home-levels .home-levels__card--advance .home-levels__action { color: #8b6ef2; }
+  .home-levels .home-levels__card--advance .home-levels__action { color: #6a45b0; }
 
   .home-parent-cta {
     background: linear-gradient(135deg, #ffffff 0%, #eef8fb 100%);
@@ -484,7 +484,6 @@
   .home-benefits .benefit-card {
     background: #fff;
     border: 1px solid #e2e8f0;
-    border-left: 5px solid var(--benefit-color, var(--primary));
     border-radius: 20px;
     box-shadow: 0 8px 22px rgba(15, 23, 42, .055);
     min-height: 155px;
@@ -610,11 +609,22 @@
   }
 
   .home-info .home-info__card p,
-  .home-student-start .home-student-start__card span {
+  .home-student-start .home-student-start__card span:not(.home-student-start__action):not(.home-student-start__icon) {
     color: #475569;
     font-size: .94rem;
     line-height: 1.55;
     margin: 0;
+  }
+
+  /* Icon sits inside its heading row, the text runs full width below. */
+  .home-info .home-info__card h3 {
+    align-items: center;
+    display: flex;
+    gap: .85rem;
+  }
+
+  .home-info .home-info__card h3 .home-info__icon {
+    flex: 0 0 auto;
   }
 
   .home-info .home-info__chips {
@@ -750,32 +760,33 @@
 {% block content %}
 {% if user.is_authenticated and user.role == 'STUDENT' %}
 <section class="container py-4 py-md-5 home-student-start" aria-labelledby="student-home-title">
-  <div class="home-student-start__header">
+  <div class="home-student-start__header" id="student-home-intro">
     <span class="eyebrow">Hola de nuevo</span>
     <h1 id="student-home-title">Elige una actividad para continuar</h1>
     <p>Haz una cosa a la vez. Puedes ir a tu panel, practicar, leer o jugar.</p>
+    {% include 'partials/listen_button.html' with target='#student-home-intro' extra_class='kid-listen--below' %}
   </div>
   <div class="home-student-start__grid">
-    <a class="home-student-start__card home-student-start__card--main" href="{% url 'dashboard:student' %}" aria-label="Continuar mi clase desde mi panel de estudiante">
+    <a class="home-student-start__card home-student-start__card--main kid-area--learn" href="{% url 'dashboard:student' %}" aria-label="Continuar mi clase desde mi panel de estudiante">
       <span class="home-student-start__icon" aria-hidden="true">📘</span>
       <strong>Ir a mi panel</strong>
       <span>Continúa tu clase y mira tus opciones de hoy.</span>
       <span class="home-student-start__action">Continuar</span>
     </a>
-    <a class="home-student-start__card" href="{% url 'activities:list' %}" aria-label="Ir a actividades para practicar">
-      <span class="home-student-start__icon" aria-hidden="true">✎</span>
+    <a class="home-student-start__card kid-area--practice" href="{% url 'activities:list' %}" aria-label="Ir a actividades para practicar">
+      <span class="home-student-start__icon" aria-hidden="true">✏️</span>
       <strong>Practicar</strong>
       <span>Haz una actividad corta.</span>
       <span class="home-student-start__action">Entrar</span>
     </a>
-    <a class="home-student-start__card" href="{% url 'readings:list' %}" aria-label="Ir a lecturas">
+    <a class="home-student-start__card kid-area--read" href="{% url 'readings:list' %}" aria-label="Ir a lecturas">
       <span class="home-student-start__icon" aria-hidden="true">📖</span>
       <strong>Leer</strong>
       <span>Descubre una historia.</span>
       <span class="home-student-start__action">Leer</span>
     </a>
-    <a class="home-student-start__card" href="{% url 'games:index' %}" aria-label="Ir a juegos">
-      <span class="home-student-start__icon" aria-hidden="true">★</span>
+    <a class="home-student-start__card kid-area--play" href="{% url 'games:index' %}" aria-label="Ir a juegos">
+      <span class="home-student-start__icon" aria-hidden="true">🎲</span>
       <strong>Jugar</strong>
       <span>Aprende jugando.</span>
       <span class="home-student-start__action">Jugar</span>
@@ -875,13 +886,11 @@
   </div>
   <div class="home-info__grid">
     <article class="home-info__card">
-      <span class="home-info__icon" aria-hidden="true">Aa</span>
-      <h3>¿Qué es la dislexia?</h3>
+      <h3><span class="home-info__icon" aria-hidden="true">Aa</span>¿Qué es la dislexia?</h3>
       <p>Es una dificultad para leer con fluidez. Cada niño puede necesitar más tiempo, apoyo visual y práctica guiada.</p>
     </article>
     <article class="home-info__card">
-      <span class="home-info__icon" aria-hidden="true">🔊</span>
-      <h3>¿Cómo ayuda esta plataforma?</h3>
+      <h3><span class="home-info__icon" aria-hidden="true">🔊</span>¿Cómo ayuda esta plataforma?</h3>
       <p>Ofrece lectura guiada, apoyo por voz, actividades cortas, juegos educativos, accesibilidad y seguimiento del progreso.</p>
       <div class="home-info__chips" aria-label="Apoyos de la plataforma">
         <span>Voz</span>
@@ -891,8 +900,7 @@
       </div>
     </article>
     <article class="home-info__card">
-      <span class="home-info__icon" aria-hidden="true">★</span>
-      <h3>Nuestro propósito</h3>
+      <h3><span class="home-info__icon" aria-hidden="true">★</span>Nuestro propósito</h3>
       <p>Apoyar a estudiantes de 1.º, 2.º y 3.º grado con una experiencia accesible, sencilla y motivadora.</p>
     </article>
   </div>
@@ -928,9 +936,9 @@
       <h3>Primeros pasos</h3>
       <p>Descubre letras, sonidos y sílabas mientras formas tus primeras palabras.</p>
       <div class="home-levels__tags" aria-label="Habilidades del nivel 1">
-        <span>Letras</span>
-        <span>Sonidos</span>
-        <span>Sílabas</span>
+        <span class="kid-tag--letters">Letras</span>
+        <span class="kid-tag--sounds">Sonidos</span>
+        <span class="kid-tag--syllables">Sílabas</span>
       </div>
       {% if not user.is_authenticated or user.role != 'PARENT' %}
       <span class="home-levels__action">Explorar nivel →</span>
@@ -951,9 +959,9 @@
       <h3>Construyo palabras</h3>
       <p>Combina sílabas, reconoce sonidos y practica palabras de forma divertida.</p>
       <div class="home-levels__tags" aria-label="Habilidades del nivel 2">
-        <span>Sílabas</span>
-        <span>Palabras</span>
-        <span>Sonidos</span>
+        <span class="kid-tag--syllables">Sílabas</span>
+        <span class="kid-tag--words">Palabras</span>
+        <span class="kid-tag--sounds">Sonidos</span>
       </div>
       {% if not user.is_authenticated or user.role != 'PARENT' %}
       <span class="home-levels__action">Explorar nivel →</span>
@@ -1003,9 +1011,9 @@
       <h3>Aprendo</h3>
       <p>Descubro letras, sonidos y sílabas paso a paso.</p>
       <div class="home-levels__tags" aria-label="Contenidos de aprendizaje">
-        <span>Letras</span>
-        <span>Sonidos</span>
-        <span>Sílabas</span>
+        <span class="kid-tag--letters">Letras</span>
+        <span class="kid-tag--sounds">Sonidos</span>
+        <span class="kid-tag--syllables">Sílabas</span>
       </div>
       <span class="home-levels__action">Ir a Aprender →</span>
     </a>
@@ -1016,7 +1024,7 @@
       <p>Refuerzo lo aprendido con actividades y pequeños retos interactivos.</p>
       <div class="home-levels__tags" aria-label="Contenidos de práctica">
         <span>Actividades</span>
-        <span>Palabras</span>
+        <span class="kid-tag--words">Palabras</span>
         <span>Retos</span>
       </div>
       <span class="home-levels__action">Ir a Practicar →</span>

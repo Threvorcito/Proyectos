@@ -7,7 +7,7 @@
     <h1>Escribe el código de tu aula</h1>
     <p>Tu docente te dice las letras y números.</p>
   </div>
-  <button class="btn btn-outline-primary kid-access__listen" type="button" data-speak-text="Escribe el código de tu aula. Tu docente te dice las letras y números.">Escuchar</button>
+  {% include 'partials/listen_button.html' with text="Escribe el código de tu aula. Tu docente te dice las letras y números." %}
 </div>
 <form method="post" class="kid-code-form">
   {% csrf_token %}

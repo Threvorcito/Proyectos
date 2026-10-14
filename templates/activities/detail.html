@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-<main class="activity-detail-page">
+<div class="activity-detail-page">
   <div class="container py-5">
     <article class="activity-play-card">
       <a class="activity-play-card__back" href="{% url 'activities:list' %}">← Volver a actividades</a>
@@ -56,7 +56,7 @@
       </section>
     </article>
   </div>
-</main>
+</div>
 {% endblock %}
 
 {% block extra_js %}

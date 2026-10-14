@@ -760,11 +760,11 @@
       options.hidden = true;
       if (countdown) {
         countdown.hidden = false;
-        countdown.textContent = 'Desaparece en ' + seconds + ' segundos';
+        countdown.textContent = 'Míralo bien. Pronto se esconde.';
       }
       var timer = window.setInterval(function () {
         seconds -= 1;
-        if (countdown) countdown.textContent = 'Desaparece en ' + seconds + ' segundos';
+        if (countdown) countdown.textContent = 'Míralo bien. Pronto se esconde.';
         if (seconds <= 0) {
           window.clearInterval(timer);
           visual.textContent = '••••';

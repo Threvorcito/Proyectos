@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
 {% block content %}
-<main class="levels-page">
+<div class="levels-page">
   <div class="container py-5">
     <a class="level-detail-back" href="{% url 'learning:levels' %}">← Volver a niveles</a>
     <section class="course-room-hero course-room-hero--{{ level.number }}">
-      <div>
-        <span class="eyebrow">Curso activo</span>
+      <div id="level-intro">
+        <span class="eyebrow">Mi nivel</span>
         <h1>Nivel {{ level.number }}: {{ level.name }}</h1>
         <p>{{ level.description }}</p>
+        {% include 'partials/listen_button.html' with target='#level-intro h1, #level-intro p' extra_class='kid-listen--below' %}
         {% if student %}<strong>{{ assigned_plan_count }} plan{{ assigned_plan_count|pluralize:'es' }} asignado{{ assigned_plan_count|pluralize:'s' }} por el profesor</strong>{% endif %}
       </div>
       <div class="course-room-hero__badge" aria-hidden="true">{% if level.number == 1 %}🔤{% elif level.number == 2 %}🧩{% else %}📚{% endif %}</div>
@@ -21,7 +22,7 @@
     </nav>
 
     <section class="course-section is-active" id="materias" data-course-panel="materias">
-      <header><h2>Materias del nivel</h2><p>Toca una materia para ver sus actividades, juegos y lecturas.</p></header>
+      <header><h2>Materias del nivel</h2><p>Toca una materia para ver qué puedes hacer.</p></header>
       <div class="level-subject-board" aria-label="Materias del nivel {{ level.number }}">
       {% for row in subject_rows %}
         <details class="level-subject-card level-subject-card--simple">
@@ -87,7 +88,7 @@
       </div>
     </section>
   </div>
-</main>
+</div>
 {% endblock %}
 
 {% block extra_js %}

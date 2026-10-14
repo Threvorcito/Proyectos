@@ -2,11 +2,12 @@
 {% block content %}
 <div class="activities-page readings-page">
   <div class="container py-5">
-    <section class="activities-hero readings-hero">
+    <section class="activities-hero readings-hero" id="readings-intro">
       <span class="eyebrow">Lecturas</span>
       {% if student %}
         <h1>Lecturas para tu grado</h1>
         <p>Escoge una lectura corta. Puedes escucharla por partes.</p>
+        {% include 'partials/listen_button.html' with target='#readings-intro h1, #readings-intro p' extra_class='kid-listen--below' %}
       {% else %}
         <h1>Escoge un grado y una materia para leer</h1>
         <p>Cuentos y textos cortos clasificados por grado y materia, con lectura pausada para estudiantes con dislexia.</p>
@@ -50,7 +51,7 @@
       {% for reading in readings %}
         <div class="col-md-6 col-lg-4">
           <a class="card-link" href="{% url 'readings:detail' reading.pk %}">
-            <div class="feature-card level-purple activity-result-card">
+            <div class="feature-card level-purple activity-result-card kid-reading-card">
               <small>{{ reading.get_grade_display }} · {% if reading.subject %}{{ reading.subject.name }}{% else %}Sin materia{% endif %}</small>
               <h3>{{ reading.title }}</h3>
               <p>{{ reading.description }}</p>

@@ -1,7 +1,52 @@
 {% extends 'base.html' %}
+{% block title %}Mis logros | {{ site_name }}{% endblock %}
 {% block content %}
-<div class="container py-5">
-  <h1>Mi progreso</h1>
-  <p>{{ student.display_name }} ha ganado {{ student.stars }} estrellas y {{ student.points }} puntos.</p>
+<div class="kid-progress">
+  <div class="container py-4 py-md-5">
+    <section class="kid-progress__hero" aria-labelledby="kid-progress-title">
+      <div id="kid-progress-intro">
+        <h1 id="kid-progress-title">Mi progreso</h1>
+        <p>{{ student.display_name }} ha ganado {{ student.stars }} estrellas y {{ student.points }} puntos.</p>
+      </div>
+      {% include 'partials/listen_button.html' with target='#kid-progress-intro' %}
+    </section>
+
+    <section class="kid-progress__stats" aria-label="Mi avance">
+      <div class="kid-progress__stat kid-area--progress">
+        <span aria-hidden="true">⭐</span>
+        <strong>{{ student.stars }}</strong>
+        <small>estrellas</small>
+      </div>
+      <div class="kid-progress__stat kid-area--practice">
+        <span aria-hidden="true">🎯</span>
+        <strong>{{ student.points }}</strong>
+        <small>puntos</small>
+      </div>
+      <div class="kid-progress__stat kid-area--learn">
+        <span aria-hidden="true">🌱</span>
+        <strong>{% if student.current_level %}{{ student.current_level.number }}{% else %}1{% endif %}</strong>
+        <small>mi nivel</small>
+      </div>
+    </section>
+
+    <section class="kid-progress__section" aria-labelledby="kid-progress-badges-title">
+      <h2 id="kid-progress-badges-title">Mis medallas</h2>
+      {% with earned=student.achievements.all %}
+        {% if earned %}
+          <ul class="kid-progress__badges">
+            {% for item in earned %}
+              <li><span aria-hidden="true">{{ item.achievement.icon }}</span>{{ item.achievement.name }}</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="kid-progress__empty">Todavía no hay medallas. Lee o juega y gana la primera.</p>
+        {% endif %}
+      {% endwith %}
+      <div class="kid-progress__next">
+        <a class="btn btn-primary btn-lg" href="{% url 'readings:list' %}">Leer un cuento</a>
+        <a class="btn btn-outline-primary btn-lg" href="{% url 'games:index' %}">Jugar</a>
+      </div>
+    </section>
+  </div>
 </div>
 {% endblock %}

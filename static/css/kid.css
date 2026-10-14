@@ -1,0 +1,622 @@
+/*
+ * Child-friendly layer for student-facing screens (ages 6-9).
+ *
+ * base.html loads this file and adds `.kid-ui` to <body> only for students
+ * and anonymous visitors, so the teacher/admin console keeps its own look.
+ * Colours are applied under `:not(.high-contrast)` so the "Alto contraste"
+ * switch keeps its own palette; sizes and targets apply in both modes.
+ *
+ * Contrast (WCAG 2.x, measured) is noted next to each text token.
+ */
+
+body.kid-ui {
+  /* Canvas and text */
+  --kid-bg: #fbf6ec;            /* warm cream: avoids white glare (BDA) */
+  --kid-surface: #fffdf8;       /* cards */
+  --kid-surface-sunk: #f6efe2;  /* boards and wells */
+  --kid-ink: #26303d;           /* 12.4:1 on bg, 13.1:1 on surface */
+  --kid-ink-soft: #4a5565;      /* 7.0:1 on bg, >= 6.3:1 on every *-soft tint */
+  --kid-line: #eadfcb;          /* decorative card edge */
+  --kid-line-strong: #7a6a52;   /* input edge, 5.2:1 on surface */
+
+  /* Primary action: brand teal, darkened for white text */
+  --kid-primary: #1d6f84;       /* white on it 5.7:1; on bg 5.3:1 */
+  --kid-primary-strong: #165a6b;/* hover; white on it 7.8:1 */
+  --kid-primary-soft: #e1f1f4;  /* primary text on it 4.9:1 */
+
+  /* Area accents, used the same way on cards, icons, tags and nav:
+     coral = Practicar / Letras, grape = Juegos / Sonidos,
+     sun = Logros / Sílabas, leaf = Lecturas / Palabras, teal = Aprender. */
+  --kid-coral: #b4441f;  --kid-coral-soft: #fde9e1;  /* 4.7:1 on soft, white 5.5:1 */
+  --kid-grape: #6a45b0;  --kid-grape-soft: #efe9fa;  /* 5.7:1 on soft, white 6.8:1 */
+  --kid-sun: #8a5a00;    --kid-sun-soft: #fdf1cf;    /* 5.3:1 on soft */
+  --kid-sun-fill: #f2b53a;                           /* decorative stars only */
+  --kid-leaf: #28703f;   --kid-leaf-soft: #e4f3e7;   /* 5.3:1 on soft, white 6.0:1 */
+
+  /* Feedback: never red, never only colour */
+  --kid-good-ink: #1e6b3a; --kid-good-soft: #e4f3e7; /* 5.7:1 */
+  --kid-try-ink: #8a4a0c;  --kid-try-soft: #fdf0dc;  /* 6.1:1 */
+
+  --kid-focus: #1d6f84;
+  --kid-radius: 20px;
+  --kid-radius-lg: 28px;
+  --kid-shadow: 0 10px 28px rgba(92, 70, 32, .08);
+  --kid-shadow-hover: 0 16px 36px rgba(92, 70, 32, .13);
+  --kid-tap: 48px;
+  --kid-tap-main: 64px;
+  --touch-target: 48px;
+}
+
+body.kid-ui:not(.high-contrast) {
+  --primary: var(--kid-primary);
+  --background: var(--kid-bg);
+  --surface: var(--kid-surface);
+  --text: var(--kid-ink);
+  --border: var(--kid-line);
+  --shadow: var(--kid-shadow);
+  --bs-body-bg: var(--kid-bg);
+  --bs-body-color: var(--kid-ink);
+  --bs-primary: var(--kid-primary);
+  --bs-primary-rgb: 29, 111, 132;
+  --bs-link-color: var(--kid-primary);
+  --bs-link-color-rgb: 29, 111, 132;
+  --bs-link-hover-color: var(--kid-primary-strong);
+  --bs-link-hover-color-rgb: 22, 90, 107;
+  --bs-secondary-color: var(--kid-ink-soft);
+  --bs-border-color: var(--kid-line);
+  background: var(--kid-bg);
+  color: var(--kid-ink);
+}
+
+/* ---------- browser surfaces ---------- */
+.kid-ui ::selection { background: #f9dc8a; color: #26303d; }
+.kid-ui :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 3px solid var(--kid-focus) !important;
+  outline-offset: 3px;
+}
+.kid-ui.high-contrast :is(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline-color: #facc15 !important;
+}
+.kid-ui:not(.high-contrast) .text-muted { color: var(--kid-ink-soft) !important; }
+
+/* Headings inherit the child's letter-spacing setting instead of tightening it. */
+.kid-ui :is(h1, h2, h3) { letter-spacing: inherit; }
+
+/* Short labels in sentence case: no tracked capitals for early readers. */
+.kid-ui :is(.eyebrow, .games-page__eyebrow, .login-page__eyebrow) {
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: inherit;
+  text-transform: none;
+}
+.kid-ui:not(.high-contrast) :is(.eyebrow, .games-page__eyebrow, .login-page__eyebrow) { color: var(--kid-primary); }
+
+/* ---------- buttons and targets ---------- */
+.kid-ui .btn {
+  align-items: center;
+  border-radius: 999px;
+  border-width: 2px;
+  display: inline-flex;
+  font-weight: 700;
+  gap: .5rem;
+  justify-content: center;
+  min-height: var(--kid-tap);
+  padding-inline: 1.25rem;
+}
+.kid-ui .btn-lg { font-size: 1.2rem; min-height: var(--kid-tap-main); padding-inline: 1.6rem; }
+.kid-ui .btn-sm { font-size: 1rem; }
+.kid-ui .btn-link { border-color: transparent; }
+.kid-ui:not(.high-contrast) .btn-primary {
+  --bs-btn-bg: var(--kid-primary);
+  --bs-btn-border-color: var(--kid-primary);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-bg: var(--kid-primary-strong);
+  --bs-btn-hover-border-color: var(--kid-primary-strong);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-bg: var(--kid-primary-strong);
+  --bs-btn-active-border-color: var(--kid-primary-strong);
+  --bs-btn-active-color: #fff;
+  --bs-btn-disabled-bg: var(--kid-primary);
+  --bs-btn-disabled-border-color: var(--kid-primary);
+}
+.kid-ui:not(.high-contrast) .btn-outline-primary {
+  --bs-btn-bg: var(--kid-surface);
+  --bs-btn-color: var(--kid-primary);
+  --bs-btn-border-color: var(--kid-primary);
+  --bs-btn-hover-bg: var(--kid-primary-soft);
+  --bs-btn-hover-color: var(--kid-primary-strong);
+  --bs-btn-hover-border-color: var(--kid-primary-strong);
+  --bs-btn-active-bg: var(--kid-primary-soft);
+  --bs-btn-active-color: var(--kid-primary-strong);
+  --bs-btn-active-border-color: var(--kid-primary-strong);
+}
+.kid-ui:not(.high-contrast) .btn-outline-secondary {
+  --bs-btn-color: var(--kid-ink-soft);
+  --bs-btn-border-color: var(--kid-line-strong);
+  --bs-btn-hover-bg: var(--kid-surface-sunk);
+  --bs-btn-hover-color: var(--kid-ink);
+  --bs-btn-hover-border-color: var(--kid-line-strong);
+}
+.kid-ui .btn-soft,
+.kid-ui .option-btn { min-height: var(--kid-tap); }
+.kid-ui:not(.high-contrast) .btn-soft,
+.kid-ui:not(.high-contrast) .option-btn {
+  background: var(--kid-surface);
+  border: 2px solid var(--kid-line);
+  color: var(--kid-ink);
+}
+.kid-ui:not(.high-contrast) .btn-soft:hover,
+.kid-ui:not(.high-contrast) .option-btn:hover { border-color: var(--kid-primary); }
+
+/* Audio cue button (partials/listen_button.html) */
+.kid-listen {
+  align-items: center;
+  align-self: flex-start;
+  background: var(--kid-primary-soft, #e1f1f4);
+  border: 2px solid var(--kid-primary, #1d6f84);
+  border-radius: 999px;
+  color: var(--kid-primary-strong, #165a6b);
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1.1rem;
+  font-weight: 700;
+  gap: .55rem;
+  justify-content: center;
+  min-height: 56px;
+  padding: .5rem 1.25rem .5rem 1rem;
+  transition: background-color .2s ease, transform .2s ease;
+}
+.kid-listen svg {
+  fill: none;
+  height: 1.5em;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  width: 1.5em;
+}
+.kid-listen svg path:first-child { fill: currentColor; }
+.kid-listen:hover { background: #cfe8ee; }
+.kid-listen:active { transform: scale(.97); }
+.kid-ui.high-contrast .kid-listen { background: #111827; border-color: #facc15; color: #fde68a; }
+
+/* A heading row with its listen button: text left, button right, stacks on phones. */
+.kid-heading-row {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+.kid-heading-row > :first-child { min-width: 0; }
+@media (max-width: 575.98px) {
+  .kid-heading-row { flex-direction: column; }
+}
+
+/* ---------- navbar, footer, accessibility panel ---------- */
+.kid-ui:not(.high-contrast) .site-navbar {
+  background-color: var(--kid-surface) !important;
+  border-bottom-color: var(--kid-line) !important;
+}
+.kid-ui .site-navbar .navbar-brand { font-size: 1.25rem; }
+.kid-ui .site-navbar .nav-link {
+  align-items: center;
+  display: flex;
+  font-size: 1.05rem;
+  gap: .5rem;
+  min-height: var(--kid-tap);
+  padding-inline: 1rem;
+}
+.kid-ui:not(.high-contrast) .site-navbar .nav-link { color: var(--kid-ink); }
+.kid-ui .site-navbar .nav-action { min-height: var(--kid-tap); padding-inline: 1.15rem; }
+.kid-ui .navbar-toggler { min-height: var(--kid-tap); min-width: 56px; }
+.kid-ui .dropdown-item { align-items: center; display: flex; font-size: 1.05rem; min-height: var(--kid-tap); }
+.kid-ui:not(.high-contrast) .dropdown-menu { background: var(--kid-surface); border-color: var(--kid-line); }
+
+/* Each area keeps one colour: a dot before the label and a tinted pill when current. */
+.kid-ui .kid-nav--learn { --area: var(--kid-primary); --area-soft: var(--kid-primary-soft); }
+.kid-ui .kid-nav--practice { --area: var(--kid-coral); --area-soft: var(--kid-coral-soft); }
+.kid-ui .kid-nav--play { --area: var(--kid-grape); --area-soft: var(--kid-grape-soft); }
+.kid-ui .kid-nav--read { --area: var(--kid-leaf); --area-soft: var(--kid-leaf-soft); }
+.kid-ui .kid-nav--progress { --area: var(--kid-sun); --area-soft: var(--kid-sun-soft); }
+.kid-ui .kid-nav::before {
+  background: var(--area);
+  border-radius: 50%;
+  content: "";
+  flex: 0 0 auto;
+  height: .6rem;
+  width: .6rem;
+}
+.kid-ui:not(.high-contrast) .site-navbar .kid-nav:hover,
+.kid-ui:not(.high-contrast) .site-navbar .kid-nav.is-current {
+  background: var(--area-soft);
+  color: var(--area);
+}
+.kid-ui .site-navbar .kid-nav.is-current { font-weight: 700; }
+
+.kid-ui:not(.high-contrast) .site-footer { background: var(--kid-surface); border-top-color: var(--kid-line); }
+.kid-ui .footer-links a { align-items: center; display: inline-flex; min-height: var(--kid-tap); }
+
+.kid-ui .accessibility-fab {
+  font-size: 1.35rem;
+  font-weight: 700;
+  height: 64px;
+  width: 64px;
+}
+.kid-ui:not(.high-contrast) .accessibility-fab { background: var(--kid-primary); box-shadow: var(--kid-shadow-hover); }
+.kid-ui:not(.high-contrast) .offcanvas { background: var(--kid-surface); color: var(--kid-ink); }
+.kid-ui .offcanvas-title { font-size: 1.4rem; font-weight: 700; }
+.kid-ui .offcanvas .btn-close { height: 2rem; width: 2rem; }
+.kid-ui .accessibility-controls .form-label,
+.kid-ui .accessibility-controls .form-check-label { font-size: 1.1rem; font-weight: 600; }
+.kid-ui .accessibility-controls .form-range { height: 2.75rem; }
+.kid-ui .accessibility-controls .form-range::-webkit-slider-runnable-track { height: .6rem; }
+.kid-ui .accessibility-controls .form-range::-webkit-slider-thumb { height: 1.9rem; margin-top: -.65rem; width: 1.9rem; }
+.kid-ui .accessibility-controls .form-range::-moz-range-track { height: .6rem; }
+.kid-ui .accessibility-controls .form-range::-moz-range-thumb { height: 1.9rem; width: 1.9rem; }
+.kid-ui:not(.high-contrast) .accessibility-controls .form-range::-webkit-slider-thumb { background: var(--kid-primary); }
+.kid-ui:not(.high-contrast) .accessibility-controls .form-range::-moz-range-thumb { background: var(--kid-primary); }
+.kid-ui .accessibility-controls .form-check {
+  align-items: center;
+  display: flex;
+  gap: .75rem;
+  min-height: var(--kid-tap);
+  padding-left: 0;
+}
+.kid-ui .accessibility-controls .form-switch .form-check-input {
+  flex: 0 0 auto;
+  height: 1.9rem;
+  margin: 0;
+  width: 3.4rem;
+}
+.kid-ui:not(.high-contrast) .form-check-input:checked { background-color: var(--kid-primary); border-color: var(--kid-primary); }
+
+/* ---------- page canvases ---------- */
+.kid-ui:not(.high-contrast) :is(
+  .student-dashboard-page, .activities-page, .activity-detail-page, .levels-page,
+  .games-page, .kid-access, .login-page, .student-plan-page, .kid-progress
+) {
+  background:
+    radial-gradient(circle at 6% 3%, rgba(242, 181, 58, .16), transparent 24%),
+    radial-gradient(circle at 96% 6%, rgba(29, 111, 132, .08), transparent 26%),
+    var(--kid-bg);
+}
+.kid-ui:not(.high-contrast) .hero-section {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(242, 181, 58, .18), transparent 30%),
+    radial-gradient(circle at 92% 30%, rgba(29, 111, 132, .1), transparent 34%),
+    var(--kid-bg);
+}
+
+/* ---------- card surfaces ---------- */
+.kid-ui:not(.high-contrast) :is(
+  .hero-card, .feature-card, .info-panel, .auth-card, .reading-card, .stat-card, .activity-shell,
+  .student-dashboard-hero, .student-progress-strip div, .student-class-card, .student-other-classes,
+  .student-recommendations, .activities-hero, .activity-current-filter, .empty-state-card,
+  .activity-learning-compass, .activity-result-card, .activity-play-card, .kid-dashboard-hero,
+  .course-overview-panel, .kid-timeline-panel, .course-room-hero, .course-section, .course-card,
+  .games-page__recommendation, .games-page__game-card, .games-page__mini-card, .games-page__play-card,
+  .home-info__card, .home-student-start__card, .home-levels__card, .benefit-card, .login-page__shell,
+  .student-plan-hero, .student-resource-card, .student-plan-steps article
+) {
+  background: var(--kid-surface);
+  border-color: var(--kid-line);
+  box-shadow: var(--kid-shadow);
+}
+.kid-ui:not(.high-contrast) :is(.student-other-classes__grid a, .student-mini-card, .games-page__board, .reading-block) {
+  background: var(--kid-surface-sunk);
+  border-color: var(--kid-line);
+}
+.kid-ui:not(.high-contrast) :is(.student-other-classes__grid a, .student-mini-card) span,
+.kid-ui:not(.high-contrast) :is(.student-class-card, .student-section-heading) p,
+.kid-ui:not(.high-contrast) .student-progress-strip span,
+.kid-ui:not(.high-contrast) :is(.games-page__hero, .games-page__section-heading, .games-page__play-header) p,
+.kid-ui:not(.high-contrast) .games-page__game-card p,
+.kid-ui:not(.high-contrast) .home-levels .home-levels__header span { color: var(--kid-ink-soft); }
+
+/* Area tints: the same colour per area on every card. */
+.kid-ui :is(.kid-area--learn, .student-choice-card--class, .course-card--1, .home-levels__card--one, .activity-grade-card--1) {
+  --area: var(--kid-primary); --area-soft: var(--kid-primary-soft);
+}
+.kid-ui :is(.kid-area--practice, .student-choice-card--practice) { --area: var(--kid-coral); --area-soft: var(--kid-coral-soft); }
+.kid-ui :is(.kid-area--play, .student-choice-card--play) { --area: var(--kid-grape); --area-soft: var(--kid-grape-soft); }
+.kid-ui :is(.kid-area--read, .student-choice-card--read, .course-card--2, .home-levels__card--two) { --area: var(--kid-leaf); --area-soft: var(--kid-leaf-soft); }
+.kid-ui :is(.kid-area--progress, .student-choice-card--progress, .course-card--3, .home-levels__card--three, .home-levels__card--advance) {
+  --area: var(--kid-sun); --area-soft: var(--kid-sun-soft);
+}
+
+.kid-ui:not(.high-contrast) :is(.student-choice-card, .home-student-start__card) {
+  background: linear-gradient(140deg, var(--kid-surface) 45%, var(--area-soft, var(--kid-primary-soft)));
+  border: 2px solid var(--kid-line);
+  color: var(--kid-ink);
+}
+.kid-ui:not(.high-contrast) :is(.student-choice-card, .home-student-start__card):is(:hover, :focus-visible) {
+  border-color: var(--area, var(--kid-primary));
+  box-shadow: var(--kid-shadow-hover);
+  color: var(--kid-ink);
+}
+.kid-ui:not(.high-contrast) :is(.student-choice-card__icon, .home-student-start__icon) {
+  background: var(--area-soft, var(--kid-primary-soft));
+  color: var(--area, var(--kid-primary));
+}
+.kid-ui:not(.high-contrast) :is(.student-choice-card__action, .home-student-start .home-student-start__card .home-student-start__action) {
+  background: var(--area, var(--kid-primary));
+  color: #fff;
+}
+.kid-ui .student-choice-card__action,
+.kid-ui .home-student-start__action {
+  align-items: center;
+  display: inline-flex;
+  font-size: 1.05rem;
+  justify-content: center;
+  min-height: var(--kid-tap);
+}
+.kid-ui:not(.high-contrast) .student-choice-card__content small { color: var(--kid-ink-soft); }
+
+/* Stars badge */
+.kid-ui:not(.high-contrast) .student-dashboard-hero__badge {
+  background: var(--kid-sun-soft);
+  border-color: var(--kid-sun-fill);
+  color: var(--kid-sun);
+}
+
+/* Level / course cards */
+.kid-ui:not(.high-contrast) .course-card__cover { background: var(--area-soft, var(--kid-primary-soft)); color: var(--area, var(--kid-primary)); }
+.kid-ui:not(.high-contrast) .course-card:is(:hover, :focus-visible) { border-color: var(--area, var(--kid-primary)); }
+.kid-ui .home-levels {
+  --level-one: var(--kid-primary);
+  --level-two: var(--kid-leaf);
+  --level-three: var(--kid-sun);
+}
+
+/* Skill tags: Letras / Sonidos / Sílabas / Palabras */
+.kid-ui:not(.high-contrast) .kid-tag--letters { background: var(--kid-coral-soft); border-color: transparent; color: var(--kid-coral); }
+.kid-ui:not(.high-contrast) .kid-tag--sounds { background: var(--kid-grape-soft); border-color: transparent; color: var(--kid-grape); }
+.kid-ui:not(.high-contrast) .kid-tag--syllables { background: var(--kid-sun-soft); border-color: transparent; color: var(--kid-sun); }
+.kid-ui:not(.high-contrast) .kid-tag--words { background: var(--kid-leaf-soft); border-color: transparent; color: var(--kid-leaf); }
+
+/* ---------- back links become real buttons ---------- */
+.kid-ui :is(.level-detail-back, .activity-play-card__back, .games-page .games-page__back-link) {
+  align-items: center;
+  border: 2px solid var(--kid-line);
+  border-radius: 999px;
+  display: inline-flex;
+  font-weight: 700;
+  gap: .4rem;
+  margin-bottom: 1rem;
+  min-height: var(--kid-tap);
+  padding: .4rem 1.1rem;
+}
+.kid-ui:not(.high-contrast) :is(.level-detail-back, .activity-play-card__back, .games-page .games-page__back-link) {
+  background: var(--kid-surface);
+  color: var(--kid-primary);
+}
+
+/* ---------- levels ---------- */
+.kid-ui .course-tabs button,
+.kid-ui .level-subject-card__actions a,
+.kid-ui .quick-resource-grid a { min-height: var(--kid-tap); }
+.kid-ui .level-subject-card__top { min-height: 72px; }
+.kid-ui:not(.high-contrast) .course-overview-panel__bar span { background: var(--kid-primary-soft); color: var(--kid-primary); }
+
+/* ---------- activities ---------- */
+.kid-ui:not(.high-contrast) .activity-result-card:is(:hover, :focus-visible) { border-color: var(--kid-coral); }
+.kid-ui:not(.high-contrast) .activity-result-card__icon { background: var(--kid-coral-soft); }
+.kid-ui:not(.high-contrast) .activity-result-card__level { background: var(--kid-coral-soft); color: var(--kid-coral); }
+.kid-ui:not(.high-contrast) .activity-result-card__footer { color: var(--kid-coral); }
+.kid-ui .activity-audio-button { min-height: 56px; }
+.kid-ui .activity-option-card { min-height: 80px; }
+.kid-ui:not(.high-contrast) .activity-option-card.is-correct {
+  background: var(--kid-good-soft);
+  border-color: var(--kid-good-ink);
+  box-shadow: 0 0 0 4px rgba(30, 107, 58, .16);
+}
+.kid-ui:not(.high-contrast) .activity-option-card.is-try {
+  background: var(--kid-try-soft);
+  border-color: #d98a2b;
+  box-shadow: 0 0 0 4px rgba(217, 138, 43, .18);
+}
+
+/* ---------- friendly feedback (activities, readings, games) ---------- */
+.kid-ui:not(.high-contrast) :is(.activity-answer-feedback, .games-page .games-page__feedback, .reading-answer-button).is-correct,
+.kid-ui:not(.high-contrast) .games-page .games-page__feedback.is-good {
+  background: var(--kid-good-soft);
+  border-color: #8fcf9f;
+  color: var(--kid-good-ink);
+}
+.kid-ui:not(.high-contrast) :is(.activity-answer-feedback, .games-page .games-page__feedback, .reading-answer-button).is-try {
+  background: var(--kid-try-soft);
+  border-color: #f0c48a;
+  color: var(--kid-try-ink);
+}
+.kid-ui .activity-answer-feedback.is-correct strong::before,
+.kid-ui .games-page .games-page__feedback.is-good::before { content: "⭐ "; }
+.kid-ui .activity-answer-feedback.is-try strong::before { content: "💡 "; }
+.kid-ui .activity-answer-feedback,
+.kid-ui .games-page .games-page__feedback { font-size: 1.15rem; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .kid-ui:not(.reduce-motion) :is(.activity-answer-feedback.is-correct, .games-page__feedback.is-good) {
+    animation: kid-pop .5s cubic-bezier(.16, 1, .3, 1) both;
+  }
+  .kid-ui:not(.reduce-motion) .games-page__finish:not([hidden]) .games-page__stars {
+    animation: kid-pop .7s cubic-bezier(.16, 1, .3, 1) both;
+  }
+  .kid-ui:not(.reduce-motion) :is(.activity-answer-feedback.is-try, .games-page__feedback.is-try) {
+    animation: kid-nudge .45s ease-out both;
+  }
+}
+@keyframes kid-pop {
+  0% { opacity: 0; transform: scale(.85); }
+  60% { opacity: 1; transform: scale(1.04); }
+  100% { transform: scale(1); }
+}
+@keyframes kid-nudge {
+  0%, 100% { transform: translateX(0); }
+  30% { transform: translateX(-4px); }
+  60% { transform: translateX(4px); }
+}
+
+/* ---------- games ---------- */
+.kid-ui .games-page .games-page__button { font-size: 1.1rem; min-height: 56px; padding-inline: 1.4rem; border-radius: 999px; }
+.kid-ui:not(.high-contrast) .games-page .games-page__button { background: var(--kid-primary); color: #fff; }
+.kid-ui:not(.high-contrast) .games-page .games-page__button:is(:hover, :focus-visible) { background: var(--kid-primary-strong); color: #fff; }
+.kid-ui:not(.high-contrast) .games-page .games-page__button--soft { background: var(--kid-primary-soft); color: var(--kid-primary-strong); }
+.kid-ui:not(.high-contrast) .games-page .games-page__button--soft:is(:hover, :focus-visible) { background: #cfe8ee; color: var(--kid-primary-strong); }
+.kid-ui .games-page :is(.games-page__audio-button, .games-page__listen-main) { min-height: 56px; font-size: 1.1rem; }
+.kid-ui:not(.high-contrast) .games-page :is(.games-page__audio-button, .games-page__listen-main) {
+  background: var(--kid-primary-soft);
+  border-color: var(--kid-primary);
+  color: var(--kid-primary-strong);
+}
+.kid-ui:not(.high-contrast) .games-page .games-page__instruction strong { border-color: var(--kid-grape); color: var(--kid-grape); background: var(--kid-surface); }
+.kid-ui .games-page :is(.games-page__letter-tile, .games-page__option, .games-page__memory-card, .games-page__slot) { min-height: 72px; }
+.kid-ui:not(.high-contrast) .games-page :is(.games-page__letter-tile, .games-page__option, .games-page__memory-card, .games-page__slot) {
+  background: var(--kid-surface);
+  border-color: var(--kid-line);
+  color: var(--kid-ink);
+}
+.kid-ui:not(.high-contrast) .games-page :is(.games-page__letter-tile[aria-pressed="true"], .games-page__option.is-selected) {
+  border-color: var(--kid-grape);
+  box-shadow: 0 0 0 4px rgba(106, 69, 176, .18);
+}
+.kid-ui:not(.high-contrast) .games-page :is(.games-page__letter-tile.is-correct, .games-page__option.is-correct, .games-page__memory-card.is-matched) {
+  background: var(--kid-good-soft);
+  border-color: var(--kid-good-ink);
+}
+.kid-ui .games-page .games-page__difficulty-control select { min-height: var(--kid-tap); }
+.kid-ui .games-page .games-page__dialog-close { height: var(--kid-tap); width: var(--kid-tap); }
+.kid-ui:not(.high-contrast) .games-page .games-page__icon { background: var(--kid-grape-soft); }
+.kid-ui:not(.high-contrast) .games-page .games-page__hero-card {
+  background: linear-gradient(135deg, var(--kid-grape-soft), var(--kid-surface) 70%);
+  border-color: var(--kid-line);
+}
+.kid-ui:not(.high-contrast) .games-page .games-page__progress { background: var(--kid-surface-sunk); }
+.kid-ui:not(.high-contrast) .games-page .games-page__progress span { background: linear-gradient(90deg, var(--kid-grape), var(--kid-primary)); }
+
+/* ---------- reading practice: keep the reading text crisp on a lighter card ---------- */
+.kid-ui:not(.high-contrast) .reading-page {
+  --practice-primary: var(--kid-primary);
+  --practice-primary-soft: var(--kid-primary-soft);
+  --practice-ink: var(--kid-ink);
+  --practice-muted: var(--kid-ink-soft);
+}
+.kid-ui:not(.high-contrast) .reading-page :is(.practice-text, .reading-content) { color: var(--kid-ink); }
+
+/* ---------- login page as children see it ---------- */
+.kid-ui:not(.high-contrast) .login-page .login-page__visual {
+  background: linear-gradient(150deg, var(--kid-primary) 0%, var(--kid-primary-strong) 100%);
+}
+.kid-ui .login-page .login-page__submit { font-size: 1.2rem; min-height: var(--kid-tap-main); border-radius: 999px; }
+.kid-ui:not(.high-contrast) .login-page .login-page__submit { background: var(--kid-primary); }
+.kid-ui:not(.high-contrast) .login-page .login-page__submit:is(:hover, :focus-visible) { background: var(--kid-primary-strong); }
+.kid-ui .login-page .login-page__input { font-size: 1.1rem; min-height: 56px; }
+.kid-ui:not(.high-contrast) .login-page .login-page__input { background: var(--kid-surface); border-color: var(--kid-line-strong); }
+.kid-ui:not(.high-contrast) .login-page :is(.login-page__brand, .login-page__register-link a) { color: var(--kid-primary); }
+.kid-ui:not(.high-contrast) .login-page .login-page__visual .login-page__brand { color: #fff; }
+.kid-ui:not(.high-contrast) .login-page :is(.login-page__heading p, .login-page__register-link) { color: var(--kid-ink-soft); }
+.kid-ui .login-page .login-page__password-toggle { min-height: var(--kid-tap); min-width: var(--kid-tap); }
+
+/* ---------- my achievements ---------- */
+.kid-progress { min-height: 70vh; }
+.kid-progress__hero {
+  align-items: center;
+  background: var(--kid-surface);
+  border: 1px solid var(--kid-line);
+  border-radius: var(--kid-radius-lg);
+  box-shadow: var(--kid-shadow);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: clamp(1.25rem, 4vw, 2rem);
+}
+.kid-progress__hero h1 { font-size: clamp(2rem, 6vw, 3rem); font-weight: 800; margin: 0 0 .4rem; }
+.kid-progress__hero p { color: var(--kid-ink-soft); font-size: 1.15rem; margin: 0; }
+.kid-progress__stats {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1.25rem;
+}
+.kid-progress__stat {
+  align-items: center;
+  background: var(--area-soft);
+  border-radius: var(--kid-radius);
+  color: var(--area);
+  display: grid;
+  gap: .25rem;
+  justify-items: center;
+  padding: 1.25rem 1rem;
+  text-align: center;
+}
+.kid-progress__stat span[aria-hidden] { font-size: 2.4rem; line-height: 1; }
+.kid-progress__stat strong { font-size: clamp(2rem, 6vw, 2.75rem); font-weight: 800; line-height: 1.1; }
+.kid-progress__stat small { color: var(--kid-ink); font-size: 1.05rem; font-weight: 600; }
+.kid-progress__section {
+  background: var(--kid-surface);
+  border: 1px solid var(--kid-line);
+  border-radius: var(--kid-radius-lg);
+  box-shadow: var(--kid-shadow);
+  margin-top: 1.25rem;
+  padding: clamp(1.15rem, 3vw, 1.6rem);
+}
+.kid-progress__section h2 { font-size: clamp(1.4rem, 4vw, 1.8rem); font-weight: 800; margin: 0 0 1rem; }
+.kid-progress__badges {
+  display: grid;
+  gap: .85rem;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.kid-progress__badges li {
+  align-items: center;
+  background: var(--kid-sun-soft);
+  border-radius: var(--kid-radius);
+  color: var(--kid-ink);
+  display: grid;
+  font-weight: 700;
+  gap: .35rem;
+  justify-items: center;
+  padding: 1rem .75rem;
+  text-align: center;
+}
+.kid-progress__badges li span { font-size: 2.2rem; line-height: 1; }
+.kid-progress__empty { color: var(--kid-ink-soft); font-size: 1.1rem; margin: 0; }
+.kid-progress__next { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.25rem; }
+.kid-ui.high-contrast :is(.kid-progress__hero, .kid-progress__section, .kid-progress__stat, .kid-progress__badges li) {
+  background: #111827; border-color: #facc15; color: #fff;
+}
+.kid-ui.high-contrast :is(.kid-progress__hero p, .kid-progress__stat small, .kid-progress__empty) { color: #fff; }
+@media (max-width: 575.98px) {
+  .kid-progress__hero { align-items: flex-start; flex-direction: column; }
+  .kid-progress__stats { grid-template-columns: 1fr; }
+  .kid-progress__stat { grid-template-columns: auto 1fr; justify-items: start; text-align: left; }
+  .kid-progress__stat span[aria-hidden] { grid-row: span 2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kid-listen { transition: none; }
+}
+.kid-listen--below { margin-top: 1rem; }
+
+/* ---------- sweep fixes ---------- */
+.kid-ui .site-navbar .navbar-brand { align-items: center; display: inline-flex; min-height: var(--kid-tap); }
+@media (min-width: 992px) {
+  .kid-ui .site-navbar .nav-link { padding-inline: .7rem; white-space: nowrap; }
+  .kid-ui .site-navbar .navbar-nav { column-gap: .25rem !important; }
+}
+.kid-ui:not(.high-contrast) .home-levels .home-levels__card--three .home-levels__action { color: var(--kid-sun); }
+.kid-ui:not(.high-contrast) .games-page .games-page__quiz-countdown { color: var(--kid-grape); }
+.kid-ui:not(.high-contrast) .login-page .login-page__visual {
+  background: linear-gradient(150deg, var(--kid-primary-strong) 0%, #124c5a 100%);
+}
+
+/* Checkboxes and switches: bigger boxes, whole row is a 48px target. */
+.kid-ui .form-check { align-items: center; display: flex; gap: .75rem; min-height: var(--kid-tap); padding-left: 0; }
+.kid-ui .form-check .form-check-input { flex: 0 0 auto; float: none; height: 1.6rem; margin: 0; width: 1.6rem; }
+.kid-ui .form-switch .form-check-input { height: 1.9rem; width: 3.4rem; }
+.kid-ui .form-check-label { font-size: 1.05rem; }
+.kid-ui:not(.high-contrast) .register-welcome {
+  background: linear-gradient(150deg, var(--kid-primary-strong) 0%, #124c5a 100%);
+}
+.kid-ui :is(.form-control, .form-select) { min-height: var(--kid-tap); }

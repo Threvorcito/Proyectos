@@ -7,7 +7,7 @@
     <h1>Escoge tus dibujos secretos</h1>
     <p>Toca tus 3 dibujos en el orden correcto.</p>
   </div>
-  <button class="btn btn-outline-primary kid-access__listen" type="button" data-speak-text="Escoge tus dibujos secretos. Toca tus tres dibujos en el orden correcto.">Escuchar</button>
+  {% include 'partials/listen_button.html' with text="Escoge tus dibujos secretos. Toca tus tres dibujos en el orden correcto." %}
 </div>
 <form method="post">
   {% csrf_token %}

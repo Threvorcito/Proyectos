@@ -3,10 +3,11 @@
 <div class="student-dashboard-page">
   <div class="container py-4 py-md-5">
     <section class="student-dashboard-hero" aria-labelledby="student-dashboard-title">
-      <div>
+      <div id="student-dashboard-intro">
         <span class="eyebrow">Hola, {{ student.display_name }}</span>
         <h1 id="student-dashboard-title">Elige una cosa para hacer ahora</h1>
         <p>Hazlo con calma. Puedes escuchar, leer, practicar o jugar.</p>
+        {% include 'partials/listen_button.html' with target='#student-dashboard-intro' extra_class='kid-listen--below' %}
       </div>
       <div class="student-dashboard-hero__badge" aria-label="Tu avance">
         <span>{{ student.stars }}</span>
