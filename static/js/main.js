@@ -83,6 +83,28 @@
       window.AppSpeech?.speak(button.dataset.speakText || '');
     });
   });
+
+  // Audio cue buttons that read the visible instruction they sit next to,
+  // so the spoken words never drift from the on-screen copy.
+  const readVisibleText = (selector) => Array.from(document.querySelectorAll(selector))
+    .map((node) => {
+      const clone = node.cloneNode(true);
+      clone.querySelectorAll('.kid-listen, [aria-hidden="true"], .visually-hidden').forEach((item) => item.remove());
+      // A short pause after each heading or line, so the voice does not run them together.
+      clone.querySelectorAll('h1, h2, h3, h4, p, li, .eyebrow, small').forEach((item) => {
+        if (!/[.!?:]\s*$/.test(item.textContent)) item.append('. ');
+        else item.append(' ');
+      });
+      return clone.textContent.replace(/\s+/g, ' ').trim();
+    })
+    .filter(Boolean)
+    .join('. ');
+
+  document.querySelectorAll('[data-speak-from]').forEach((button) => {
+    button.addEventListener('click', () => {
+      window.AppSpeech?.speak(readVisibleText(button.dataset.speakFrom));
+    });
+  });
 })();
 
 (() => {

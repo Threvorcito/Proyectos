@@ -1,0 +1,8 @@
+{% comment %}
+Audio cue for children: reads an instruction aloud with the shared AppSpeech helper (main.js).
+Pass `text` (the words to read) or `target` (a CSS selector whose visible text is read).
+Optional: `label` (defaults to "Escuchar"), `extra_class`.
+{% endcomment %}<button class="kid-listen{% if extra_class %} {{ extra_class }}{% endif %}" type="button" {% if target %}data-speak-from="{{ target }}"{% else %}data-speak-text="{{ text }}"{% endif %}>
+  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+  <span>{{ label|default:"Escuchar" }}</span>
+</button>
