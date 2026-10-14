@@ -39,7 +39,9 @@
           {% endfor %}
         </div>
         {% if answer_feedback %}
-          <div class="activity-answer-feedback {% if answer_feedback.is_correct %}is-correct{% else %}is-try{% endif %}" role="status" aria-live="polite">
+          <div class="activity-answer-feedback {% if answer_feedback.is_correct %}is-correct{% else %}is-try{% endif %}" role="status" aria-live="polite"
+            data-mascot-on-load="{% if answer_feedback.is_correct %}cheer{% else %}encourage{% endif %}"
+            data-mascot-say="{% if answer_feedback.is_correct %}¡Sí! ¡Lo lograste!{% else %}¡Casi! Mira otra vez, tú puedes.{% endif %}">
             {% if answer_feedback.is_correct %}
               <strong>¡Muy bien!</strong>
               {% if answer_feedback.points %}
@@ -53,6 +55,7 @@
             {% endif %}
           </div>
         {% endif %}
+        <div class="mascot-slot" data-mascot-slot></div>
       </section>
     </article>
   </div>
@@ -70,3 +73,5 @@
   });
 </script>
 {% endblock %}
+
+{% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}

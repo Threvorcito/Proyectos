@@ -295,14 +295,21 @@
     if (this.progress) this.progress.style.width = Math.round((this.index / total) * 100) + '%';
   };
 
+  // The reading buddy (templates/partials/mascot.html) is optional on a page.
+  function mascotReact(kind, text) {
+    if (window.Mascot) window.Mascot.react(kind, text ? {say: text} : {});
+  }
+
   GameState.prototype.sayGood = function () {
     this.feedback.className = 'games-page__feedback is-good';
     this.feedback.textContent = '✓ ' + positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
+    mascotReact('cheer');
   };
 
   GameState.prototype.sayTry = function () {
     this.feedback.className = 'games-page__feedback is-try';
     this.feedback.textContent = tryMessages[Math.floor(Math.random() * tryMessages.length)];
+    mascotReact('encourage');
   };
 
   GameState.prototype.next = function (wasCorrect, render) {
@@ -331,6 +338,7 @@
     if (this.stars) this.stars.textContent = '⭐'.repeat(starCount);
     if (this.summary) this.summary.textContent = 'Retos completados: ' + total + ' | Aciertos: ' + this.correct;
     this.renderResults();
+    mascotReact('cheer', starCount === 3 ? '¡Todo perfecto! ¡Qué bien!' : '¡Terminaste el juego!');
     this.saveAttempt(total);
   };
 

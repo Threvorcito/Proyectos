@@ -67,6 +67,40 @@ class FooterRoleVisibilityTests(TestCase):
         self.assertContains(response, 'Lecturas')
 
 
+class ReadingBuddyMascotTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial', order=1)
+
+    def test_student_dashboard_shows_mascot_with_greeting(self):
+        student_user = CustomUser.objects.create_user(
+            username='alumnolumi', email='alumnolumi@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT,
+        )
+        StudentProfile.objects.create(user=student_user, name='Ana Lumi', grade='1', reading_level=self.level, current_level=self.level)
+        self.client.force_login(student_user)
+
+        response = self.client.get(reverse('dashboard:student'))
+
+        self.assertTemplateUsed(response, 'partials/mascot.html')
+        self.assertContains(response, 'data-mascot ')
+        self.assertContains(response, 'aria-label="Lumi, la lechuza lectora"')
+        self.assertContains(response, '¿Leemos juntos?')
+        self.assertContains(response, 'js/mascot.js')
+
+    def test_teacher_dashboard_has_no_mascot(self):
+        teacher_user = CustomUser.objects.create_user(
+            username='docentelumi', email='docentelumi@example.com', password='Docente123!', role=CustomUser.Role.TEACHER,
+        )
+        TeacherProfile.objects.create(user=teacher_user, name='Docente Lumi')
+        self.client.force_login(teacher_user)
+
+        response = self.client.get(reverse('dashboard:teacher'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateNotUsed(response, 'partials/mascot.html')
+        self.assertNotContains(response, 'data-mascot')
+        self.assertNotContains(response, 'js/mascot.js')
+
+
 class QuickStudentCreationFormTests(TestCase):
     def test_teacher_form_does_not_ask_for_login_credentials(self):
         Level.objects.create(number=1, name='Inicial', order=1)

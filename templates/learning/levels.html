@@ -8,6 +8,7 @@
         <h1>Hola{% if student %}, {{ student.display_name }}{% elif teacher %}, profe {{ teacher.name }}{% endif %}</h1>
         <p>Elige un nivel. Dentro hay juegos, lecturas y prácticas.</p>
         {% include 'partials/listen_button.html' with target='#levels-intro' extra_class='kid-listen--below' %}
+        <div class="mascot-slot" data-mascot-slot></div>
       </div>
       <div class="kid-dashboard-hero__mascot" aria-hidden="true">🌈</div>
     </section>
@@ -62,3 +63,5 @@
   </div>
 </div>
 {% endblock %}
+
+{% block mascot %}{% if student %}{% with greeting='¡Hola, '|add:student.display_name|add:'! ¿Leemos juntos?' %}{% include 'partials/mascot.html' with greeting=greeting %}{% endwith %}{% else %}{% include 'partials/mascot.html' %}{% endif %}{% endblock %}

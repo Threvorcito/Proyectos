@@ -16,6 +16,7 @@
         <span>Practicar lectura</span>
       </button>
     </div>
+    <div class="mascot-slot" data-mascot-slot></div>
     <div id="reading-mode-listen" data-reading-mode-panel="listen">
     <div class="reading-actions mb-3">
       <button class="btn btn-outline-primary" type="button" data-speak-text="{{ reading.content|escapejs }}">Escuchar lectura completa</button>
@@ -105,6 +106,7 @@
         </div>
         <p class="practice-message" data-practice-message></p>
         <div class="practice-text practice-text--plain" data-practice-read-text></div>
+        <div class="mascot-slot" data-mascot-slot></div>
         <div class="practice-controls">
           <button class="practice-btn practice-btn--main" type="button" data-practice-start>
             <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4l13 8-13 8z"/></svg>
@@ -123,6 +125,7 @@
 
       <div class="practice-step" data-practice-step="result" hidden>
         <h2 tabindex="-1">¡Mira cómo mejoraste!</h2>
+        <div class="mascot-slot" data-mascot-slot></div>
         <p class="practice-celebration" data-practice-celebration>
           <svg class="practice-celebration__star" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/></svg>
           <span data-label></span>
@@ -149,7 +152,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/reading-practice.js' %}?v=20261014-k1-2"></script>
+<script src="{% static 'js/reading-practice.js' %}?v=20261014-k3-1"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var root = document.querySelector('[data-reading-comprehension]');
@@ -201,6 +204,7 @@
           button.classList.add(isCorrect ? 'is-correct' : 'is-try');
           if (isCorrect) correct += 1;
           if (feedback) feedback.textContent = isCorrect ? '¡Muy bien!' : 'Inténtalo en la próxima.';
+          if (window.Mascot) window.Mascot.react(isCorrect ? 'cheer' : 'encourage', {say: isCorrect ? '¡Bien pensado!' : '¡Ánimo! La próxima sale.'});
           saveAnswer(step, button, index + 1 >= steps.length);
           if (next) {
             next.hidden = false;
@@ -220,6 +224,7 @@
           if (result) {
             result.hidden = false;
             result.textContent = 'Resultado: ' + correct + ' de ' + steps.length + ' respuestas correctas.';
+            if (window.Mascot) window.Mascot.react('cheer', {say: '¡Terminaste el cuento!'});
           }
         }
       });
@@ -228,3 +233,5 @@
   });
 </script>
 {% endblock %}
+
+{% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}

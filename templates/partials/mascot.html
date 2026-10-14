@@ -1,0 +1,71 @@
+{% load static %}{% comment %}
+Reading buddy "Lumi" (original owl art). Include inside `{% block mascot %}` on child pages only;
+base.html renders that block for students and anonymous visitors, never for teacher/admin.
+Optional: `greeting` (bubble text shown once on load; never spoken without a tap).
+Pages may add an empty `<div class="mascot-slot" data-mascot-slot></div>` where Lumi should sit
+in the page flow when the side gutter is too narrow for the corner (see static/js/mascot.js).
+{% endcomment %}<div class="mascot" data-mascot data-expression="neutral" data-look="c"{% if greeting %} data-mascot-greeting="{{ greeting }}"{% endif %}>
+  <div class="mascot__inner">
+    <button class="mascot__buddy" type="button" data-mascot-buddy aria-label="Lumi, la lechuza lectora. Tócala para que te salude.">
+      <svg class="mascot__art" viewBox="0 0 120 120" role="img" aria-label="Lumi, la lechuza lectora" focusable="false">
+        <defs>
+          <clipPath id="lumi-eye-l"><circle cx="44" cy="54" r="13"/></clipPath>
+          <clipPath id="lumi-eye-r"><circle cx="76" cy="54" r="13"/></clipPath>
+        </defs>
+        <ellipse class="m-shadow" cx="60" cy="114" rx="30" ry="4" aria-hidden="true"/>
+        <g class="m-hop" aria-hidden="true">
+          <path class="m-wing m-wing-l" d="M24 62C10 70 10 92 26 100C30 88 30 74 24 62Z"/>
+          <path class="m-wing m-wing-r" d="M96 62C110 70 110 92 94 100C90 88 90 74 96 62Z"/>
+          <path class="m-tuft" d="M31 36L27 15L47 28Z"/>
+          <path class="m-tuft" d="M89 36L93 15L73 28Z"/>
+          <path class="m-bodyshape" d="M60 24C86 24 100 44 100 70C100 96 82 110 60 110C38 110 20 96 20 70C20 44 34 24 60 24Z"/>
+          <path class="m-belly" d="M60 66C76 66 86 80 86 92C86 104 74 110 60 110C46 110 34 104 34 92C34 80 44 66 60 66Z"/>
+          <path class="m-feather" d="M49 80q3 3 6 0M65 80q3 3 6 0M57 88q3 3 6 0"/>
+          <ellipse class="m-foot" cx="49" cy="110" rx="6" ry="3.5"/>
+          <ellipse class="m-foot" cx="71" cy="110" rx="6" ry="3.5"/>
+          <g class="m-book">
+            <path class="m-book-cover" d="M33 95L60 100L87 95L87 110L60 114L33 110Z"/>
+            <path class="m-book-page" d="M60 98C52 94 43 94 37 96.5L37 107.5C43 105 52 105 60 109Z"/>
+            <path class="m-book-page" d="M60 98C68 94 77 94 83 96.5L83 107.5C77 105 68 105 60 109Z"/>
+            <path class="m-book-line" d="M42 100.5q7-1.5 13 1M65 101.5q6-2.5 13-1"/>
+          </g>
+          <g class="m-nod">
+            <g class="m-head">
+              <circle class="m-face" cx="44" cy="54" r="20"/>
+              <circle class="m-face" cx="76" cy="54" r="20"/>
+              <circle class="m-cheek" cx="29" cy="68" r="5"/>
+              <circle class="m-cheek" cx="91" cy="68" r="5"/>
+              <g class="m-eye-open">
+                <g clip-path="url(#lumi-eye-l)">
+                  <circle class="m-eyeball" cx="44" cy="54" r="13"/>
+                  <g class="m-pupil"><g class="m-pupil-size"><circle class="m-iris" cx="44" cy="54" r="6.5"/><circle class="m-glint" cx="46.5" cy="51.5" r="2"/></g></g>
+                  <rect class="m-lid" x="30" y="40" width="28" height="28"/>
+                </g>
+                <g clip-path="url(#lumi-eye-r)">
+                  <circle class="m-eyeball" cx="76" cy="54" r="13"/>
+                  <g class="m-pupil"><g class="m-pupil-size"><circle class="m-iris" cx="76" cy="54" r="6.5"/><circle class="m-glint" cx="78.5" cy="51.5" r="2"/></g></g>
+                  <rect class="m-lid" x="62" y="40" width="28" height="28"/>
+                </g>
+                <circle class="m-eyering" cx="44" cy="54" r="13"/>
+                <circle class="m-eyering" cx="76" cy="54" r="13"/>
+              </g>
+              <path class="m-eye-happy" d="M35 57Q44 46 53 57M67 57Q76 46 85 57"/>
+              <path class="m-brow m-brow-l" d="M34 36Q42 32 51 35"/>
+              <path class="m-brow m-brow-r" d="M86 36Q78 32 69 35"/>
+              <ellipse class="m-mouth" cx="60" cy="77" rx="4.5" ry="3.5"/>
+              <path class="m-beak" d="M53 62Q60 59 67 62L60 74Z"/>
+            </g>
+          </g>
+        </g>
+      </svg>
+    </button>
+    <p class="mascot__bubble" data-mascot-bubble role="status" aria-live="polite"></p>
+    <button class="mascot__toggle" type="button" data-mascot-hide aria-label="Esconder a Lumi">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <button class="mascot__show" type="button" data-mascot-show aria-label="Mostrar a Lumi" hidden>
+    <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><circle class="m-face" cx="13" cy="20" r="10"/><circle class="m-face" cx="27" cy="20" r="10"/><circle class="m-eyeball" cx="13" cy="20" r="6.5"/><circle class="m-eyeball" cx="27" cy="20" r="6.5"/><circle class="m-iris" cx="13" cy="20" r="3.2"/><circle class="m-iris" cx="27" cy="20" r="3.2"/><path class="m-beak" d="M17 25Q20 23.5 23 25L20 31Z"/></svg>
+  </button>
+</div>
+<script src="{% static 'js/mascot.js' %}?v=20261014-k3-3" defer></script>

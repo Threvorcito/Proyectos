@@ -24,6 +24,7 @@
       </header>
 
       <div class="games-page__feedback" data-game-feedback aria-live="polite"></div>
+      <div class="mascot-slot mascot-slot--game" data-mascot-slot></div>
 
       {% block game_board %}{% endblock %}
 
@@ -57,4 +58,6 @@
 </div>
 {% endblock %}
 
-{% block extra_js %}<script src="{% static 'js/games/common.js' %}?v=20261014-kid-1"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'js/games/common.js' %}?v=20261014-k3-1"></script>{% endblock %}
+
+{% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}

@@ -429,6 +429,7 @@
     const durationMs = Math.round(performance.now() - readStartedAt);
     if (durationMs < minMs) {
       askToRetry('¡Uy, fue muy rápido! Lee todo el cuento y luego toca Terminé.');
+      window.Mascot?.react('encourage', {say: 'Despacito se lee mejor. ¡Otra vez!'});
       return;
     }
     if (durationMs > maxMs) {
@@ -440,6 +441,7 @@
     const data = await saveRead(attemptNumber, durationMs);
     if (data && data.retry) {
       askToRetry('¡Uy, fue muy rápido! Lee todo el cuento y luego toca Terminé.');
+      window.Mascot?.react('encourage', {say: 'Despacito se lee mejor. ¡Otra vez!'});
       return;
     }
     const wpm = data ? data.words_per_minute : Math.round((localWordCount * 60000) / durationMs);
@@ -452,6 +454,7 @@
     }
     renderReadProgress();
     resetReadButtons();
+    window.Mascot?.react('cheer', {say: '¡Muy bien leído!'});
     readMessage.textContent = encouragements[reads.length - 1] || encouragements[0];
     announce(`${readMessage.textContent} Lectura ${reads.length + 1} de ${totalReads}.`);
     startButton.focus();
@@ -539,6 +542,7 @@
     }
     pointsNote.hidden = !pointsNote.textContent;
     showStep('result', `¡Mira cómo mejoraste! ${celebration.textContent}`);
+    window.Mascot?.react('cheer', {say: improved ? '¡Leíste más rápido!' : '¡Tres lecturas! ¡Bravo!'});
   };
 
   againButton.addEventListener('click', () => {
