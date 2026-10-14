@@ -24,8 +24,9 @@
   const maxMs = Number(root.dataset.maxMs || 900000);
   const WORD = /[\p{L}\p{N}]+/gu;
   const MAX_CHUNK_WORDS = 12;
+  // Slightly slower than the rest of the app: this voice models fluent reading.
   const SPEECH_RATE = 0.85;
-  const PREFERRED_LANGS = ['es-mx', 'es-us', 'es-es'];
+  const SPEECH_PITCH = 1.05;
 
   const $ = (selector) => root.querySelector(selector);
   const steps = {
@@ -157,17 +158,11 @@
   let tickTimer = null;
   let watchTimers = [];
 
+  // Same voice as every other child screen (ranked female Spanish voice or the child's choice).
   const pickVoice = () => {
     if (!synth) return null;
-    const score = (candidate) => {
-      const lang = (candidate.lang || '').toLowerCase().replace('_', '-');
-      const exact = PREFERRED_LANGS.indexOf(lang);
-      if (exact !== -1) return exact;
-      return lang === 'es' || lang.startsWith('es-') ? PREFERRED_LANGS.length : 99;
-    };
-    const spanish = synth.getVoices().filter((candidate) => score(candidate) < 99);
-    spanish.sort((first, second) => score(first) - score(second) || Number(second.localService) - Number(first.localService));
-    return spanish[0] || null;
+    if (window.AppSpeech?.pickVoice) return window.AppSpeech.pickVoice();
+    return synth.getVoices().find((candidate) => (candidate.lang || '').toLowerCase().startsWith('es')) || null;
   };
 
   const clearTimers = () => {
@@ -264,6 +259,7 @@
     utterance.voice = voice;
     utterance.lang = voice.lang;
     utterance.rate = SPEECH_RATE;
+    utterance.pitch = SPEECH_PITCH;
     utterance.onstart = () => {
       if (myToken !== token) return;
       startedAt = performance.now();

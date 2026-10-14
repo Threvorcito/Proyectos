@@ -1,11 +1,76 @@
 (() => {
-  const preferredLanguages = ['es-MX', 'es-ES', 'es-US'];
+  /*
+   * Shared voice for every child screen. The Web Speech API exposes no voice
+   * gender, so pleasant female Spanish voices are ranked by name across
+   * platforms (Edge/Windows, Chrome, Apple, Android), Latin American first.
+   */
   const missingSpanishVoiceMessage = 'Este navegador no tiene una voz en español disponible. Para escuchar mejor, usa Chrome o Edge.';
+  const VOICE_STORAGE_KEY = 'lsl_voice';
+  const DEFAULT_RATE = 0.9;
+  const DEFAULT_PITCH = 1.1;
+  // Ranked female voice names (accent-free, lowercase). The order only breaks ties.
+  const FEMALE_NAMES = [
+    'dalia', 'paloma', 'salome', 'elena', 'larissa', 'renata', 'beatriz', 'candela', 'carlota', 'marina', 'nuria',
+    'catalina', 'camila', 'paola', 'valentina', 'andrea', 'lorena', 'marta', 'sofia', 'tania', 'maria', 'margarita',
+    'ramona', 'karla', 'yolanda', 'karina', 'belkys', 'teresa',
+    'sabina', 'helena', 'laura',
+    'paulina', 'monica', 'marisol', 'angelica', 'soledad', 'isabela',
+    'elvira', 'abril', 'arabella', 'estrella', 'irene', 'laia', 'lia', 'triana', 'vera', 'ximena',
+    'es-us-x-sfb', 'es-us-x-esc', 'es-us-x-esf', 'es-es-x-eea', 'es-es-x-eec', 'es-es-x-eef',
+  ];
+  const MALE_NAMES = [
+    'raul', 'jorge', 'pablo', 'diego', 'juan', 'carlos', 'enrique', 'alvaro', 'gerardo', 'alonso', 'gonzalo', 'tomas',
+    'cecilio', 'liberto', 'luciano', 'pelayo', 'yago', 'arnau', 'dario', 'elias', 'nil', 'saul', 'teo', 'lorenzo',
+    'alex', 'sebastian', 'mateo', 'luis', 'rodrigo', 'andres', 'marcelo', 'mario', 'roberto', 'emilio', 'federico',
+    'victor', 'manuel', 'javier', 'eddy', 'reed', 'rocko', 'grandpa', 'es-us-x-esd', 'es-es-x-eed',
+  ];
+  const REGION_RANK = {mx: 0, us: 1, 419: 2, co: 3, ar: 4, es: 6};
+  const LATAM = ['cl', 'pe', 've', 'uy', 'ec', 'sv', 'gt', 'bo', 'py', 'cr', 'pa', 'do', 'hn', 'ni', 'pr', 'cu'];
+  const REGION_LABELS = {
+    mx: 'México', us: 'Estados Unidos', 419: 'Latinoamérica', co: 'Colombia', ar: 'Argentina', es: 'España',
+    cl: 'Chile', pe: 'Perú', ve: 'Venezuela', uy: 'Uruguay', ec: 'Ecuador', sv: 'El Salvador', gt: 'Guatemala',
+    bo: 'Bolivia', py: 'Paraguay', cr: 'Costa Rica', pa: 'Panamá', do: 'República Dominicana', hn: 'Honduras',
+    ni: 'Nicaragua', pr: 'Puerto Rico', cu: 'Cuba', gq: 'Guinea Ecuatorial',
+  };
   let voices = [];
   let speakToken = 0;
   let noticeTimeout = null;
+  const listeners = [];
 
-  const normalizeLanguage = (language) => (language || '').toLowerCase();
+  const fold = (text) => (text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const langOf = (voice) => fold(voice.lang).replace('_', '-');
+  const isSpanish = (voice) => {
+    const lang = langOf(voice);
+    return lang === 'es' || lang.startsWith('es-');
+  };
+  const regionOf = (voice) => langOf(voice).split('-')[1] || '';
+  const nameMatchers = (names) => names.map((name) => new RegExp(`(^|[^a-z])${name.replace(/-/g, '\\-')}([^a-z]|$)`));
+  const FEMALE_MATCHERS = nameMatchers(FEMALE_NAMES);
+  const MALE_MATCHERS = nameMatchers(MALE_NAMES);
+
+  // Lower is better: [gender tier, quality tier, region rank, name rank].
+  const rankOf = (voice) => {
+    const name = fold(voice.name);
+    const femaleIndex = FEMALE_MATCHERS.findIndex((matcher) => matcher.test(name));
+    // Every Google Spanish voice is female.
+    const female = femaleIndex !== -1 || name.startsWith('google');
+    const male = !female && MALE_MATCHERS.some((matcher) => matcher.test(name));
+    const quality = /natural|online|neural|google|premium|enhanced|mejorada/.test(name) ? 0 : 1;
+    const region = regionOf(voice);
+    let regionRank = 8;
+    if (region in REGION_RANK) regionRank = REGION_RANK[region];
+    else if (LATAM.includes(region)) regionRank = 5;
+    else if (!region) regionRank = 7;
+    return [female ? 0 : (male ? 2 : 1), quality, regionRank, femaleIndex === -1 ? FEMALE_NAMES.length : femaleIndex];
+  };
+  const compareVoices = (first, second) => {
+    const a = rankOf(first);
+    const b = rankOf(second);
+    for (let index = 0; index < a.length; index += 1) {
+      if (a[index] !== b[index]) return a[index] - b[index];
+    }
+    return Number(second.localService) - Number(first.localService);
+  };
 
   const loadVoices = () => {
     if (!('speechSynthesis' in window)) return [];
@@ -13,18 +78,40 @@
     return voices;
   };
 
-  const voiceScore = (voice) => {
-    const language = normalizeLanguage(voice.lang);
-    const exactIndex = preferredLanguages.findIndex((preferred) => normalizeLanguage(preferred) === language);
-    if (exactIndex !== -1) return exactIndex;
-    return language.startsWith('es-') || language === 'es' ? preferredLanguages.length : preferredLanguages.length + 1;
+  const spanishVoices = () => (voices.length ? voices : loadVoices()).filter(isSpanish).sort(compareVoices);
+  const voiceId = (voice) => voice.voiceURI || voice.name;
+  const isRecommended = (voice) => rankOf(voice)[0] === 0;
+
+  const readStoredVoice = () => {
+    try {
+      return window.localStorage.getItem(VOICE_STORAGE_KEY) || '';
+    } catch (error) {
+      return '';
+    }
+  };
+  let chosenVoiceId = readStoredVoice();
+  const setPreferredVoice = (id) => {
+    chosenVoiceId = id || '';
+    try {
+      if (chosenVoiceId) window.localStorage.setItem(VOICE_STORAGE_KEY, chosenVoiceId);
+      else window.localStorage.removeItem(VOICE_STORAGE_KEY);
+    } catch (error) {
+      // Storage blocked: the choice lasts for this page only.
+    }
   };
 
-  const selectSpanishVoice = () => {
-    const availableVoices = voices.length ? voices : loadVoices();
-    const spanishVoices = availableVoices.filter((voice) => voiceScore(voice) <= preferredLanguages.length);
-    if (!spanishVoices.length) return null;
-    return spanishVoices.sort((first, second) => voiceScore(first) - voiceScore(second))[0];
+  // The child's chosen voice when this browser has it, else the best ranked one.
+  const pickVoice = () => {
+    const ranked = spanishVoices();
+    if (!ranked.length) return null;
+    return (chosenVoiceId && ranked.find((voice) => voiceId(voice) === chosenVoiceId)) || ranked[0];
+  };
+
+  const friendlyLabel = (voice) => {
+    let name = (voice.name || '').replace(/^(microsoft|google|apple)\s+/i, '');
+    if (!/^espa/i.test(name)) name = name.split(/\s+(?:online|desktop|\(|-)/i)[0];
+    const region = REGION_LABELS[regionOf(voice)];
+    return region && !fold(name).includes(fold(region)) ? `${name} · ${region}` : name;
   };
 
   const showSpeechNotice = (message) => {
@@ -51,7 +138,7 @@
     window.speechSynthesis.cancel();
     const startSpeaking = (retried = false) => {
       if (currentToken !== speakToken) return;
-      const voice = selectSpanishVoice();
+      const voice = pickVoice();
       if (!voice && !voices.length && !retried) {
         window.setTimeout(() => startSpeaking(true), 250);
         return;
@@ -62,18 +149,73 @@
       }
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = voice.lang || options.lang || 'es-MX';
-      utterance.rate = options.rate || 0.85;
+      utterance.rate = options.rate || DEFAULT_RATE;
+      utterance.pitch = options.pitch || DEFAULT_PITCH;
       utterance.voice = voice;
       window.speechSynthesis.speak(utterance);
     };
     window.setTimeout(() => startSpeaking(), 40);
   };
 
+  const onVoicesChanged = (callback) => listeners.push(callback);
+
   loadVoices();
   if ('speechSynthesis' in window) {
-    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    // Chrome loads voices asynchronously.
+    window.speechSynthesis.addEventListener('voiceschanged', () => {
+      loadVoices();
+      listeners.forEach((callback) => callback());
+    });
   }
-  window.AppSpeech = {speak, loadVoices};
+  window.AppSpeech = {
+    speak,
+    loadVoices,
+    pickVoice,
+    spanishVoices,
+    isRecommended,
+    friendlyLabel,
+    voiceId,
+    setPreferredVoice,
+    getPreferredVoice: () => chosenVoiceId,
+    onVoicesChanged,
+  };
+})();
+
+(() => {
+  // "Voz" chooser in the reading settings panel.
+  const select = document.querySelector('[data-voice-select]');
+  const preview = document.querySelector('[data-voice-preview]');
+  const speech = window.AppSpeech;
+  if (!select || !speech) return;
+
+  const render = () => {
+    const ranked = speech.spanishVoices();
+    select.textContent = '';
+    if (!ranked.length) {
+      select.append(new Option('No hay voces en español en este navegador', ''));
+      select.disabled = true;
+      if (preview) preview.disabled = true;
+      return;
+    }
+    const current = speech.pickVoice();
+    ranked.forEach((voice, index) => {
+      const label = speech.friendlyLabel(voice);
+      const option = new Option(index === 0 && speech.isRecommended(voice) ? `${label} (Recomendada)` : label, speech.voiceId(voice));
+      option.selected = voice === current;
+      select.append(option);
+    });
+    select.disabled = false;
+    if (preview) preview.disabled = false;
+  };
+
+  select.addEventListener('change', () => speech.setPreferredVoice(select.value));
+  preview?.addEventListener('click', () => speech.speak('¡Hola! Vamos a leer juntos.'));
+  document.querySelector('[data-accessibility-reset]')?.addEventListener('click', () => {
+    speech.setPreferredVoice('');
+    render();
+  });
+  speech.onVoicesChanged(render);
+  render();
 })();
 
 (() => {
