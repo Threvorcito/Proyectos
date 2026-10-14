@@ -39,7 +39,7 @@
         <span class="student-choice-card__content"><strong>Jugar</strong><small>Aprende jugando</small></span>
         <span class="student-choice-card__action">Jugar</span>
       </a>
-      <a class="student-choice-card student-choice-card--progress" href="{% url 'dashboard:student_report' student.pk %}">
+      <a class="student-choice-card student-choice-card--progress" href="{% url 'progress:overview' %}">
         <span class="student-choice-card__icon" aria-hidden="true">⭐</span>
         <span class="student-choice-card__content"><strong>Mi avance</strong><small>Mira todo lo que has logrado</small></span>
         <span class="student-choice-card__action">Ver</span>
@@ -49,7 +49,7 @@
     <section class="student-progress-strip mt-4" aria-label="Resumen de avance">
       <div><span>Nivel</span><strong>{% if student.current_level %}{{ student.current_level.number }}{% else %}-{% endif %}</strong></div>
       <div><span>Puntos</span><strong>{{ student.points }}</strong></div>
-      <div><span>Racha</span><strong>{{ student.learning_streak }}</strong></div>
+      <div><span>Días que practicaste</span><strong>{{ practice_days }}</strong></div>
     </section>
 
     {% if today_plan %}

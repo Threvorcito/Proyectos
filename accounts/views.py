@@ -217,6 +217,8 @@ class RegisterView(FormView):
     template_name = 'accounts/register.html'
     form_class = RegistrationForm
     success_url = reverse_lazy('dashboard:redirect')
+    # Register is for adults (teachers and families): skip the child layer and mascot.
+    extra_context = {'adult_layout': True}
 
     def form_valid(self, form):
         user = form.save(commit=False)

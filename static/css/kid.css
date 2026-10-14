@@ -534,7 +534,7 @@ body.kid-ui:not(.high-contrast) {
 .kid-progress__stats {
   display: grid;
   gap: 1rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-top: 1.25rem;
 }
 .kid-progress__stat {
@@ -587,6 +587,65 @@ body.kid-ui:not(.high-contrast) {
   background: #111827; border-color: #facc15; color: #fff;
 }
 .kid-ui.high-contrast :is(.kid-progress__hero p, .kid-progress__stat small, .kid-progress__empty) { color: #fff; }
+/* Reading growth: own history only, "before" vs "now" bars */
+.kid-growth, .kid-done { display: grid; gap: 1rem; list-style: none; margin: 0; padding: 0; }
+.kid-growth { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+.kid-growth__card {
+  background: var(--kid-leaf-soft);
+  border-radius: var(--kid-radius);
+  color: var(--kid-ink);
+  display: grid;
+  gap: .5rem;
+  padding: 1rem 1.1rem 1.15rem;
+}
+.kid-growth__card--down { background: var(--kid-sun-soft); }
+.kid-growth__title { font-size: 1.15rem; font-weight: 800; line-height: 1.3; text-wrap: balance; }
+.kid-growth__svg { display: block; height: auto; max-width: 260px; width: 100%; }
+.kid-growth__axis { stroke: var(--kid-line-strong); stroke-linecap: round; stroke-width: 3; }
+.kid-growth__bar { transform-box: fill-box; transform-origin: bottom; animation: kid-growth-rise .7s cubic-bezier(.16, 1, .3, 1) both; }
+.kid-growth__bar--before { fill: #7a8698; } /* 3.3:1 on leaf-soft */
+.kid-growth__bar--now { fill: var(--kid-leaf); animation-delay: .15s; }
+.kid-growth__card--down .kid-growth__bar--now { fill: var(--kid-sun); }
+.kid-growth__label { fill: var(--kid-ink); font-size: 17px; font-weight: 700; }
+.kid-growth__message { color: var(--kid-good-ink); font-size: 1.15rem; font-weight: 800; margin: 0; }
+.kid-growth__card--down .kid-growth__message { color: var(--kid-try-ink); }
+@keyframes kid-growth-rise { from { transform: scaleY(.15); } to { transform: scaleY(1); } }
+
+/* Finished items: friendly cards, never a table */
+.kid-done { grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); }
+.kid-done__card {
+  align-items: center;
+  background: var(--area-soft, var(--kid-surface-sunk));
+  border-radius: var(--kid-radius);
+  color: var(--kid-ink);
+  display: grid;
+  gap: .85rem;
+  grid-template-columns: auto 1fr auto;
+  min-height: var(--kid-tap-main);
+  padding: .85rem 1rem;
+}
+.kid-done__icon { font-size: 2rem; line-height: 1; }
+.kid-done__text { display: grid; min-width: 0; }
+.kid-done__text small { color: var(--area, var(--kid-ink-soft)); font-size: .95rem; font-weight: 700; }
+.kid-done__text strong { font-size: 1.1rem; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+.kid-done__check {
+  align-items: center;
+  background: var(--kid-good-ink);
+  border-radius: 50%;
+  display: inline-flex;
+  height: 2.25rem;
+  justify-content: center;
+  width: 2.25rem;
+}
+.kid-done__check svg { fill: none; height: 1.4rem; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3; width: 1.4rem; }
+.kid-ui.high-contrast :is(.kid-growth__card, .kid-done__card) { background: #111827; border: 2px solid #facc15; color: #fff; }
+.kid-ui.high-contrast :is(.kid-growth__message, .kid-done__text small) { color: #fff; }
+.kid-ui.high-contrast .kid-growth__label { fill: #fff; }
+.kid-ui.reduce-motion .kid-growth__bar { animation: none; }
+@media (prefers-reduced-motion: reduce) { .kid-growth__bar { animation: none; } }
+@media (max-width: 991.98px) {
+  .kid-progress__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 575.98px) {
   .kid-progress__hero { align-items: flex-start; flex-direction: column; }
   .kid-progress__stats { grid-template-columns: 1fr; }

@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
-{% block title %}Mis logros | {{ site_name }}{% endblock %}
+{% block title %}Mi avance | {{ site_name }}{% endblock %}
 {% block content %}
 <div class="kid-progress">
   <div class="container py-4 py-md-5">
     <section class="kid-progress__hero" aria-labelledby="kid-progress-title">
       <div id="kid-progress-intro">
-        <h1 id="kid-progress-title">Mi progreso</h1>
-        <p>{{ student.display_name }} ha ganado {{ student.stars }} estrellas y {{ student.points }} puntos.</p>
+        <h1 id="kid-progress-title">Mi avance</h1>
+        <p>¡Mira todo lo que has logrado, {{ student.display_name }}!</p>
       </div>
       {% include 'partials/listen_button.html' with target='#kid-progress-intro' %}
     </section>
 
-    <section class="kid-progress__stats" aria-label="Mi avance">
+    <section class="kid-progress__stats" aria-label="Mis números">
       <div class="kid-progress__stat kid-area--progress">
         <span aria-hidden="true">⭐</span>
         <strong>{{ student.stars }}</strong>
@@ -27,6 +27,53 @@
         <strong>{% if student.current_level %}{{ student.current_level.number }}{% else %}1{% endif %}</strong>
         <small>mi nivel</small>
       </div>
+      <div class="kid-progress__stat kid-area--read">
+        <span aria-hidden="true">📅</span>
+        <strong>{{ practice_days }}</strong>
+        <small>Días que practicaste</small>
+      </div>
+    </section>
+
+    <section class="kid-progress__section" aria-labelledby="kid-growth-title">
+      <h2 id="kid-growth-title">Así crece tu lectura</h2>
+      {% if growth_cards %}
+        <ul class="kid-growth">
+          {% for card in growth_cards %}
+            <li class="kid-growth__card kid-growth__card--{{ card.trend }}">
+              <strong class="kid-growth__title">{{ card.reading.title }}</strong>
+              <svg class="kid-growth__svg" viewBox="0 0 220 150" role="img" aria-label="Antes leías {{ card.first_wpm }} palabras por minuto. Ahora lees {{ card.last_wpm }}." focusable="false">
+                <line class="kid-growth__axis" x1="16" x2="204" y1="112" y2="112"/>
+                <rect class="kid-growth__bar kid-growth__bar--before" x="40" y="{{ card.before.y }}" width="56" height="{{ card.before.height }}" rx="10"/>
+                <rect class="kid-growth__bar kid-growth__bar--now" x="124" y="{{ card.now.y }}" width="56" height="{{ card.now.height }}" rx="10"/>
+                <text class="kid-growth__label" x="68" y="138" text-anchor="middle">Antes</text>
+                <text class="kid-growth__label" x="152" y="138" text-anchor="middle">Ahora</text>
+              </svg>
+              <p class="kid-growth__message">{{ card.message }}</p>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="kid-progress__empty">Escucha un cuento y practica leerlo. Aquí verás cómo creces.</p>
+      {% endif %}
+    </section>
+
+    <section class="kid-progress__section" aria-labelledby="kid-done-title">
+      <h2 id="kid-done-title">Lo que terminaste</h2>
+      {% if recent_items %}
+        <ul class="kid-done">
+          {% for item in recent_items %}
+            <li class="kid-done__card kid-area--{{ item.kind }}">
+              <span class="kid-done__icon" aria-hidden="true">{{ item.icon }}</span>
+              <span class="kid-done__text"><small>{{ item.label }}</small><strong>{{ item.title }}</strong></span>
+              <span class="kid-done__check" aria-label="Terminado">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="kid-progress__empty">Cuando termines una actividad, un cuento o un juego, aparecerá aquí.</p>
+      {% endif %}
     </section>
 
     <section class="kid-progress__section" aria-labelledby="kid-progress-badges-title">

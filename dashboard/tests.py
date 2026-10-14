@@ -101,6 +101,42 @@ class ReadingBuddyMascotTests(TestCase):
         self.assertNotContains(response, 'js/mascot.js')
 
 
+class StudentProgressLinkTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial', order=1)
+        self.user = CustomUser.objects.create_user(
+            username='alumnomiavance', email='alumnomiavance@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT,
+        )
+        self.student = StudentProfile.objects.create(user=self.user, name='Ana Avance', grade='1', reading_level=self.level, current_level=self.level)
+        other_user = CustomUser.objects.create_user(
+            username='alumnoajeno', email='alumnoajeno@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT,
+        )
+        self.other = StudentProfile.objects.create(user=other_user, name='Otro Ajeno', grade='1', reading_level=self.level, current_level=self.level)
+        self.client.force_login(self.user)
+
+    def test_mi_avance_points_to_kid_progress_view(self):
+        response = self.client.get(reverse('dashboard:student'))
+
+        self.assertContains(response, f'href="{reverse("progress:overview")}"')
+        self.assertNotContains(response, reverse('dashboard:student_report', args=[self.student.pk]))
+
+    def test_dashboard_shows_cumulative_practice_days_instead_of_streak(self):
+        response = self.client.get(reverse('dashboard:student'))
+
+        self.assertContains(response, 'Días que practicaste')
+        self.assertNotContains(response, 'Racha')
+
+    def test_student_cannot_open_another_students_report(self):
+        response = self.client.get(reverse('dashboard:student_report', args=[self.other.pk]))
+
+        self.assertRedirects(response, reverse('dashboard:redirect'), fetch_redirect_response=False)
+
+    def test_student_opening_own_report_goes_to_kid_view(self):
+        response = self.client.get(reverse('dashboard:student_report', args=[self.student.pk]))
+
+        self.assertRedirects(response, reverse('progress:overview'))
+
+
 class QuickStudentCreationFormTests(TestCase):
     def test_teacher_form_does_not_ask_for_login_credentials(self):
         Level.objects.create(number=1, name='Inicial', order=1)
@@ -410,7 +446,8 @@ class LessonPlanImplementationTests(TestCase):
         attempt = GameAttempt.objects.create(student=student, game=game, score=50, correct_answers=1, total_questions=2)
         GameAttemptAnswer.objects.create(attempt=attempt, subject='Matemática', question='¿Cuánto es 1 + 1?', correct_answer='2', selected_answer='2', is_correct=True)
         GameAttemptAnswer.objects.create(attempt=attempt, subject='Matemática', question='¿Cuánto es 2 + 1?', correct_answer='3', selected_answer='4', is_correct=False)
-        self.client.force_login(user)
+        # Students get the kid view; the table report is for adults.
+        self.client.force_login(CustomUser.objects.create_user(username=f'adminreporte{student.pk}', password='Admin12345!', role=CustomUser.Role.ADMIN))
 
         response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
 
@@ -434,7 +471,8 @@ class LessonPlanImplementationTests(TestCase):
         ReadingProgress.objects.create(student=student, reading=reading, completed=True, comprehension_percentage=50)
         achievement = Achievement.objects.create(name='Primer lector', description='Completa una lectura.', icon='📚', requirement_type='readings', requirement_value=1)
         StudentAchievement.objects.create(student=student, achievement=achievement)
-        self.client.force_login(user)
+        # Students get the kid view; the table report is for adults.
+        self.client.force_login(CustomUser.objects.create_user(username=f'adminreporte{student.pk}', password='Admin12345!', role=CustomUser.Role.ADMIN))
 
         response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
 

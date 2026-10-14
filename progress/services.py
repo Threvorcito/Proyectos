@@ -1,9 +1,12 @@
 from django.db import transaction
 from django.db.models import F, Max
+from django.db.models.functions import TruncDate
 from django.utils import timezone
 
 from activities.models import Activity
+from games.models import GameAttempt
 from learning.models import StudentProfile
+from readings.models import ReadingPracticeAttempt, ReadingProgress
 
 from .models import ActivityAttempt, StudentDifficulty, StudentProgress
 
@@ -122,3 +125,18 @@ def complete_reading_practice(session):
     session.completed_at = now
     session.points_awarded = points
     return points, stars
+
+
+def practice_days(student):
+    """Total distinct days the student practised. Cumulative: it never resets after a break."""
+    sources = (
+        (ActivityAttempt.objects.filter(student=student), 'created_at'),
+        (GameAttempt.objects.filter(student=student), 'started_at'),
+        (ReadingPracticeAttempt.objects.filter(session__student=student), 'created_at'),
+        (ReadingProgress.objects.filter(student=student), 'started_at'),
+    )
+    days = set()
+    for queryset, field in sources:
+        days.update(queryset.annotate(day=TruncDate(field)).values_list('day', flat=True).distinct())
+    days.discard(None)
+    return len(days)

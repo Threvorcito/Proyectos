@@ -13,7 +13,7 @@
           <li class="nav-item"><a class="nav-link kid-nav kid-nav--practice{% if ns == 'activities' %} is-current{% endif %}" href="{% url 'activities:list' %}"{% if ns == 'activities' %} aria-current="page"{% endif %}>Practicar</a></li>
           <li class="nav-item"><a class="nav-link kid-nav kid-nav--play{% if ns == 'games' %} is-current{% endif %}" href="{% url 'games:index' %}"{% if ns == 'games' %} aria-current="page"{% endif %}>Juegos</a></li>
           <li class="nav-item"><a class="nav-link kid-nav kid-nav--read{% if ns == 'readings' %} is-current{% endif %}" href="{% url 'readings:list' %}"{% if ns == 'readings' %} aria-current="page"{% endif %}>Lecturas</a></li>
-          <li class="nav-item"><a class="nav-link kid-nav kid-nav--progress{% if ns == 'progress' %} is-current{% endif %}" href="{% url 'progress:overview' %}"{% if ns == 'progress' %} aria-current="page"{% endif %}>Mis logros</a></li>
+          <li class="nav-item"><a class="nav-link kid-nav kid-nav--progress{% if ns == 'progress' %} is-current{% endif %}" href="{% url 'progress:overview' %}"{% if ns == 'progress' %} aria-current="page"{% endif %}>Mi avance</a></li>
           {% endwith %}
         {% elif user.role == 'PARENT' %}
           <li class="nav-item"><a class="nav-link" href="{% url 'dashboard:parents' %}">Panel familiar</a></li>

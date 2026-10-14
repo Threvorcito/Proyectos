@@ -232,3 +232,19 @@ class StudentVisualAccessTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertNotIn('_auth_user_id', self.client.session)
+
+
+class AdultPagesLayoutTests(TestCase):
+    def test_register_page_uses_the_adult_look_without_mascot(self):
+        response = self.client.get(reverse('accounts:register'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'kid-ui')
+        self.assertNotContains(response, 'css/kid.css')
+        self.assertNotContains(response, 'data-mascot')
+        self.assertNotContains(response, 'css/mascot.css')
+
+    def test_login_page_stays_child_friendly(self):
+        response = self.client.get(reverse('accounts:login'))
+
+        self.assertContains(response, 'class="kid-ui"')

@@ -131,3 +131,85 @@ class AttemptScoringTests(TestCase):
 
         with self.assertRaises(IntegrityError), transaction.atomic():
             StudentDifficulty.objects.create(student=self.student, difficulty_type='letter_confusion', character_a='b', character_b='d', word='d')
+
+
+class KidProgressViewTests(TestCase):
+    def setUp(self):
+        from readings.models import Reading
+        self.level = Level.objects.create(number=1, name='Inicial')
+        self.user = CustomUser.objects.create_user(
+            username='alumnoavance', email='alumnoavance@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT,
+        )
+        self.student = StudentProfile.objects.create(
+            user=self.user, name='Ana Avance', grade=StudentProfile.Grade.FIRST,
+            reading_level=self.level, current_level=self.level, stars=7, points=40,
+        )
+        self.reading = Reading.objects.create(title='El sapo feliz', content='El sapo salta en el charco.', level=self.level)
+        self.activity = Activity.objects.create(
+            level=self.level, title='Encuentra la m', activity_type=Activity.ActivityType.FIND_LETTER, points=5, stars=1,
+        )
+
+    def _practice_cycle(self, days_ago, wpms):
+        from datetime import timedelta
+        from django.utils import timezone
+        from readings.models import ReadingPracticeAttempt, ReadingPracticeSession
+        when = timezone.now() - timedelta(days=days_ago)
+        session = ReadingPracticeSession.objects.create(student=self.student, reading=self.reading)
+        ReadingPracticeSession.objects.filter(pk=session.pk).update(started_at=when, completed_at=when)
+        for number, wpm in enumerate(wpms, start=1):
+            attempt = ReadingPracticeAttempt.objects.create(
+                session=session, attempt_number=number, duration_ms=10_000, word_count=6, words_per_minute=wpm,
+            )
+            ReadingPracticeAttempt.objects.filter(pk=attempt.pk).update(created_at=when)
+
+    def test_overview_shows_big_tiles_growth_and_finished_cards(self):
+        self._practice_cycle(3, [30, 34, 36])
+        self._practice_cycle(0, [40, 44, 48])
+        StudentProgress.objects.create(student=self.student, activity=self.activity, completed=True, progress_percentage=100)
+        self.client.force_login(self.user)
+
+        response = self.client.get(reverse('progress:overview'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'kid-progress__stat')
+        self.assertContains(response, 'Días que practicaste')
+        self.assertContains(response, '¡Lees más rápido que antes!')
+        self.assertContains(response, 'El sapo feliz')
+        self.assertContains(response, 'kid-growth__svg')
+        self.assertContains(response, 'Encuentra la m')
+        self.assertNotContains(response, '<table')
+
+    def test_overview_never_shows_other_students_practice(self):
+        other_user = CustomUser.objects.create_user(
+            username='otroalumno', email='otroalumno@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT,
+        )
+        other = StudentProfile.objects.create(user=other_user, name='Otro', grade='1', reading_level=self.level, current_level=self.level)
+        self._practice_cycle(1, [30, 40, 50])
+        self.client.force_login(other_user)
+
+        response = self.client.get(reverse('progress:overview'))
+
+        self.assertNotContains(response, 'El sapo feliz')
+        self.assertEqual(response.context['student'], other)
+
+
+class PracticeDaysTests(TestCase):
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial')
+        user = CustomUser.objects.create_user(
+            username='alumnodias', email='alumnodias@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT,
+        )
+        self.student = StudentProfile.objects.create(user=user, name='Dias', grade='1', reading_level=self.level, current_level=self.level)
+        self.activity = Activity.objects.create(level=self.level, title='A', activity_type=Activity.ActivityType.FIND_LETTER)
+
+    def test_counts_distinct_days_and_never_resets_after_a_gap(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        from progress.models import ActivityAttempt
+        from progress.services import practice_days
+        now = timezone.now()
+        for days_ago in (0, 0, 10, 30):
+            attempt = ActivityAttempt.objects.create(student=self.student, activity=self.activity)
+            ActivityAttempt.objects.filter(pk=attempt.pk).update(created_at=now - timedelta(days=days_ago))
+
+        self.assertEqual(practice_days(self.student), 3)

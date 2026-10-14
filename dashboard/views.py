@@ -19,6 +19,7 @@ from gamification.services import evaluate_achievements
 from games.models import Game, GameAttempt, GameAttemptAnswer
 from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, LessonPlanAssignment, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 from progress.models import StudentDifficulty, StudentProgress
+from progress.services import practice_days
 from readings.models import Reading, ReadingComprehensionAnswer, ReadingProgress
 from readings.services import practice_summary
 
@@ -744,6 +745,9 @@ def student_report(request, pk):
     if not user_can_view_student_report(request.user, student):
         messages.error(request, 'No tienes permiso para ver este reporte.')
         return redirect('dashboard:redirect')
+    if getattr(request.user, 'student_profile', None) == student:
+        # Children get their own friendly view; the table report is for adults.
+        return redirect('progress:overview')
     progress_items = StudentProgress.objects.filter(student=student).select_related('activity', 'activity__level').order_by('-last_activity_date')[:10]
     difficulties = StudentDifficulty.objects.filter(student=student).order_by('-error_count', '-last_error_date')[:8]
     attempts_count = student.attempts.count()
@@ -822,7 +826,13 @@ def student_dashboard(request):
         plan__status__in=visible_plan_statuses,
     ).select_related('plan', 'plan__subject', 'plan__level').prefetch_related('plan__activities', 'plan__readings', 'plan__games')[:3]
     today_plan = assigned_plans[0] if assigned_plans else None
-    return render(request, 'dashboard/student_dashboard.html', {'student': student, 'recommended': recommended, 'assigned_plans': assigned_plans, 'today_plan': today_plan})
+    return render(request, 'dashboard/student_dashboard.html', {
+        'student': student,
+        'recommended': recommended,
+        'assigned_plans': assigned_plans,
+        'today_plan': today_plan,
+        'practice_days': practice_days(student),
+    })
 
 
 @login_required
