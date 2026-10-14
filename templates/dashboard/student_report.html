@@ -245,6 +245,29 @@
   </section>
 
   <section class="feature-card dt-card mt-4">
+    <h2 class="h4">Práctica de lectura</h2>
+    <p class="text-muted mb-3">Ciclos completos de lectura repetida (escuchar y leer 3 veces). Velocidad en palabras por minuto: primera lectura del primer ciclo frente a la última lectura del ciclo más reciente.</p>
+    <div class="dt-wrap">
+      <table class="table table-stack data-table align-middle mb-0">
+        <thead><tr><th>Lectura</th><th>Ciclos</th><th>Última práctica</th><th>Palabras por minuto</th><th>Tendencia</th></tr></thead>
+        <tbody>
+          {% for row in practice_rows %}
+            <tr>
+              <td data-label="Lectura"><strong>{{ row.reading.title }}</strong></td>
+              <td data-label="Ciclos">{{ row.sessions }}</td>
+              <td data-label="Última práctica">{{ row.last_date|date:'d/m/Y' }}</td>
+              <td data-label="Palabras por minuto">{{ row.first_wpm }} → {{ row.last_wpm }}</td>
+              <td data-label="Tendencia">{% if row.trend == 'up' %}<span class="dt-status">Mejora</span>{% elif row.trend == 'down' %}<span class="dt-badge">Más lenta</span>{% else %}<span class="dt-status dt-status--muted">Estable</span>{% endif %}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5"><div class="dt-empty"><strong>Todavía no hay prácticas de lectura completas.</strong></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="feature-card dt-card mt-4">
     <h2 class="h4">Progreso del quiz por materia</h2>
     <p class="text-muted mb-3">Resumen de aciertos guardados en el Quiz de agilidad lectora.</p>
     <div class="dt-wrap">

@@ -20,6 +20,7 @@ from games.models import Game, GameAttempt, GameAttemptAnswer
 from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, LessonPlanAssignment, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 from progress.models import StudentDifficulty, StudentProgress
 from readings.models import Reading, ReadingComprehensionAnswer, ReadingProgress
+from readings.services import practice_summary
 
 from .forms import AdminUserCreationForm, AdminUserUpdateForm, LessonPlanForm, QuickStudentCreationForm, TeacherCreationForm, TeacherStudentModalForm, TeacherUpdateForm, build_admin_model_form, style_admin_form
 
@@ -795,6 +796,7 @@ def student_report(request, pk):
         'game_attempts': game_attempts,
         'game_attempts_count': student.game_attempts.count(),
         'reading_rows': reading_rows,
+        'practice_rows': practice_summary(student),
         'readings_started_count': student.reading_progress.count(),
         'readings_completed_count': student.reading_progress.filter(completed=True).count(),
         'completed_count': completed_count,

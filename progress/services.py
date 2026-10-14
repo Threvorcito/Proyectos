@@ -79,3 +79,46 @@ def register_attempt(user, activity: Activity, answer: str, is_correct: bool, co
             StudentDifficulty.objects.filter(pk=difficulty.pk).update(error_count=F('error_count') + 1, last_error_date=now)
     attempt.points_awarded = activity.points if first_completion else 0
     return attempt
+
+
+READING_PRACTICE_POINTS = 5
+READING_PRACTICE_STARS = 1
+
+
+def complete_reading_practice(session):
+    """Close a finished three-read practice cycle and award its reward.
+
+    Points and a star are granted at most once per reading per local day, so a
+    child can keep practising without farming points. The student row is locked
+    so two cycles finishing at the same time cannot both be rewarded. Returns
+    ``(points, stars)`` actually awarded for this cycle.
+    """
+    from readings.models import ReadingPracticeSession
+
+    now = timezone.now()
+    with transaction.atomic():
+        student = StudentProfile.objects.select_for_update().get(pk=session.student_id)
+        already_rewarded = (
+            ReadingPracticeSession.objects.filter(
+                student=student,
+                reading_id=session.reading_id,
+                points_awarded__gt=0,
+                completed_at__date=timezone.localdate(now),
+            )
+            .exclude(pk=session.pk)
+            .exists()
+        )
+        points = 0 if already_rewarded else READING_PRACTICE_POINTS
+        stars = 0 if already_rewarded else READING_PRACTICE_STARS
+        ReadingPracticeSession.objects.filter(pk=session.pk).update(completed_at=now, points_awarded=points)
+        update_fields = {'last_activity_at': now}
+        if points:
+            update_fields.update(
+                points=F('points') + points,
+                stars=F('stars') + stars,
+                experience=F('experience') + points,
+            )
+        StudentProfile.objects.filter(pk=student.pk).update(**update_fields)
+    session.completed_at = now
+    session.points_awarded = points
+    return points, stars

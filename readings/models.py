@@ -75,3 +75,39 @@ class ReadingComprehensionAnswer(models.Model):
 
     def __str__(self):
         return f'{self.student} - {self.question}'
+
+
+class ReadingPracticeSession(models.Model):
+    """One repeated-reading cycle: listen to the model, then read the text three times."""
+
+    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE, related_name='reading_practice_sessions')
+    reading = models.ForeignKey(Reading, on_delete=models.CASCADE, related_name='practice_sessions')
+    started_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(blank=True, null=True)
+    points_awarded = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        indexes = [models.Index(fields=['student', 'reading', 'completed_at'])]
+
+    def __str__(self):
+        return f'{self.student} - {self.reading} ({self.started_at:%Y-%m-%d})'
+
+
+class ReadingPracticeAttempt(models.Model):
+    """A single timed read. Words per minute are computed on the server."""
+
+    session = models.ForeignKey(ReadingPracticeSession, on_delete=models.CASCADE, related_name='attempts')
+    attempt_number = models.PositiveSmallIntegerField()
+    duration_ms = models.PositiveIntegerField()
+    word_count = models.PositiveIntegerField()
+    words_per_minute = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['attempt_number']
+        constraints = [
+            models.UniqueConstraint(fields=['session', 'attempt_number'], name='unique_practice_attempt_number'),
+        ]
+
+    def __str__(self):
+        return f'{self.session} #{self.attempt_number}'

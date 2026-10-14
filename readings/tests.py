@@ -1,14 +1,24 @@
 import json
+from datetime import timedelta
 
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from accounts.models import CustomUser
 from gamification.models import Achievement, StudentAchievement
 from gamification.services import evaluate_achievements
 from learning.models import Level, StudentProfile
 
-from .models import Reading, ReadingAnswer, ReadingComprehensionAnswer, ReadingProgress, ReadingQuestion
+from .models import (
+    Reading,
+    ReadingAnswer,
+    ReadingComprehensionAnswer,
+    ReadingPracticeAttempt,
+    ReadingPracticeSession,
+    ReadingProgress,
+    ReadingQuestion,
+)
 
 
 class ReadingGradeFilterTests(TestCase):
@@ -191,3 +201,122 @@ class ComprehensionPayloadValidationTests(TestCase):
                 self.assertEqual(response.status_code, 400)
                 self.assertFalse(response.json()['saved'])
         self.assertFalse(ReadingComprehensionAnswer.objects.exists())
+
+
+class ReadingPracticeTests(TestCase):
+    """Repeated reading practice: three timed reads with server-side words per minute."""
+
+    def setUp(self):
+        self.level = Level.objects.create(number=1, name='Inicial')
+        self.user = CustomUser.objects.create_user(
+            username='lectorpractica', email='lectorpractica@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT,
+        )
+        self.student = StudentProfile.objects.create(user=self.user, name='Lector Practica', grade='1', reading_level=self.level, current_level=self.level)
+        # 13 words; accents and punctuation must not change the count.
+        self.reading = Reading.objects.create(
+            level=self.level, grade='1', title='El sapo', content='El sapo salta.\n¡Qué día tan bonito! La niña ríe con el sapo.',
+        )
+        self.url = reverse('readings:save_practice_attempt', args=[self.reading.pk])
+        self.client.force_login(self.user)
+
+    def post(self, payload, url=None):
+        return self.client.post(url or self.url, data=json.dumps(payload), content_type='application/json')
+
+    def run_cycle(self, durations=(12000, 10000, 8000)):
+        session_id = None
+        response = None
+        for number, duration in enumerate(durations, start=1):
+            response = self.post({'session_id': session_id, 'attempt_number': number, 'duration_ms': duration})
+            self.assertEqual(response.status_code, 200, response.content)
+            session_id = response.json()['session_id']
+        return response.json()
+
+    def test_detail_page_offers_listen_and_practice_modes(self):
+        response = self.client.get(reverse('readings:detail', args=[self.reading.pk]))
+        self.assertContains(response, 'Escuchar el cuento')
+        self.assertContains(response, 'Practicar lectura')
+        self.assertContains(response, 'data-reading-practice')
+        self.assertContains(response, self.url)
+
+    def test_attempt_saves_and_computes_words_per_minute_server_side(self):
+        response = self.post({'attempt_number': 1, 'duration_ms': 30000, 'word_count': 999, 'words_per_minute': 999})
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        attempt = ReadingPracticeAttempt.objects.get()
+        self.assertEqual(attempt.session.student, self.student)
+        self.assertEqual(attempt.word_count, 13)
+        self.assertEqual(attempt.duration_ms, 30000)
+        self.assertEqual(attempt.words_per_minute, 26)
+        self.assertEqual(data['words_per_minute'], 26)
+        self.assertFalse(data['completed'])
+
+    def test_full_cycle_completes_session_and_awards_points(self):
+        data = self.run_cycle()
+        session = ReadingPracticeSession.objects.get()
+        self.assertIsNotNone(session.completed_at)
+        self.assertTrue(data['completed'])
+        self.assertEqual([item['words_per_minute'] for item in data['attempts']], [65, 78, 98])
+        self.assertGreater(data['points_awarded'], 0)
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.points, data['points_awarded'])
+        self.assertEqual(self.student.stars, 1)
+
+    def test_points_only_once_per_reading_per_day(self):
+        first = self.run_cycle()
+        second = self.run_cycle()
+        self.assertGreater(first['points_awarded'], 0)
+        self.assertEqual(second['points_awarded'], 0)
+        self.assertEqual(len(second['history']), 1)
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.points, first['points_awarded'])
+
+    def test_points_again_on_another_day(self):
+        first = self.run_cycle()
+        ReadingPracticeSession.objects.update(completed_at=timezone.now() - timedelta(days=1))
+        second = self.run_cycle()
+        self.assertEqual(second['points_awarded'], first['points_awarded'])
+
+    def test_rejects_out_of_order_or_foreign_session(self):
+        self.assertEqual(self.post({'attempt_number': 2, 'duration_ms': 9000}).status_code, 400)
+        session_id = self.post({'attempt_number': 1, 'duration_ms': 9000}).json()['session_id']
+        self.assertEqual(self.post({'session_id': session_id, 'attempt_number': 3, 'duration_ms': 9000}).status_code, 400)
+        other_user = CustomUser.objects.create_user(username='otrolector', email='otrolector@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        StudentProfile.objects.create(user=other_user, name='Otro', grade='1', reading_level=self.level, current_level=self.level)
+        self.client.force_login(other_user)
+        self.assertEqual(self.post({'session_id': session_id, 'attempt_number': 2, 'duration_ms': 9000}).status_code, 400)
+
+    def test_rejects_bad_payloads(self):
+        bad_payloads = [
+            [],
+            {},
+            {'attempt_number': 1},
+            {'attempt_number': 4, 'duration_ms': 9000},
+            {'attempt_number': 1, 'duration_ms': 'rapido'},
+            {'attempt_number': 1, 'duration_ms': True},
+        ]
+        for payload in bad_payloads:
+            self.assertEqual(self.post(payload).status_code, 400, payload)
+        response = self.client.post(self.url, data='no json', content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(ReadingPracticeAttempt.objects.exists())
+
+    def test_rejects_absurd_durations(self):
+        for duration in (1500, 15 * 60 * 1000 + 1):
+            response = self.post({'attempt_number': 1, 'duration_ms': duration})
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()['reason'], 'duration')
+        self.assertFalse(ReadingPracticeAttempt.objects.exists())
+
+    def test_rejects_reading_from_other_grade(self):
+        other = Reading.objects.create(level=self.level, grade='2', title='Otra', content='Texto de otro grado.')
+        response = self.post({'attempt_number': 1, 'duration_ms': 9000}, url=reverse('readings:save_practice_attempt', args=[other.pk]))
+        self.assertEqual(response.status_code, 404)
+
+    def test_requires_student_login(self):
+        self.client.logout()
+        response = self.post({'attempt_number': 1, 'duration_ms': 9000})
+        self.assertEqual(response.status_code, 302)
+        teacher = CustomUser.objects.create_user(username='docentepractica', email='docentepractica@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        self.client.force_login(teacher)
+        self.assertEqual(self.post({'attempt_number': 1, 'duration_ms': 9000}).status_code, 403)
+        self.assertFalse(ReadingPracticeAttempt.objects.exists())

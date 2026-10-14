@@ -429,6 +429,29 @@ class LessonPlanImplementationTests(TestCase):
         self.assertContains(response, 'Lectura visible docente')
         self.assertContains(response, 'Lecturas y comprensión')
 
+    def test_student_report_shows_reading_practice_summary(self):
+        from readings.models import ReadingPracticeAttempt, ReadingPracticeSession
+
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        teacher_user = CustomUser.objects.create_user(username='docentepracticarep', email='docentepracticarep@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Practica', can_view_student_reports=True)
+        student_user = CustomUser.objects.create_user(username='alumnopracticarep', email='alumnopracticarep@example.com', password='Demo12345!', role=CustomUser.Role.STUDENT)
+        student = StudentProfile.objects.create(user=student_user, name='Alumno Practica', grade='1', reading_level=level, current_level=level)
+        teacher.students.add(student)
+        reading = Reading.objects.create(level=level, grade='1', title='El sapo saltarin', content='Uno dos tres cuatro.')
+        for first_wpm, last_wpm in ((20, 30), (31, 44)):
+            session = ReadingPracticeSession.objects.create(student=student, reading=reading, completed_at=timezone.now())
+            for number, wpm in ((1, first_wpm), (2, first_wpm), (3, last_wpm)):
+                ReadingPracticeAttempt.objects.create(session=session, attempt_number=number, duration_ms=10000, word_count=4, words_per_minute=wpm)
+        self.client.force_login(teacher_user)
+
+        response = self.client.get(reverse('dashboard:student_report', args=[student.pk]))
+
+        self.assertContains(response, 'Práctica de lectura')
+        self.assertContains(response, 'El sapo saltarin')
+        self.assertContains(response, '20 → 44')
+        self.assertContains(response, 'Mejora')
+
     def test_unlinked_teacher_cannot_view_student_report(self):
         level = Level.objects.create(number=1, name='Inicial', order=1)
         teacher_user = CustomUser.objects.create_user(username='docenteajeno', email='docenteajeno@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
