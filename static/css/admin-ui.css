@@ -590,6 +590,9 @@ body.aui-dialog-open { overflow: hidden; }
     flex: 1 1 auto;
     flex-direction: column;
     min-height: 0;
+    /* Auto side margins in a column flexbox shrink-wrap the item;
+       keep the full content width up to the main.css cap. */
+    width: 100%;
   }
   .admin-content.admin-ui:has(.aui-table-wrap) > * { flex: 0 0 auto; }
   .admin-ui .aui-card:has(.aui-table-wrap) {
