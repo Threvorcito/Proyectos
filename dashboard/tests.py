@@ -1026,7 +1026,7 @@ class TeacherPermissionEnforcementTests(TestCase):
         old_hash = student.visual_key_hash
         self.teacher.students.add(student)
 
-        with patch('learning.models.secrets.SystemRandom.sample', return_value=['book', 'sun', 'fish']):
+        with patch('learning.models.secrets.SystemRandom.sample', return_value=['book', 'sun']):
             response = self.client.post(reverse('dashboard:teacher_student_visual_key_regenerate', args=[student.pk]), {'had_visual_key': '1'})
         student.refresh_from_db()
 
@@ -1034,7 +1034,8 @@ class TeacherPermissionEnforcementTests(TestCase):
         self.assertContains(response, 'Tarjeta de acceso')
         self.assertNotEqual(student.visual_key_hash, old_hash)
         self.assertFalse(student.check_visual_key(['dog', 'star', 'car']))
-        self.assertTrue(student.check_visual_key(['book', 'sun', 'fish']))
+        self.assertTrue(student.check_visual_key(['sun', 'book']))
+        self.assertEqual(student.visual_key_version, StudentProfile.VISUAL_KEY_PAIR)
 
     def test_unlinked_teacher_cannot_regenerate_student_visual_key(self):
         other_teacher_user = CustomUser.objects.create_user(username='docenteajeno', email='docenteajeno@example.com', password='Docente123!', role=CustomUser.Role.TEACHER)
@@ -1059,13 +1060,13 @@ class TeacherPermissionEnforcementTests(TestCase):
         self.teacher.students.add(student)
         self.assertEqual(student.visual_key_hash, '')
 
-        with patch('learning.models.secrets.SystemRandom.sample', return_value=['apple', 'house', 'car']):
+        with patch('learning.models.secrets.SystemRandom.sample', return_value=['apple', 'house']):
             response = self.client.post(reverse('dashboard:teacher_student_visual_key_regenerate', args=[student.pk]), {'had_visual_key': '0'})
         student.refresh_from_db()
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Guarda esta tarjeta en un lugar seguro')
-        self.assertTrue(student.check_visual_key(['apple', 'house', 'car']))
+        self.assertTrue(student.check_visual_key(['house', 'apple']))
 
 
 class AdminResourceDeleteTests(TestCase):

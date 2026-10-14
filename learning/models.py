@@ -62,7 +62,14 @@ class StudentProfile(models.Model):
         ('house', '🏠', 'casa'),
         ('apple', '🍎', 'manzana'),
         ('fish', '🐟', 'pez'),
+        ('cat', '🐱', 'gato'),
     )
+    # v1: three drawings in order (legacy, kept until the teacher makes a new key).
+    # v2: two drawings out of nine, order does not matter (grade-1 friendly).
+    VISUAL_KEY_LEGACY = 1
+    VISUAL_KEY_PAIR = 2
+    VISUAL_KEY_PAIR_SIZE = 2
+    VISUAL_KEY_LEGACY_SIZE = 3
 
     class Grade(models.TextChoices):
         FIRST = '1', 'Primer grado'
@@ -105,6 +112,7 @@ class StudentProfile(models.Model):
     learning_streak = models.PositiveIntegerField(default=0)
     last_activity_at = models.DateTimeField(blank=True, null=True)
     visual_key_hash = models.CharField(max_length=128, blank=True)
+    visual_key_version = models.PositiveSmallIntegerField(default=VISUAL_KEY_LEGACY)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def display_name(self):
@@ -130,19 +138,42 @@ class StudentProfile(models.Model):
         return [items[code] for code in codes if code in items]
 
     @classmethod
-    def visual_key_secret(cls, codes):
+    def visual_key_secret(cls, codes, version=VISUAL_KEY_LEGACY):
+        if version == cls.VISUAL_KEY_PAIR:
+            # Order does not matter: hash the sorted pair.
+            return 'v2:' + '+'.join(sorted(codes))
         return '|'.join(codes)
 
+    @classmethod
+    def _valid_key_codes(cls, codes, size):
+        known = set(cls.visual_key_codes())
+        return len(codes) == size and len(set(codes)) == size and all(code in known for code in codes)
+
+    @property
+    def has_pair_visual_key(self):
+        return self.visual_key_version == self.VISUAL_KEY_PAIR
+
+    @property
+    def visual_key_size(self):
+        return self.VISUAL_KEY_PAIR_SIZE if self.has_pair_visual_key else self.VISUAL_KEY_LEGACY_SIZE
+
     def set_visual_key(self, codes):
-        self.visual_key_hash = make_password(self.visual_key_secret(codes))
+        """Store a salted hash; two codes make a v2 pair key, three a legacy ordered key."""
+        codes = list(codes)
+        version = self.VISUAL_KEY_PAIR if len(codes) == self.VISUAL_KEY_PAIR_SIZE else self.VISUAL_KEY_LEGACY
+        self.visual_key_version = version
+        self.visual_key_hash = make_password(self.visual_key_secret(codes, version))
 
     def check_visual_key(self, codes):
-        return bool(self.visual_key_hash and check_password(self.visual_key_secret(codes), self.visual_key_hash))
+        codes = [code for code in codes if code]
+        if not self.visual_key_hash or not self._valid_key_codes(codes, self.visual_key_size):
+            return False
+        return check_password(self.visual_key_secret(codes, self.visual_key_version), self.visual_key_hash)
 
     def generate_visual_key(self):
-        codes = secrets.SystemRandom().sample(self.visual_key_codes(), 3)
+        codes = secrets.SystemRandom().sample(self.visual_key_codes(), self.VISUAL_KEY_PAIR_SIZE)
         self.set_visual_key(codes)
-        self.save(update_fields=['visual_key_hash'])
+        self.save(update_fields=['visual_key_hash', 'visual_key_version'])
         return self.visual_key_items_for_codes(codes)
 
 

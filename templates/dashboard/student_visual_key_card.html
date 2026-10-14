@@ -22,11 +22,11 @@
 {% block content %}
 <section class="visual-card-page">
   <div class="visual-card">
-    <span class="eyebrow">Tarjeta de acceso</span>
+    <p class="visual-card__subtitle mb-0">Tarjeta de acceso</p>
     <h1>{{ student.display_name }}</h1>
-    <p class="visual-card__subtitle">Mis dibujos secretos</p>
+    <p class="visual-card__subtitle">Mis {{ visual_key|length }} dibujos secretos. El orden no importa.</p>
 
-    <div class="visual-card__symbols" aria-label="Dibujos secretos en orden">
+    <div class="visual-card__symbols" aria-label="Dibujos secretos">
       {% for item in visual_key %}
         <div class="visual-card__symbol">
           <span aria-hidden="true">{{ item.icon }}</span>

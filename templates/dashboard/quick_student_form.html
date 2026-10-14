@@ -51,9 +51,10 @@
             <strong class="fs-4 d-block mb-2">{{ credentials.username }}</strong>
             <div class="d-flex flex-wrap gap-2 justify-content-center mb-3">
               {% for item in credentials.visual_key %}
-                <span class="badge text-bg-light border p-3" style="font-size: 2.4rem;" aria-label="{{ item.label }}">{{ item.icon }}</span>
+                <span class="badge text-bg-light border p-3 d-inline-flex flex-column align-items-center" style="font-size: 2.4rem;"><span aria-hidden="true">{{ item.icon }}</span><small class="fs-6 text-body mt-1">{{ item.label }}</small></span>
               {% endfor %}
             </div>
+            <p class="small text-muted">Dibujos secretos: toca los 2. El orden no importa.</p>
             <strong class="fs-2 d-block">PIN: {{ credentials.password }}</strong>
           </div>
           {% if credentials.parent_username %}
