@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from accounts.models import CustomUser
 from activities.models import Activity
 from activities.services import get_recommended_activities
+from accounts import lockout
 from core.models import AuditLog
 from gamification.models import StudentAchievement
 from gamification.services import evaluate_achievements
@@ -832,6 +833,7 @@ def student_dashboard(request):
         'assigned_plans': assigned_plans,
         'today_plan': today_plan,
         'practice_days': practice_days(student),
+        'signin_cheer': request.session.pop('kid_signin_cheer', False),
     })
 
 
@@ -900,7 +902,9 @@ def get_teacher_students_for_page(teacher_profile, edit_form=None, open_edit_stu
             page_number = ordered_ids.index(open_edit_student) // RESOURCE_PAGE_SIZE + 1
     page_obj = Paginator(students, RESOURCE_PAGE_SIZE).get_page(page_number)
     page_obj.object_list = list(page_obj.object_list)
+    locked = lockout.locked_keys(lockout.student_key(student.pk) for student in page_obj.object_list)
     for student in page_obj.object_list:
+        student.access_locked = lockout.student_key(student.pk) in locked
         student.edit_form = edit_form if edit_form is not None and student.pk == open_edit_student else TeacherStudentModalForm(instance=student)
         student.open_edit_modal = student.pk == open_edit_student
     return page_obj
@@ -967,8 +971,10 @@ def teacher_student_visual_key_regenerate(request, pk):
         messages.error(request, 'No tienes permiso para crear dibujos secretos de este alumno.')
         return redirect('dashboard:redirect')
     visual_key = student.generate_visual_key()
+    # A new key is also a fresh start for a locked child.
+    lockout.reset(lockout.student_key(student.pk))
     action = 'regeneró' if request.POST.get('had_visual_key') == '1' else 'creó'
-    write_audit(request, f'{action}_student_visual_key', student)
+    write_audit(request, f'{action}_student_visual_key', student, {'visual_key_version': student.visual_key_version})
     messages.success(request, 'Dibujos secretos listos. Guarda esta tarjeta en un lugar seguro.')
     return render(request, 'dashboard/student_visual_key_card.html', {
         'student': student,
@@ -976,6 +982,20 @@ def teacher_student_visual_key_regenerate(request, pk):
         'pin': request.POST.get('pin', ''),
         'back_url': 'dashboard:teacher_students' if request.user.role == 'TEACHER' else 'dashboard:redirect',
     })
+
+
+@login_required
+@require_POST
+def teacher_student_access_unlock(request, pk):
+    student = get_object_or_404(StudentProfile, pk=pk)
+    if not user_can_manage_student_visual_key(request.user, student):
+        messages.error(request, 'No tienes permiso para desbloquear a este alumno.')
+        return redirect('dashboard:redirect')
+    key = lockout.student_key(student.pk)
+    write_audit(request, 'unlock_student_access', student, {'needed_teacher': lockout.needs_unlock(key)})
+    lockout.reset(key)
+    messages.success(request, f'{student.display_name()} ya puede entrar con sus dibujos.')
+    return redirect('dashboard:teacher_students' if request.user.role == 'TEACHER' else 'dashboard:redirect')
 
 
 @login_required

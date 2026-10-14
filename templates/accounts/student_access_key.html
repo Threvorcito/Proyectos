@@ -1,32 +1,74 @@
 {% extends 'accounts/student_access_base.html' %}
+{% load static %}
 {% block title %}Dibujos secretos | {{ site_name }}{% endblock %}
 {% block kid_access_content %}
 <div class="kid-access__header">
-  <div>
-    <span class="eyebrow">{{ student.display_name }}</span>
-    <h1>Escoge tus dibujos secretos</h1>
-    <p>Toca tus 3 dibujos en el orden correcto.</p>
+  <div class="kid-access__hello">
+    <span class="kid-card__avatar kid-card__avatar--small" aria-hidden="true">{% if student.avatar %}<img src="{{ student.avatar.url }}" alt="">{% else %}{{ student.display_name|slice:':1' }}{% endif %}</span>
+    <div>
+      <h1>Hola, {{ student.display_name }}</h1>
+      {% if pair_key %}<p>Toca tus 2 dibujos secretos.</p>{% else %}<p>Toca tus 3 dibujos en orden.</p>{% endif %}
+    </div>
   </div>
-  {% include 'partials/listen_button.html' with text="Escoge tus dibujos secretos. Toca tus tres dibujos en el orden correcto." %}
+  {% if pair_key %}
+    {% include 'partials/listen_button.html' with text="Hola. Toca tus dos dibujos secretos." %}
+  {% else %}
+    {% include 'partials/listen_button.html' with text="Hola. Toca tus tres dibujos secretos en orden." %}
+  {% endif %}
 </div>
-<form method="post">
-  {% csrf_token %}
-  {% for step in steps %}
-    <section class="visual-key-row">
-      <h2>Dibujo {{ step }}</h2>
-      <div class="visual-key-options">
+
+{% if try_again %}
+  <p class="kid-access__again" role="status" data-mascot-on-load="encourage" data-mascot-say="¡Casi! Prueba otra vez.">¡Casi! Prueba otra vez.</p>
+{% endif %}
+
+{% if pair_key %}
+  <form method="post" class="pair-key" data-pair-key data-pair-size="{{ pair_size }}">
+    {% csrf_token %}
+    <fieldset>
+      <legend class="visually-hidden">Escoge 2 dibujos</legend>
+      <div class="pair-key__grid">
         {% for item in choices %}
-          <label class="visual-key-option">
-            <input type="radio" name="symbol_{{ step }}" value="{{ item.code }}" required>
-            <span>{{ item.icon }}<small>{{ item.label }}</small></span>
+          <label class="pair-key__item">
+            <input type="checkbox" name="symbols" value="{{ item.code }}" data-word="{{ item.label }}">
+            <span class="pair-key__tile">
+              <span class="pair-key__icon" aria-hidden="true">{{ item.icon }}</span>
+              <span class="pair-key__word">{{ item.label }}</span>
+              <svg class="pair-key__check" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            </span>
           </label>
         {% endfor %}
       </div>
-    </section>
-  {% endfor %}
-  <div class="kid-access__actions">
-    <button class="btn btn-primary btn-lg kid-access__back" type="submit">Entrar</button>
-    <a class="btn btn-outline-primary kid-access__back" href="{% url 'accounts:student_access_parents' %}">Atrás</a>
-  </div>
-</form>
+    </fieldset>
+    <div class="pair-key__footer">
+      <p class="pair-key__count" aria-live="polite"><span class="pair-key__dots" aria-hidden="true"><i></i><i></i></span><span data-pair-count>0</span> de {{ pair_size }}</p>
+      <button class="btn btn-primary btn-lg pair-key__submit" type="submit" data-pair-submit>Entrar</button>
+    </div>
+  </form>
+{% else %}
+  <form method="post">
+    {% csrf_token %}
+    {% for step in steps %}
+      <section class="visual-key-row">
+        <h2>Dibujo {{ step }}</h2>
+        <div class="visual-key-options">
+          {% for item in choices %}
+            <label class="visual-key-option">
+              <input type="radio" name="symbol_{{ step }}" value="{{ item.code }}" required>
+              <span>{{ item.icon }}<small>{{ item.label }}</small></span>
+            </label>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+    <div class="kid-access__actions">
+      <button class="btn btn-primary btn-lg kid-access__back" type="submit">Entrar</button>
+    </div>
+  </form>
+{% endif %}
+<div class="kid-access__actions">
+  <a class="btn btn-outline-primary kid-access__back" href="{% url 'accounts:student_access_students' %}">No soy yo</a>
+</div>
+<div class="mascot-slot" data-mascot-slot></div>
+<script src="{% static 'js/student-access.js' %}?v=20261014-k5-1" defer></script>
 {% endblock %}
+{% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}

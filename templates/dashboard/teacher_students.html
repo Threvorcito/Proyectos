@@ -36,6 +36,8 @@
                 <td data-label="Estudiante">
                   <strong>{{ student.display_name }}</strong>
                   <small>{{ student.get_grade_display }}</small>
+                  {% if student.access_locked %}<small class="teacher-students-access-note teacher-students-access-note--locked">Bloqueado: necesita tu ayuda para entrar</small>{% endif %}
+                  {% if student.visual_key_hash and not student.has_pair_visual_key %}<small class="teacher-students-access-note">Clave antigua de 3 dibujos</small>{% endif %}
                   <small class="teacher-students-tutor-line">
                     <span aria-hidden="true">👤</span>
                     {% with tutor_count=student.parents.all|length %}
@@ -64,10 +66,16 @@
                         <button type="submit">Ver como estudiante</button>
                       </form>
                       <a href="{% url 'dashboard:student_report' student.pk %}">Ver reporte</a>
-                      <form method="post" action="{% url 'dashboard:teacher_student_visual_key_regenerate' student.pk %}" onsubmit="return confirm('¿Quieres crear nuevos dibujos secretos para este alumno? La clave anterior dejará de funcionar.');">
+                      {% if student.access_locked %}
+                        <form method="post" action="{% url 'dashboard:teacher_student_access_unlock' student.pk %}">
+                          {% csrf_token %}
+                          <button type="submit">Desbloquear</button>
+                        </form>
+                      {% endif %}
+                      <form method="post" action="{% url 'dashboard:teacher_student_visual_key_regenerate' student.pk %}" onsubmit="return confirm('¿Quieres crear una nueva clave de 2 dibujos para este alumno? La clave anterior dejará de funcionar.');">
                         {% csrf_token %}
                         <input type="hidden" name="had_visual_key" value="{% if student.visual_key_hash %}1{% else %}0{% endif %}">
-                        <button type="submit">Regenerar dibujos</button>
+                        <button type="submit">Nueva clave de dibujos</button>
                       </form>
                       {% if teacher_profile.can_create_students %}
                         <button type="button" data-bs-toggle="modal" data-bs-target="#editStudentModal{{ student.pk }}">Editar</button>

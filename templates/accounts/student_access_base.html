@@ -7,12 +7,38 @@
   .kid-access__header h1 { color: #26303d; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 800; margin: 0; }
   .kid-access__header p { color: #4a5565; font-size: 1.2rem; margin: .35rem 0 0; }
   .kid-access__grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
-  .kid-card { background: #fffdf8; border: 2px solid #eadfcb; border-radius: 24px; box-shadow: 0 10px 28px rgba(92, 70, 32, .08); color: #26303d; min-height: 170px; padding: 1.25rem; text-align: left; transition: transform .15s ease, border-color .15s ease; width: 100%; }
-  .kid-card:hover, .kid-card:focus { border-color: #1d6f84; transform: translateY(-2px); }
-  .kid-card__avatar { align-items: center; background: linear-gradient(135deg, #1d6f84, #6a45b0); border-radius: 22px; color: #fff; display: inline-flex; font-size: 2rem; font-weight: 900; height: 72px; justify-content: center; margin-bottom: 1rem; overflow: hidden; width: 72px; }
+  .kid-card { align-items: center; background: #fffdf8; border: 2px solid #eadfcb; border-radius: 24px; box-shadow: 0 10px 28px rgba(92, 70, 32, .08); color: #26303d; display: flex; flex-direction: column; justify-content: center; min-height: 190px; padding: 1.25rem; text-align: center; transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease; width: 100%; }
+  .kid-card:hover, .kid-card:focus-visible { border-color: #1d6f84; transform: translateY(-2px); }
+  .kid-card:focus-visible { outline: 3px solid #1d6f84; outline-offset: 3px; }
+  .kid-card.is-picked { border-color: #1d6f84; box-shadow: 0 0 0 5px rgba(29, 111, 132, .25), 0 10px 28px rgba(92, 70, 32, .08); }
+  .kid-card__avatar { align-items: center; background: linear-gradient(135deg, #1d6f84, #6a45b0); border-radius: 50%; color: #fff; display: inline-flex; font-size: 2.6rem; font-weight: 900; height: 104px; justify-content: center; margin-bottom: .8rem; overflow: hidden; width: 104px; }
+  .kid-card__avatar--small { flex: 0 0 auto; font-size: 1.8rem; height: 72px; margin: 0; width: 72px; }
   .kid-card__avatar img { height: 100%; object-fit: cover; width: 100%; }
   .kid-card .kid-card__avatar { color: #fff; display: inline-flex; font-size: 2rem; margin-top: 0; }
-  .kid-card strong { display: block; font-size: 1.45rem; line-height: 1.15; }
+  .kid-card strong { display: block; font-size: 1.6rem; line-height: 1.15; }
+  .kid-card--empty { min-height: 150px; }
+  .kid-access__hello { align-items: center; display: flex; gap: 1rem; min-width: 0; }
+  .kid-access__header--adult h1 { font-size: clamp(1.8rem, 5vw, 2.8rem); }
+  .kid-access__again { background: #fdf1cf; border-radius: 18px; color: #6b4600; font-size: 1.35rem; font-weight: 800; margin: 0 0 1rem; padding: .9rem 1.2rem; }
+  .pair-key fieldset { border: 0; margin: 0; min-width: 0; padding: 0; }
+  .pair-key__grid { display: grid; gap: .8rem; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 auto; max-width: 620px; }
+  .pair-key__item { display: block; position: relative; }
+  .pair-key__item input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+  .pair-key__tile { align-items: center; background: #fffdf8; border: 3px solid #eadfcb; border-radius: 22px; box-shadow: 0 6px 16px rgba(92, 70, 32, .08); cursor: pointer; display: flex; flex-direction: column; gap: .2rem; justify-content: center; min-height: 116px; padding: .6rem .3rem; position: relative; transition: transform .15s ease, border-color .15s ease, background-color .15s ease; }
+  .pair-key__icon { font-size: clamp(2.6rem, 11vw, 3.6rem); line-height: 1.1; }
+  .pair-key__word { color: #26303d; font-size: 1.2rem; font-weight: 800; }
+  .pair-key__check { background: #1d6f84; border-radius: 50%; fill: none; height: 34px; opacity: 0; padding: 5px; position: absolute; right: -8px; stroke: #fff; stroke-linecap: round; stroke-linejoin: round; stroke-width: 3.2; top: -8px; transform: scale(.6); transition: opacity .15s ease, transform .2s cubic-bezier(.16, 1, .3, 1); width: 34px; }
+  .pair-key__item input:checked + .pair-key__tile { background: #e1f1f4; border-color: #1d6f84; box-shadow: 0 0 0 5px rgba(29, 111, 132, .25); transform: scale(1.03); }
+  .pair-key__item input:checked + .pair-key__tile .pair-key__check { opacity: 1; transform: scale(1); }
+  .pair-key__item input:focus-visible + .pair-key__tile { outline: 3px solid #1d6f84; outline-offset: 4px; }
+  .pair-key__footer { align-items: center; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; margin: 1.4rem auto 0; max-width: 620px; }
+  .pair-key__count { align-items: center; color: #26303d; display: flex; font-size: 1.3rem; font-weight: 800; gap: .6rem; margin: 0; }
+  .pair-key__dots { display: inline-flex; gap: .35rem; }
+  .pair-key__dots i { border: 3px solid #1d6f84; border-radius: 50%; display: block; height: 22px; width: 22px; }
+  .pair-key__dots i.is-on { background: #1d6f84; }
+  .pair-key__submit { border-radius: 999px; flex: 1 1 220px; font-size: 1.4rem; font-weight: 800; max-width: 340px; min-height: 64px; }
+  .pair-key__submit:disabled { opacity: .55; }
+  @media (prefers-reduced-motion: reduce) { .pair-key__tile, .pair-key__check, .kid-card { transition: none; } .pair-key__item input:checked + .pair-key__tile { transform: none; } }
   .kid-card span { color: #4a5565; display: block; font-size: .98rem; margin-top: .45rem; }
   .kid-access__actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.5rem; }
   .kid-access__back { border-radius: 999px; font-weight: 700; min-height: 56px; padding: .8rem 1.4rem; }
@@ -28,7 +54,7 @@
   .kid-code-form__input { background: #fff; border: 3px solid #7a6a52; border-radius: 20px; color: #26303d; flex: 1 1 260px; font-size: clamp(2rem, 8vw, 3.25rem); font-weight: 900; letter-spacing: .3em; min-height: 88px; min-width: 0; padding: .5rem 1rem; text-align: center; text-transform: uppercase; }
   .kid-code-form__input:focus { border-color: #1d6f84; outline: 3px solid #1d6f84; outline-offset: 3px; }
   .kid-code-form__submit { border-radius: 999px; flex: 1 1 200px; font-size: 1.35rem; font-weight: 800; min-height: 88px; }
-  @media (max-width: 700px) { .kid-access__header { align-items: flex-start; flex-direction: column; } .kid-card { min-height: 145px; } }
+  @media (max-width: 700px) { .kid-access__header { align-items: flex-start; flex-direction: column; } .kid-access__grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); } .kid-card { min-height: 170px; } .pair-key__grid { gap: .6rem; } }
 </style>
 {% endblock %}
 {% block content %}

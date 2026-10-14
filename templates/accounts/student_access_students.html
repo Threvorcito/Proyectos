@@ -1,27 +1,27 @@
 {% extends 'accounts/student_access_base.html' %}
+{% load static %}
 {% block title %}Escoge tu tarjeta | {{ site_name }}{% endblock %}
 {% block kid_access_content %}
 <div class="kid-access__header">
   <div>
-    <span class="eyebrow">{{ teacher.name }}</span>
     <h1>¿Cuál eres tú?</h1>
-    <p>Busca tu nombre y toca tu tarjeta.</p>
+    <p>Toca tu tarjeta.</p>
   </div>
-  {% include 'partials/listen_button.html' with text="¿Cuál eres tú? Busca tu nombre y toca tu tarjeta." %}
+  {% include 'partials/listen_button.html' with text="¿Cuál eres tú? Toca tu tarjeta." %}
 </div>
 <div class="kid-access__grid">
   {% for student in students %}
-    <form method="post">
+    <form method="post" data-kid-card-form>
       {% csrf_token %}
       <input type="hidden" name="student_id" value="{{ student.pk }}">
-      <button class="kid-card" type="submit" data-speak-text="{{ student.display_name }}">
-        <span class="kid-card__avatar">{% if student.avatar %}<img src="{{ student.avatar.url }}" alt="">{% else %}{{ student.display_name|slice:':1' }}{% endif %}</span>
+      <button class="kid-card" type="submit" data-kid-card data-speak-name="{{ student.display_name }}">
+        <span class="kid-card__avatar" aria-hidden="true">{% if student.avatar %}<img src="{{ student.avatar.url }}" alt="">{% else %}{{ student.display_name|slice:':1' }}{% endif %}</span>
         <strong>{{ student.display_name }}</strong>
-        <span>{{ student.get_grade_display }}{% if student.display_name in duplicate_names and student.current_level %} · Nivel {{ student.current_level.number }}{% endif %}</span>
+        {% if student.display_name in duplicate_names %}<span>{{ student.get_grade_display }}{% if student.current_level %} · Nivel {{ student.current_level.number }}{% endif %}</span>{% endif %}
       </button>
     </form>
   {% empty %}
-    <div class="kid-card"><strong>No hay estudiantes.</strong><span>Pide ayuda a tu profe.</span></div>
+    <div class="kid-card kid-card--empty"><strong>Todavía no hay tarjetas.</strong><span>Pide ayuda a tu maestra.</span></div>
   {% endfor %}
 </div>
 <div class="kid-access__actions">
@@ -31,4 +31,5 @@
     <button class="btn btn-outline-primary kid-access__back" type="submit">Cambiar código del aula</button>
   </form>
 </div>
+<script src="{% static 'js/student-access.js' %}?v=20261014-k5-1" defer></script>
 {% endblock %}

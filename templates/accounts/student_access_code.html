@@ -1,19 +1,18 @@
 {% extends 'accounts/student_access_base.html' %}
-{% block title %}Acceso para estudiantes | {{ site_name }}{% endblock %}
+{% block title %}Código del aula | {{ site_name }}{% endblock %}
 {% block kid_access_content %}
-<div class="kid-access__header">
+<div class="kid-access__header kid-access__header--adult">
   <div>
-    <span class="eyebrow">Acceso para estudiantes</span>
-    <h1>Escribe el código de tu aula</h1>
-    <p>Tu docente te dice las letras y números.</p>
+    <h1>Para la maestra o el maestro</h1>
+    <p>Escribe el código del aula una vez en esta tableta. La tableta lo recuerda por 30 días.</p>
   </div>
-  {% include 'partials/listen_button.html' with text="Escribe el código de tu aula. Tu docente te dice las letras y números." %}
+  {% include 'partials/listen_button.html' with text="Para la maestra o el maestro. Escribe el código del aula una vez en esta tableta." %}
 </div>
 <form method="post" class="kid-code-form">
   {% csrf_token %}
   <label class="visually-hidden" for="classroom-code">Código del aula</label>
   <input id="classroom-code" class="kid-code-form__input" type="text" name="code" maxlength="12" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ABC234" required autofocus>
-  <button class="btn btn-primary kid-code-form__submit" type="submit">Entrar a mi aula</button>
+  <button class="btn btn-primary kid-code-form__submit" type="submit">Abrir el aula</button>
 </form>
 <div class="kid-access__actions"><a class="btn btn-outline-primary kid-access__back" href="{% url 'accounts:login' %}">Usar PIN</a></div>
 {% endblock %}

@@ -3344,6 +3344,8 @@ a { text-decoration: none; }
   margin-top: .18rem !important;
   max-width: 260px;
 }
+.teacher-table td small.teacher-students-access-note { color: #475569; font-size: .78rem; font-weight: 700; }
+.teacher-table td small.teacher-students-access-note--locked { color: #92400e; }
 .teacher-badge {
   background: #eef6f9;
   border-radius: 999px;

@@ -1,4 +1,5 @@
 import secrets
+from datetime import timedelta
 
 from django.conf import settings
 from django.contrib import messages
@@ -25,6 +26,11 @@ CLASSROOM_COOKIE_SALT = 'accounts.classroom'
 CLASSROOM_COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 CLASSROOM_CODE_MAX_FAILURES = 20
 LOCKED_CHILD_MESSAGE = 'Hiciste muchos intentos. Pide ayuda a tu docente y prueba en un ratito.'
+KEY_REST_MESSAGE = 'Vamos a descansar un ratito. Pide ayuda a tu maestra.'
+KEY_TEACHER_MESSAGE = 'Pide ayuda a tu maestra.'
+# A 2-of-9 key has only 36 combinations: count misses over a whole day and
+# escalate repeated lockouts to the teacher (see accounts.lockout).
+STUDENT_KEY_FAILURE_WINDOW = timedelta(hours=24)
 
 
 def _clear_student_access_session(request):
@@ -69,13 +75,6 @@ def _student_access_student(request, teacher):
     if not student_id or teacher is None:
         return None
     return teacher.students.select_related('user').filter(pk=student_id, user__is_active=True).first()
-
-
-def _student_access_parent(request, student):
-    parent_id = request.session.get('student_access_parent_id')
-    if not parent_id or student is None:
-        return None
-    return ParentProfile.objects.filter(pk=parent_id, students=student, user__is_active=True).first()
 
 
 def student_access_code(request):
@@ -130,8 +129,7 @@ def student_access_students(request):
             messages.error(request, 'Escoge tu tarjeta de la lista.')
             return redirect('accounts:student_access_students')
         request.session['student_access_student_id'] = student.pk
-        request.session.pop('student_access_parent_id', None)
-        return redirect('accounts:student_access_parents')
+        return redirect('accounts:student_access_key')
 
     students = list(teacher.students.select_related('user', 'current_level').filter(user__is_active=True).order_by('name'))
     name_counts = {}
@@ -142,62 +140,62 @@ def student_access_students(request):
 
 
 def student_access_parents(request):
-    teacher = _student_access_teacher(request)
-    student = _student_access_student(request, teacher)
-    if teacher is None or student is None:
-        return redirect('accounts:student_access')
+    """Old tutor step: children no longer pick a tutor, so go on to the drawings."""
+    request.session.pop('student_access_parent_id', None)
+    return redirect('accounts:student_access_key')
 
-    if request.method == 'POST':
-        parent = ParentProfile.objects.filter(pk=request.POST.get('parent_id'), students=student, user__is_active=True).first()
-        if parent is None:
-            messages.error(request, 'Escoge quién te acompaña en casa.')
-            return redirect('accounts:student_access_parents')
-        request.session['student_access_parent_id'] = parent.pk
-        return redirect('accounts:student_access_key')
 
-    parents = ParentProfile.objects.filter(students=student, user__is_active=True).select_related('user').order_by('name')
-    return render(request, 'accounts/student_access_parents.html', {'teacher': teacher, 'student': student, 'parents': parents})
+def _key_locked_redirect(request, lock_key):
+    request.session.pop('student_access_student_id', None)
+    messages.info(request, KEY_TEACHER_MESSAGE if lockout.needs_unlock(lock_key) else KEY_REST_MESSAGE)
+    return redirect('accounts:student_access_students')
+
+
+def _submitted_key(request, student):
+    if student.has_pair_visual_key:
+        return request.POST.getlist('symbols')
+    return [request.POST.get(f'symbol_{index}', '') for index in range(1, student.VISUAL_KEY_LEGACY_SIZE + 1)]
 
 
 def student_access_key(request):
     teacher = _student_access_teacher(request)
     student = _student_access_student(request, teacher)
-    parent = _student_access_parent(request, student)
-    if teacher is None or student is None or parent is None:
+    if teacher is None or student is None:
         return redirect('accounts:student_access')
     if not student.visual_key_hash:
-        messages.error(request, 'Pide a tu docente que cree tus dibujos secretos.')
+        messages.info(request, 'Pide a tu maestra que cree tus dibujos secretos.')
         return redirect('accounts:student_access_students')
 
     lock_key = lockout.student_key(student.pk)
+    if lockout.is_locked(lock_key):
+        return _key_locked_redirect(request, lock_key)
+    try_again = False
     if request.method == 'POST':
-        if lockout.is_locked(lock_key):
-            _clear_student_access_session(request)
-            messages.error(request, LOCKED_CHILD_MESSAGE)
-            return redirect('accounts:student_access')
-        selected_codes = [request.POST.get(f'symbol_{index}', '') for index in range(1, 4)]
-        if student.check_visual_key(selected_codes):
+        if student.check_visual_key(_submitted_key(request, student)):
             lockout.reset(lock_key)
             _clear_student_access_session(request)
             login(request, student.user, backend='django.contrib.auth.backends.ModelBackend')
+            request.session['kid_signin_cheer'] = True
             messages.success(request, '¡Muy bien! Vamos a aprender.')
             return redirect('dashboard:student')
-        lockout.register_failure(lock_key)
+        lockout.register_failure(
+            lock_key, escalate_after=lockout.ESCALATE_AFTER, window=STUDENT_KEY_FAILURE_WINDOW,
+        )
         if lockout.is_locked(lock_key):
-            _clear_student_access_session(request)
-            messages.error(request, LOCKED_CHILD_MESSAGE)
-            return redirect('accounts:student_access')
-        messages.error(request, 'Intenta otra vez con tus dibujos secretos.')
+            return _key_locked_redirect(request, lock_key)
+        try_again = True
 
     choices = StudentProfile.visual_key_items()
     random_choices = secrets.SystemRandom().sample(choices, len(choices))
     return render(request, 'accounts/student_access_key.html', {
         'teacher': teacher,
         'student': student,
-        'parent': parent,
         'choices': random_choices,
-        'steps': (1, 2, 3),
-    })
+        'pair_key': student.has_pair_visual_key,
+        'pair_size': StudentProfile.VISUAL_KEY_PAIR_SIZE,
+        'steps': range(1, StudentProfile.VISUAL_KEY_LEGACY_SIZE + 1),
+        'try_again': try_again,
+    }, status=200)
 
 
 class UserLoginView(LoginView):

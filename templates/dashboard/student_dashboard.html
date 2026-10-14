@@ -9,6 +9,7 @@
         <p>Hazlo con calma. Puedes escuchar, leer, practicar o jugar.</p>
         {% include 'partials/listen_button.html' with target='#student-dashboard-intro' extra_class='kid-listen--below' %}
         <div class="mascot-slot" data-mascot-slot></div>
+        {% if signin_cheer %}<span hidden data-mascot-on-load="cheer" data-mascot-say="¡Entraste! ¡Muy bien!"></span>{% endif %}
       </div>
       <div class="student-dashboard-hero__badge" aria-label="Tu avance">
         <span>{{ student.stars }}</span>

@@ -20,6 +20,7 @@ urlpatterns = [
     path('docente/alumnos/<int:pk>/entrar/', views.teacher_student_login, name='teacher_student_login'),
     path('docente/alumnos/volver/', views.teacher_student_return, name='teacher_student_return'),
     path('docente/alumnos/<int:pk>/dibujos/', views.teacher_student_visual_key_regenerate, name='teacher_student_visual_key_regenerate'),
+    path('docente/alumnos/<int:pk>/desbloquear/', views.teacher_student_access_unlock, name='teacher_student_access_unlock'),
     path('docente/alumnos/<int:pk>/editar/', views.teacher_student_update, name='teacher_student_update'),
     path('docente/alumnos/<int:pk>/eliminar/', views.teacher_student_delete, name='teacher_student_delete'),
     path('alumnos/nuevo/', views.quick_student_create, name='quick_student_create'),

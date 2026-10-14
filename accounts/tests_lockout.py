@@ -66,7 +66,6 @@ class StudentVisualKeyLockoutTests(TestCase):
         session['student_access_teacher_id'] = self.teacher.pk
         session['student_access_classroom_code'] = self.teacher.classroom_code
         session['student_access_student_id'] = self.student.pk
-        session['student_access_parent_id'] = self.parent.pk
         session.save()
         return client
 
@@ -84,7 +83,7 @@ class StudentVisualKeyLockoutTests(TestCase):
 
         self.assertNotIn('_auth_user_id', client.session)
         self.assertEqual(response.status_code, 302)
-        self.assertContains(client.get(response.url), 'Pide ayuda a tu docente')
+        self.assertContains(client.get(response.url), 'Pide ayuda a tu maestra')
 
         with mock.patch('accounts.lockout._now', return_value=start + timedelta(minutes=16)):
             client, response = self.try_key(RIGHT_KEY)

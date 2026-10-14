@@ -35,6 +35,10 @@ class LoginAttempt(models.Model):
     failures = models.PositiveIntegerField(default=0)
     window_started_at = models.DateTimeField(blank=True, null=True)
     locked_until = models.DateTimeField(blank=True, null=True)
+    # Progressive lock: repeated lockouts inside a day need an adult to unlock.
+    lockouts = models.PositiveIntegerField(default=0)
+    lockouts_started_at = models.DateTimeField(blank=True, null=True)
+    requires_unlock = models.BooleanField(default=False)
 
     def __str__(self):
         return self.key

@@ -157,7 +157,6 @@ class StudentVisualAccessTests(TestCase):
     def test_student_visual_access_logs_in_same_student_profile(self):
         self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
-        self.client.post(reverse('accounts:student_access_parents'), {'parent_id': self.parent.pk})
 
         response = self.client.post(reverse('accounts:student_access_key'), {
             'symbol_1': 'dog',
@@ -178,51 +177,23 @@ class StudentVisualAccessTests(TestCase):
         self.assertRedirects(response, reverse('accounts:student_access_students'))
         self.assertNotIn('student_access_student_id', self.client.session)
 
-    def test_student_visual_access_rejects_parent_not_linked_to_student(self):
-        other_parent_user = CustomUser.objects.create_user(username='otrotutor', email='otrotutor@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
-        other_parent = ParentProfile.objects.create(user=other_parent_user, name='Otro Tutor')
-        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
-        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
-
-        response = self.client.post(reverse('accounts:student_access_parents'), {'parent_id': other_parent.pk})
-
-        self.assertRedirects(response, reverse('accounts:student_access_parents'))
-        self.assertNotIn('student_access_parent_id', self.client.session)
-
-    def test_student_visual_access_shows_linked_parent(self):
-        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
-        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
-
-        response = self.client.get(reverse('accounts:student_access_parents'))
-
-        self.assertContains(response, 'Tutor Visual')
-        self.assertNotContains(response, 'Falta vincular un tutor')
-
-    def test_student_visual_access_shows_two_linked_parents(self):
-        second_parent_user = CustomUser.objects.create_user(username='tutorvisualdos', email='tutorvisualdos@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
-        second_parent = ParentProfile.objects.create(user=second_parent_user, name='Tutor Visual Dos')
-        second_parent.students.add(self.student)
-        self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
-        self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
-
-        response = self.client.get(reverse('accounts:student_access_parents'))
-
-        self.assertContains(response, 'Tutor Visual')
-        self.assertContains(response, 'Tutor Visual Dos')
-
-    def test_student_visual_access_without_parent_shows_help_message(self):
+    def test_student_visual_access_works_without_linked_parent(self):
         self.parent.students.remove(self.student)
         self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
 
-        response = self.client.get(reverse('accounts:student_access_parents'))
+        response = self.client.post(reverse('accounts:student_access_key'), {
+            'symbol_1': 'dog',
+            'symbol_2': 'star',
+            'symbol_3': 'car',
+        })
 
-        self.assertContains(response, 'Falta vincular un tutor')
+        self.assertRedirects(response, reverse('dashboard:student'))
+        self.assertTrue(ParentProfile.objects.filter(pk=self.parent.pk).exists())
 
     def test_student_visual_access_rejects_wrong_visual_key(self):
         self.client.post(reverse('accounts:student_access'), {'code': self.teacher.classroom_code})
         self.client.post(reverse('accounts:student_access_students'), {'student_id': self.student.pk})
-        self.client.post(reverse('accounts:student_access_parents'), {'parent_id': self.parent.pk})
 
         response = self.client.post(reverse('accounts:student_access_key'), {
             'symbol_1': 'car',
