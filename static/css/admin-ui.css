@@ -562,3 +562,46 @@ body.aui-dialog-open { overflow: hidden; }
   .admin-ui .dialog-root::backdrop,
   .admin-ui .dialog-content { animation: none; }
 }
+
+/* ------------------------------------------------------------------
+   Viewport-fit list pages (laptop and up): the page itself never
+   scrolls; the sidebar and the table area scroll on their own, and
+   the card keeps its full border and footer in view.
+   ------------------------------------------------------------------ */
+@media (min-width: 821px) and (min-height: 520px) {
+  .admin-console:has(.aui-table-wrap) {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .admin-console:has(.aui-table-wrap) .admin-sidebar {
+    height: 100dvh;
+    position: static;
+  }
+  .admin-console:has(.aui-table-wrap) .admin-main {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .admin-console:has(.aui-table-wrap) .admin-topbar { flex: 0 0 auto; }
+  .admin-content.admin-ui:has(.aui-table-wrap) {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .admin-content.admin-ui:has(.aui-table-wrap) > * { flex: 0 0 auto; }
+  .admin-ui .aui-card:has(.aui-table-wrap) {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .admin-ui .aui-card:has(.aui-table-wrap) > * { flex: 0 0 auto; }
+  .admin-ui .aui-card > .aui-table-wrap {
+    flex: 1 1 auto;
+    max-height: none;
+    min-height: 120px;
+  }
+}
