@@ -130,6 +130,7 @@
               </tbody>
             </table>
           </div>
+          {% include 'partials/pagination.html' %}
         </div>
       </section>
 {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}

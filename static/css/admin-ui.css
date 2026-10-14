@@ -74,6 +74,9 @@
 /* ------------------------------------------------------------------
    Page head
    ------------------------------------------------------------------ */
+/* Bodega spacing: .main-content 26px 30px, .topbar 22px below. */
+.admin-content.admin-ui { padding: 26px 30px; }
+.admin-ui .resource-page-head { margin-bottom: 22px; }
 .admin-ui .resource-page-head h1 { color: var(--aui-text); letter-spacing: -.02em; }
 .admin-ui .resource-page-head p { color: var(--aui-text-2); }
 
@@ -100,9 +103,18 @@
   margin-bottom: 16px;
   padding: 12px;
 }
+.admin-ui .aui-search-form {
+  align-items: center;
+  display: flex;
+  flex: 1 1 360px;
+  gap: 10px;
+  margin: 0;
+  max-width: 470px;
+}
 .admin-ui .aui-search {
-  flex: 1 1 260px;
-  max-width: 420px;
+  flex: 1 1 auto;
+  max-width: 360px;
+  min-width: 0;
   position: relative;
 }
 .admin-ui .aui-search span {
@@ -145,7 +157,7 @@
    Data table (Bodega .data-table inside .table-wrap.table-scroll-area)
    ------------------------------------------------------------------ */
 .admin-ui .aui-table-wrap {
-  max-height: clamp(320px, calc(100vh - 330px), 640px);
+  max-height: clamp(320px, calc(100vh - 360px), 520px);
   max-width: 100%;
   min-width: 0;
   overflow: auto;
@@ -190,7 +202,6 @@
 }
 .admin-ui .data-table tbody tr:last-child td { border-bottom: 0; }
 .admin-ui .data-table tbody tr:hover td { background: #fbfdff; }
-.admin-ui .data-table tbody tr[hidden] { display: none; }
 
 /* Actions column stays pinned while the wide table scrolls sideways. */
 .admin-ui .data-table th:last-child,
@@ -295,10 +306,19 @@
    Phones: keep the stacked-row table from main.css (.table-stack +
    data-label) and give it Bodega's surfaces instead of a wide grid.
    ------------------------------------------------------------------ */
-@media (max-width: 639.98px) {
-  .admin-ui .aui-card { padding: 12px; }
+/* Bodega <=820px: 18px page padding, toolbar stacks, shorter scroll area. */
+@media (max-width: 820px) {
+  .admin-content.admin-ui { padding: 18px; }
   .admin-ui .aui-toolbar { align-items: stretch; flex-direction: column; }
-  .admin-ui .aui-search { flex-basis: auto; max-width: none; }
+  .admin-ui .aui-search-form { flex-basis: auto; max-width: none; }
+  .admin-ui .aui-search { max-width: none; }
+  .admin-ui .aui-table-wrap { max-height: clamp(260px, calc(100vh - 340px), 440px); }
+}
+
+@media (max-width: 639.98px) {
+  /* Rows become bordered cards here, so the outer card keeps 12px
+     instead of Bodega's 20px to leave the rows room at 375px. */
+  .admin-ui .aui-card { padding: 12px; }
   .admin-ui .resource-scroll-tools { display: none; }
   .admin-ui .aui-table-wrap { max-height: none; overflow: visible; }
   .admin-ui .data-table { min-width: 0; }

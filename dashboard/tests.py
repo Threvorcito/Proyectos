@@ -2209,3 +2209,97 @@ class StudentReportQueryCountTests(TestCase):
         self.assertEqual(row['total_questions'], 2)
         self.assertEqual(row['answered_questions'], 1)
         self.assertEqual(row['correct_answers'], 1)
+
+
+class ResourceListPaginationTests(TestCase):
+    """Bodega-style server pagination (10 per page) and GET search on list tables."""
+
+    def setUp(self):
+        self.admin = CustomUser.objects.create_user(
+            username='adminpaginas',
+            email='adminpaginas@example.com',
+            password='Admin12345!',
+            role=CustomUser.Role.ADMIN,
+            is_staff=True,
+        )
+        for number in range(1, 26):
+            CustomUser.objects.create_user(
+                username=f'pgu{number:02d}x',
+                email=f'pgu{number:02d}x@example.com',
+                password=None,
+                role=CustomUser.Role.PARENT,
+            )
+        self.client.force_login(self.admin)
+        self.url = reverse('dashboard:admin_resource', args=['usuarios'])
+
+    def test_first_page_shows_ten_newest_records(self):
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context['page_obj'].object_list), 10)
+        self.assertContains(response, 'pgu25x')
+        self.assertContains(response, 'pgu16x')
+        self.assertNotContains(response, 'pgu15x')
+        self.assertContains(response, 'Mostrando 1 a 10 de 26 registros')
+
+    def test_second_page_shows_records_eleven_to_twenty(self):
+        response = self.client.get(self.url, {'page': 2})
+
+        self.assertContains(response, 'pgu15x')
+        self.assertContains(response, 'pgu06x')
+        self.assertNotContains(response, 'pgu16x')
+        self.assertNotContains(response, 'pgu05x')
+        self.assertContains(response, 'Mostrando 11 a 20 de 26 registros')
+        # Dialogs are rendered for the rows on the current page.
+        row_user = CustomUser.objects.get(username='pgu15x')
+        self.assertContains(response, f'editResourceModal{row_user.pk}"')
+        self.assertContains(response, f'deleteResourceModal{row_user.pk}"')
+
+    def test_search_filters_server_side_and_is_kept_in_pagination_links(self):
+        for number in range(1, 13):
+            CustomUser.objects.create_user(
+                username=f'buscable{number:02d}',
+                email=f'buscable{number:02d}@example.com',
+                password=None,
+                role=CustomUser.Role.PARENT,
+            )
+
+        response = self.client.get(self.url, {'q': 'buscable'})
+
+        self.assertContains(response, 'Mostrando 1 a 10 de 12 registros')
+        self.assertNotContains(response, 'pgu25x')
+        self.assertContains(response, 'value="buscable"')
+        self.assertContains(response, '?q=buscable&amp;page=2')
+
+    def test_invalid_or_out_of_range_page_does_not_fail(self):
+        for page in ('abc', '999', '-1'):
+            response = self.client.get(self.url, {'page': page})
+            self.assertEqual(response.status_code, 200)
+
+    def test_teacher_students_list_is_paginated(self):
+        level = Level.objects.create(number=1, name='Inicial', order=1)
+        teacher_user = CustomUser.objects.create_user(
+            username='docentepaginas',
+            email='docentepaginas@example.com',
+            password='Docente123!',
+            role=CustomUser.Role.TEACHER,
+        )
+        teacher = TeacherProfile.objects.create(user=teacher_user, name='Docente Paginas')
+        for number in range(1, 13):
+            user = CustomUser.objects.create_user(
+                username=f'alpag{number:02d}',
+                email=f'alpag{number:02d}@example.com',
+                password=None,
+                role=CustomUser.Role.STUDENT,
+            )
+            teacher.students.add(StudentProfile.objects.create(
+                user=user, name=f'Alumno Pag {number:02d}', grade='1', reading_level=level, current_level=level,
+            ))
+        self.client.force_login(teacher_user)
+
+        response = self.client.get(reverse('dashboard:teacher_students'), {'page': 2})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Alumno Pag 11')
+        self.assertNotContains(response, 'Alumno Pag 10')
+        self.assertContains(response, 'Mostrando 11 a 12 de 12 registros')

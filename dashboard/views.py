@@ -1,10 +1,12 @@
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db import transaction
+from django.core.paginator import Paginator
+from django.db import models, transaction
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
@@ -270,6 +272,21 @@ def admin_dashboard(request):
     return render(request, 'dashboard/admin_dashboard.html', {'stats': stats, 'recent_students': recent_students, 'recent_plans': recent_plans, 'resources': ADMIN_RESOURCES})
 
 
+# SistemaBodega list tables: 10 records per page, searched server-side via ?q=.
+RESOURCE_PAGE_SIZE = 10
+SEARCH_EXCLUDED_FIELDS = {'password'}
+
+
+def resource_search_query(model, term):
+    # Match the term against every plain text column (names, titles,
+    # descriptions, emails); coded choice fields would only match raw keys.
+    query = Q()
+    for field in model._meta.concrete_fields:
+        if isinstance(field, (models.CharField, models.TextField)) and not field.choices and field.name not in SEARCH_EXCLUDED_FIELDS:
+            query |= Q(**{f'{field.name}__icontains': term})
+    return query
+
+
 def resource_form_kwargs(request, resource):
     # User forms need the acting user to decide which privilege fields are editable.
     return {'actor': request.user} if resource == 'usuarios' else {}
@@ -288,7 +305,11 @@ def admin_resource_landing(request, resource):
     objects = config['model'].objects.all()
     if resource == 'usuarios':
         objects = objects.filter(is_superuser=False)
-    objects = list(objects.order_by('-pk')[:20])
+    search_term = request.GET.get('q', '').strip()
+    if search_term:
+        objects = objects.filter(resource_search_query(config['model'], search_term))
+    page_obj = Paginator(objects.order_by('-pk'), RESOURCE_PAGE_SIZE).get_page(request.GET.get('page'))
+    objects = list(page_obj.object_list)
     form_class = config.get('create_form') or config.get('form') or build_admin_model_form(config['model'], config['fields'])
     form_kwargs = resource_form_kwargs(request, resource)
     create_form = style_admin_form(form_class(**form_kwargs))
@@ -303,6 +324,8 @@ def admin_resource_landing(request, resource):
         'resource': resource,
         'config': config,
         'objects': objects,
+        'page_obj': page_obj,
+        'search_term': search_term,
         'edit_rows': edit_rows,
         'create_form': create_form,
         'teacher_resource_page': teacher_resource_page,
@@ -490,7 +513,8 @@ def lesson_plan_list(request):
             messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
             return redirect('dashboard:teacher')
         plans = plans.filter(teacher=teacher)
-    return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans, 'create_form': LessonPlanForm(teacher=teacher, choose_teacher=teacher is None)})
+    page_obj = Paginator(plans.order_by('-planned_date', '-created_at', '-pk'), RESOURCE_PAGE_SIZE).get_page(request.GET.get('page'))
+    return render(request, 'dashboard/lesson_plan_list.html', {'plans': page_obj, 'page_obj': page_obj, 'create_form': LessonPlanForm(teacher=teacher, choose_teacher=teacher is None)})
 
 
 @login_required
@@ -525,7 +549,8 @@ def lesson_plan_create(request):
                 messages.error(request, 'Tu cuenta docente no tiene un perfil asignado.')
                 return redirect('dashboard:teacher')
             plans = plans.filter(teacher=teacher)
-        return render(request, 'dashboard/lesson_plan_list.html', {'plans': plans, 'create_form': form, 'open_create_modal': True})
+        page_obj = Paginator(plans.order_by('-planned_date', '-created_at', '-pk'), RESOURCE_PAGE_SIZE).get_page(1)
+        return render(request, 'dashboard/lesson_plan_list.html', {'plans': page_obj, 'page_obj': page_obj, 'pagination_url': reverse('dashboard:lesson_plans'), 'create_form': form, 'open_create_modal': True})
     return render(request, 'dashboard/lesson_plan_form.html', {'form': form, 'is_edit': False})
 
 
@@ -831,23 +856,32 @@ def teacher_students(request):
         return render(request, 'dashboard/teacher_students.html', {
             'teacher_profile': teacher_profile,
             'students': students,
+            'page_obj': students,
+            'pagination_url': reverse('dashboard:teacher_students'),
             'create_student_form': create_form,
             'open_create_student_modal': True,
         })
-    students = get_teacher_students_for_page(teacher_profile)
-    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students, 'create_student_form': create_form})
+    students = get_teacher_students_for_page(teacher_profile, page_number=request.GET.get('page'))
+    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students, 'page_obj': students, 'create_student_form': create_form})
 
 
-def get_teacher_students_for_page(teacher_profile, edit_form=None, open_edit_student=None):
-    students = list(teacher_profile.students.select_related('user', 'current_level').prefetch_related('parents').annotate(
+def get_teacher_students_for_page(teacher_profile, edit_form=None, open_edit_student=None, page_number=None):
+    students = teacher_profile.students.select_related('user', 'current_level').prefetch_related('parents').annotate(
         completed_activities=Count('progress_items', filter=Q(progress_items__completed=True), distinct=True),
         total_attempts=Count('attempts', distinct=True),
         detected_difficulties=Count('difficulties', distinct=True),
-    ).order_by('name'))
-    for student in students:
+    ).order_by('name', 'pk')
+    if open_edit_student is not None:
+        # Re-rendering a failed edit: show the page that holds that student.
+        ordered_ids = list(teacher_profile.students.order_by('name', 'pk').values_list('pk', flat=True))
+        if open_edit_student in ordered_ids:
+            page_number = ordered_ids.index(open_edit_student) // RESOURCE_PAGE_SIZE + 1
+    page_obj = Paginator(students, RESOURCE_PAGE_SIZE).get_page(page_number)
+    page_obj.object_list = list(page_obj.object_list)
+    for student in page_obj.object_list:
         student.edit_form = edit_form if edit_form is not None and student.pk == open_edit_student else TeacherStudentModalForm(instance=student)
         student.open_edit_modal = student.pk == open_edit_student
-    return students
+    return page_obj
 
 
 @login_required
@@ -945,6 +979,8 @@ def teacher_student_update(request, pk):
     return render(request, 'dashboard/teacher_students.html', {
         'teacher_profile': teacher_profile,
         'students': students,
+        'page_obj': students,
+        'pagination_url': reverse('dashboard:teacher_students'),
         'open_edit_student': student.pk,
     })
 

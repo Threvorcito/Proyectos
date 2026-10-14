@@ -1,0 +1,22 @@
+{# Server-side pagination footer ported from SistemaBodega. Needs `page_obj`; links keep the other GET params (e.g. q). Optional `pagination_url` when the page was rendered from a POST URL. #}
+<nav class="pagination list-pagination" aria-label="Paginación de resultados">
+  <p class="pagination-summary">
+    {% if page_obj.paginator.count %}
+      Mostrando {{ page_obj.start_index }} a {{ page_obj.end_index }} de {{ page_obj.paginator.count }} registros
+    {% else %}
+      Mostrando 0 registros
+    {% endif %}
+  </p>
+  <div class="pagination-actions">
+    {% if page_obj.has_previous %}
+      <a class="pagination-link" href="{{ pagination_url|default:'' }}{% querystring page=page_obj.previous_page_number %}">Anterior</a>
+    {% else %}
+      <span class="pagination-link is-disabled" aria-disabled="true">Anterior</span>
+    {% endif %}
+    {% if page_obj.has_next %}
+      <a class="pagination-link" href="{{ pagination_url|default:'' }}{% querystring page=page_obj.next_page_number %}">Siguiente</a>
+    {% else %}
+      <span class="pagination-link is-disabled" aria-disabled="true">Siguiente</span>
+    {% endif %}
+  </div>
+</nav>

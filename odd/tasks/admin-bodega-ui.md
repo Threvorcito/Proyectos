@@ -34,13 +34,21 @@ Replace the look of the admin panel tables and dialogs (`/panel/admin/gestion/..
   - Kebab where a row has 2+ actions: admin resource tables (Editar / Permisos / Eliminar|Desactivar), teacher students (replaced the Bootstrap dropdown kebab; old `.teacher-students-actions*` CSS removed), lesson plan list (Implementar / Reporte / Editar, permission-guarded). Single-action rows stay buttons (teacher dashboard Implementar, lesson plan report Guardar|Ver estudiante, profile Editar, admin fallback rows with only Eliminar): a menu would hide the only action behind an extra tap. student_report has no action column.
   - Check: browser at 1280 and 375 (usuarios, actividades, teacher students, lesson plans): menu opens, items fully hit-testable (not clipped), flips up at viewport bottom, only one open, click outside closes, edit/delete dialogs open from items with CSRF, Escape closes menu and returns focus, focus returns to kebab after admin dialog and Bootstrap modal, confirm() still guards destructive teacher forms, 44px targets on coarse pointer, page scrollWidth == clientWidth. Tests 206 OK. Detector 0 findings.
 
+- [x] B5 Port Bodega's list limit (server pagination + search) and table margins
+  - Source: `SistemaBodega/apps/catalogos/views.py` `_list_view` (`Paginator(qs, 10)`, `get_page`, GET `q` OR-ed `icontains`), `templates/partials/pagination.html`, `catalogos/area_list.html` toolbar (GET form, search + "Buscar", no clear link), CSS `.pagination*`, `.main-content` 26px 30px (18px <=820px), `.topbar` 22px, `.card` 20px, `.toolbar` 12px/16px, `.data-table` th 12px 14px / td 14px, `.table-scroll-area` clamp(320px, 100vh-360px, 520px) (<=820px: 260/340/440).
+  - `dashboard/views.py`: `RESOURCE_PAGE_SIZE = 10`; resource landing paginates newest first (`-pk`) with `get_page` and searches `q` across the model's plain text columns (no choices, no password); edit/delete dialogs render for the current page rows. Teacher students (by name, pk) and lesson plan list (model ordering + pk) also paginate: both grow without bound. A failed student edit re-renders the page holding that student; POST re-renders pass `pagination_url` so links go back to the list.
+  - New `templates/partials/pagination.html` (Django `{% querystring %}` keeps `q`), new shared `static/css/data-list.css` (pagination footer; Bodega cell spacing for every `.table-stack` table >=640px, phones keep stacked rows). Admin: live client filter replaced by the GET search form + "Buscar"; empty state says when a search found nothing; Bodega page padding, head margin, scroll-area heights, toolbar stacks <=820px. Admin card keeps 12px under 640px (rows are bordered cards there; documented in CSS).
+  - Tests (RED then GREEN): `ResourceListPaginationTests` (page 1 = 10 newest, page 2 = rows 11-20 with their dialogs, `q` filters and stays in links, bad/out-of-range page 200, teacher students page 2).
+  - Check: browser 1280 (actividades: 10 rows, "Mostrando 1 a 10 de 13 registros", `?q=a&page=2` links, page 2 edit dialog opens from kebab, padding 26px 30px / card 20px / th 12px 14px / td 14px / wrap 440px tall) and 375 (usuarios + teacher students: page 18px padding, toolbar stacked, pagination links 44px sharing the row, kebab menu inside the screen, `page=abc` 200), scrollWidth == clientWidth everywhere. Suite 211 OK. Detector 0 findings.
+
 ## Route log
 | Task | Route | Evidence | Commit |
 |------|-------|----------|--------|
 | B1 | delegated writer | Bodega CSS/markup read, 1280 render | e58e8c5 |
 | B2 | delegated writer | Bodega dialog markup/JS read, scripted dialog checks | a3fc8d0 |
 | B3 | delegated writer | 4-width iframe sweep, one fix batch, one confirm round | 54e71f2 |
-| B4 | delegated writer | Bodega action-menu markup/CSS/JS read, scripted 375/1280 checks | (this commit) |
+| B4 | delegated writer | Bodega action-menu markup/CSS/JS read, scripted 375/1280 checks | f958464 |
+| B5 | delegated writer | Bodega list view/partial/CSS read, RED/GREEN tests, 375/1280 checks | (this commit) |
 
 ## Next step
 Done. Optional: hide "Ver más columnas" when the table does not overflow; phone admin sidebar height.
