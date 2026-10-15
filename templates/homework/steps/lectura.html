@@ -1,1 +1,6 @@
+{% if hide_practice %}
+<p class="task-question">{{ step.text }}</p>
+<p class="task-preview-note">El niño practica este texto leyendo en voz alta. Aquí solo se muestra un ejemplo de la lectura.</p>
+{% else %}
 {% include 'readings/partials/practice.html' with practice_text=step.text save_url=practice_save_url in_task=True %}
+{% endif %}

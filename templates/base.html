@@ -14,7 +14,10 @@
   <link rel="stylesheet" href="{% static 'css/data-list.css' %}?v=20261014-data-list-3">
   <link rel="stylesheet" href="{% static 'css/data-table.css' %}?v=20261014-data-table-1">
   {% block extra_css %}{% endblock %}
-  {% if adult_layout %}{# Adult-only pages (e.g. register) opt out of the child layer. #}
+  {% if kid_layout %}{# Teacher preview "como la ve el niño": force the child layer. #}
+    <link rel="stylesheet" href="{% static 'css/kid.css' %}?v=20261014-kid-6">
+    <link rel="stylesheet" href="{% static 'css/mascot.css' %}?v=20261014-k3-1">
+  {% elif adult_layout %}{# Adult-only pages (e.g. register) opt out of the child layer. #}
   {% elif not request.user.is_authenticated or request.user.role == 'STUDENT' %}
     {# Child-friendly layer: students and anonymous visitors only; teacher/admin keep their look. #}
     <link rel="stylesheet" href="{% static 'css/kid.css' %}?v=20261014-kid-6">
@@ -22,7 +25,7 @@
   {% endif %}
 </head>
 <body
-  {% if not adult_layout %}{% if not request.user.is_authenticated or request.user.role == 'STUDENT' %}class="kid-ui"{% endif %}{% endif %}
+  {% if kid_layout %}class="kid-ui"{% elif not adult_layout %}{% if not request.user.is_authenticated or request.user.role == 'STUDENT' %}class="kid-ui"{% endif %}{% endif %}
   data-default-font-size="{% if accessibility_preference %}{{ accessibility_preference.font_size }}{% else %}16{% endif %}"
   data-default-letter-spacing="{% if accessibility_preference %}{{ accessibility_preference.letter_spacing }}{% else %}0{% endif %}"
   data-default-word-spacing="{% if accessibility_preference %}{{ accessibility_preference.word_spacing }}{% else %}0{% endif %}"
@@ -55,8 +58,8 @@
     {% block content %}{% endblock %}
   </main>
   {% include 'partials/footer.html' %}
-  {% if adult_layout %}
-  {% elif not request.user.is_authenticated or request.user.role == 'STUDENT' %}
+  {% if adult_layout and not kid_layout %}
+  {% elif kid_layout or not request.user.is_authenticated or request.user.role == 'STUDENT' %}
     {# Reading buddy: child pages opt in by filling this block; never rendered for teacher/admin. #}
     {% block mascot %}{% endblock %}
   {% endif %}

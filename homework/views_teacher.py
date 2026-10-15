@@ -9,6 +9,9 @@ from django.views.decorators.http import require_POST
 
 from dashboard.views import RESOURCE_PAGE_SIZE, is_admin_user, write_audit
 
+from readings.services import MAX_READ_MS, MIN_READ_MS, PRACTICE_READS
+
+from .copy import FEEDBACK, INSTRUCTIONS
 from .forms import STEP_FORMS, AssignStudentsForm, TaskForm
 from .models import Task, TaskStep
 from .permissions import can_manage_tasks, can_view_task
@@ -22,6 +25,7 @@ from .services import (
     move_step,
     update_step,
 )
+from .views_student import _instruction_key
 
 DENIED = 'No tienes permiso para gestionar tareas.'
 LOCKED = 'Un alumno ya empezó esta tarea. Para cambiar los pasos, duplícala.'
@@ -114,6 +118,40 @@ def task_detail(request, pk):
         'assign_form': AssignStudentsForm(teacher=task.teacher, task=task) if can_manage and task.is_active else None,
         'can_manage': can_manage,
         'locked': task.is_locked,
+    })
+
+
+@login_required
+def task_preview(request, pk):
+    """The teacher sees every step as the child will, with no way to save anything."""
+    if not (is_admin_user(request.user) or can_manage_tasks(request.user)):
+        return _deny(request)
+    task = _task_or_404(request, pk)
+    shown_practice = False
+    items = []
+    for step in task.steps.select_related('reading'):
+        is_lectura = step.step_type == TaskStep.StepType.LECTURA
+        # The reading practice widget is a single instance per page: only the first lectura step gets it.
+        items.append({
+            'step': step,
+            'instruction': INSTRUCTIONS[_instruction_key(step)],
+            'qid': f'task-question-{step.order}',
+            'instruction_id': f'task-step-instruction-{step.order}',
+            'hide_practice': is_lectura and shown_practice,
+        })
+        shown_practice = shown_practice or is_lectura
+    return render(request, 'homework/teacher/task_preview.html', {
+        'task': task,
+        'items': items,
+        'has_lectura': shown_practice,
+        'kid_layout': True,
+        'preview': True,
+        'feedback': FEEDBACK,
+        # Same keys as views_student._practice_context; empty save URL so nothing is ever written.
+        'practice_save_url': '',
+        'practice_reads': PRACTICE_READS,
+        'practice_min_ms': MIN_READ_MS,
+        'practice_max_ms': MAX_READ_MS,
     })
 
 

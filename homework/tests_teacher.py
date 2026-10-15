@@ -7,7 +7,7 @@ from django.utils import timezone
 from accounts.models import CustomUser
 from learning.models import LessonPlan, Level, StudentProfile, Subject, TeacherProfile
 
-from .models import Task, TaskAssignment
+from .models import StepResult, Task, TaskAssignment, TaskStep
 
 
 class TeacherTaskTestCase(TestCase):
@@ -195,3 +195,72 @@ class ArchivedTaskTests(TeacherTaskTestCase):
     def test_detail_empty_state_when_no_students_in_grade(self):
         task = self._task(grade='3')
         self.assertContains(self.client.get(reverse('homework:task_detail', args=[task.pk])), 'No hay estudiantes de este grado vinculados a ti.')
+
+
+class TaskPreviewTests(TeacherTaskTestCase):
+    def _steps(self, task):
+        TaskStep.objects.create(task=task, order=1, step_type='mira', payload={'question': 'Mira el dibujo'})
+        TaskStep.objects.create(task=task, order=2, step_type='lectura', payload={'text': 'Mi mamá me mima'})
+        TaskStep.objects.create(task=task, order=3, step_type='contesta', payload={
+            'question': 'Qué animal es', 'kind': 'choice', 'options': ['gato', 'perro'], 'answer': 'perro'})
+
+    def _url(self, task):
+        return reverse('homework:task_preview', args=[task.pk])
+
+    def test_preview_renders_kid_layout_for_teacher(self):
+        task = self._task()
+        self._steps(task)
+        response = self.client.get(self._url(task))
+        self.assertContains(response, 'class="kid-ui"')
+        self.assertContains(response, 'Vista previa: así verá la tarea el niño')
+        self.assertContains(response, 'Volver a la tarea')
+        self.assertContains(response, 'css/kid.css')
+        self.assertContains(response, 'data-mascot')
+        self.assertContains(response, 'Mira el dibujo')
+        self.assertContains(response, 'data-preview="1"')
+
+    def test_preview_marks_correct_option_only_in_preview(self):
+        task = self._task()
+        self._steps(task)
+        self.assertContains(self.client.get(self._url(task)), '✓ correcta', count=1)
+
+    def test_preview_has_no_answer_urls(self):
+        task = self._task()
+        self._steps(task)
+        response = self.client.get(self._url(task))
+        self.assertNotContains(response, '/responder/')
+        self.assertNotContains(response, '/listo/')
+        self.assertNotContains(response, 'data-save-url')
+
+    def test_preview_writes_no_progress(self):
+        task = self._task()
+        self._steps(task)
+        self.client.get(self._url(task))
+        self.assertFalse(StepResult.objects.exists())
+        self.assertFalse(TaskAssignment.objects.exists())
+
+    def test_teacher_pages_keep_adult_layout(self):
+        self._task()
+        self.assertNotContains(self.client.get(reverse('homework:task_list')), 'kid-ui')
+
+    def test_preview_forbidden_for_other_teacher(self):
+        task = self._task(teacher=self.other_teacher)
+        self.assertEqual(self.client.get(self._url(task)).status_code, 404)
+
+    def test_preview_forbidden_for_student(self):
+        task = self._task()
+        self.client.login(username='ana', password='x')
+        self.assertNotEqual(self.client.get(self._url(task)).status_code, 200)
+
+    def test_admin_can_preview(self):
+        task = self._task()
+        self._steps(task)
+        CustomUser.objects.create_user(username='admin1', password='x', role='ADMIN', email='admin1@example.com')
+        self.client.login(username='admin1', password='x')
+        self.assertEqual(self.client.get(self._url(task)).status_code, 200)
+
+    def test_preview_entry_points(self):
+        task = self._task()
+        link = self._url(task)
+        self.assertContains(self.client.get(reverse('homework:task_list')), f'href="{link}"')
+        self.assertContains(self.client.get(reverse('homework:task_detail', args=[task.pk])), f'href="{link}"')

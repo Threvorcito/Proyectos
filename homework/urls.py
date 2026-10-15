@@ -15,6 +15,7 @@ urlpatterns = [
     path('<int:pk>/pasos/<int:step_pk>/eliminar/', views_teacher.step_delete, name='step_delete'),
     path('<int:pk>/pasos/<int:step_pk>/mover/', views_teacher.step_move, name='step_move'),
     path('<int:pk>/duplicar/', views_teacher.task_duplicate, name='task_duplicate'),
+    path('<int:pk>/vista-previa/', views_teacher.task_preview, name='task_preview'),
     path('<int:pk>/archivar/', views_teacher.task_archive, name='task_archive'),
     path('mi-tarea/<int:assignment_pk>/', views_student.student_task, name='student_task'),
     path('mi-tarea/<int:assignment_pk>/paso/<int:order>/', views_student.student_step, name='student_step'),

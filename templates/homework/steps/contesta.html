@@ -1,12 +1,13 @@
-{% with question=step.payload.question %}
+{% with question=step.payload.question qid=qid|default:'task-question' %}
 <div class="task-contesta">
-  <p class="task-question" id="task-question">{{ question }}</p>
-  {% include 'partials/listen_button.html' with target='#task-question' %}
+  <p class="task-question" id="{{ qid }}">{{ question }}</p>
+  {% include 'partials/listen_button.html' with target='#'|add:qid %}
   <ul class="task-options">
     {% for option in step.payload.options %}
       <li class="task-option">
         <button class="task-option__choice" type="button" data-task-choice="{{ forloop.counter0 }}">{{ option }}</button>
         {% include 'partials/listen_button.html' with text=option label='Escuchar' %}
+        {% if preview and option == step.payload.answer %}<span class="task-option__key">✓ correcta</span>{% endif %}
       </li>
     {% endfor %}
   </ul>

@@ -144,3 +144,14 @@
   from { box-shadow: 0 0 0 .2rem var(--kid-primary, #1d6f84); }
   to { box-shadow: 0 0 0 .35rem var(--kid-primary, #1d6f84); }
 }
+
+/* Teacher preview ("como la ve el niño") */
+.task-preview-banner {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem;
+  margin-bottom: 1.5rem; padding: 1rem 1.25rem; border-radius: 1rem;
+  background: var(--kid-primary-soft, #e1f1f4); color: var(--kid-ink, #1b2b30);
+}
+.task-preview-banner strong { flex: 1 1 14rem; font-size: 1.1rem; }
+.task-step--preview { margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: .125rem dashed var(--kid-primary, #1d6f84); }
+.task-preview-label, .task-preview-note { font-size: .95rem; opacity: .8; }
+.task-option__key { font-weight: 600; font-size: .95rem; color: var(--kid-good-ink, #1f6b3a); }
