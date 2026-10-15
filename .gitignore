@@ -27,3 +27,6 @@ desktop.ini
 
 # Local Claude Code tooling (machine-specific paths)
 .claude/
+
+# Brainstorming companion mockups
+.superpowers/
