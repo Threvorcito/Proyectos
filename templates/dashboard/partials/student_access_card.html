@@ -1,0 +1,56 @@
+{% comment %}
+Child-facing, printable access card.
+Context: name, visual_key (list of {icon, label}), pin (optional), classroom_code (optional).
+Three drawings means a legacy ordered key; two means any order.
+{% endcomment %}
+{% with ordered=visual_key|length|stringformat:"d" %}
+<article class="access-card" data-access-card aria-label="Tarjeta de acceso de {{ name|title }}">
+  <header class="access-card__head">
+    <div class="access-card__who">
+      <span class="access-card__avatar" aria-hidden="true">{{ name|first|upper }}</span>
+      <div>
+        <p class="access-card__name">{{ name|title }}</p>
+        <p class="access-card__tagline">Mi tarjeta para entrar a leer</p>
+      </div>
+    </div>
+    {% if classroom_code %}
+      <div class="access-card__code">
+        <small>Código del aula</small>
+        <strong>{{ classroom_code }}</strong>
+      </div>
+    {% endif %}
+  </header>
+
+  <div class="access-card__body">
+    <p class="access-card__label">{% if ordered == "3" %}Mis 3 dibujos secretos, en este orden{% else %}Mis {{ visual_key|length }} dibujos secretos{% endif %}</p>
+    <ul class="access-card__drawings">
+      {% for item in visual_key %}
+        <li class="access-card__drawing">
+          {% if ordered == "3" %}<span class="access-card__order" aria-label="Paso {{ forloop.counter }}">{{ forloop.counter }}</span>{% endif %}
+          <span class="access-card__emoji" aria-hidden="true">{{ item.icon }}</span>
+          <span class="access-card__word">{{ item.label }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <ol class="access-card__steps" aria-label="Cómo entrar">
+      <li class="access-card__step">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h.01M11 10h.01M15 10h.01M7 14h10"/></svg>
+        <span><b>1.</b> La maestra escribe el código del aula</span>
+      </li>
+      <li class="access-card__step">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+        <span><b>2.</b> Toca tu tarjeta</span>
+      </li>
+      <li class="access-card__step">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4 6.8 19.1l1-5.8L3.5 9.2l5.9-.9z"/></svg>
+        <span><b>3.</b> {% if ordered == "3" %}Toca tus 3 dibujos (en este orden){% else %}Toca tus {{ visual_key|length }} dibujos (en cualquier orden){% endif %}</span>
+      </li>
+    </ol>
+
+    {% if pin %}
+      <p class="access-card__pin">Si usas el PIN: <strong>{{ pin }}</strong></p>
+    {% endif %}
+  </div>
+</article>
+{% endwith %}

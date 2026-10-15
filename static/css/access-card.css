@@ -1,0 +1,226 @@
+/* Student access card: the printable, child-facing card handed to a new
+   student, plus the teacher-facing dialog shell around it.
+   Kid tokens are copied from kid.css because teacher pages do not load it. */
+
+.access-card {
+  --ac-bg: #fbf6ec;
+  --ac-surface: #fffdf8;
+  --ac-ink: #26303d;
+  --ac-ink-soft: #4a5565;
+  --ac-line: #eadfcb;
+  --ac-line-strong: #7a6a52;
+  --ac-primary: #1d6f84;
+  --ac-primary-soft: #e1f1f4;
+  --ac-coral: #b4441f;  --ac-coral-soft: #fde9e1;
+  --ac-grape: #6a45b0;  --ac-grape-soft: #efe9fa;
+  --ac-sun: #8a5a00;    --ac-sun-soft: #fdf1cf;
+  --ac-leaf: #28703f;   --ac-leaf-soft: #e4f3e7;
+
+  background: var(--ac-bg);
+  border: 2px solid var(--ac-line);
+  border-radius: 16px;
+  color: var(--ac-ink);
+  container-type: inline-size;
+  font-family: 'Lexend', system-ui, sans-serif;
+  margin: 0 auto;
+  max-width: 560px;
+  overflow: hidden;
+  width: 100%; /* inline-size containment has no intrinsic width */
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.access-card__head {
+  align-items: center;
+  background: var(--ac-surface);
+  border-bottom: 2px solid var(--ac-line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem 1rem;
+  justify-content: space-between;
+  padding: 1rem 1.15rem;
+}
+.access-card__who { align-items: center; display: flex; gap: .8rem; min-width: 0; }
+.access-card__avatar {
+  align-items: center;
+  background: var(--ac-coral);
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  flex: none;
+  font-size: 1.6rem;
+  font-weight: 700;
+  height: 3.25rem;
+  justify-content: center;
+  width: 3.25rem;
+}
+.access-card__name {
+  font-size: clamp(1.35rem, 5cqi, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.access-card__tagline { color: var(--ac-ink-soft); font-size: .92rem; margin: .1rem 0 0; }
+
+.access-card__code {
+  background: var(--ac-primary-soft);
+  border-radius: 12px;
+  color: var(--ac-primary);
+  padding: .45rem .8rem;
+  text-align: center;
+}
+.access-card__code small { display: block; font-size: .78rem; font-weight: 600; }
+.access-card__code strong {
+  display: block;
+  font-size: 1.45rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: .12em;
+  line-height: 1.2;
+}
+
+.access-card__body { padding: 1.1rem 1.15rem 1rem; }
+.access-card__label {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 .7rem;
+  text-align: center;
+}
+.access-card__drawings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  justify-content: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.access-card__drawing {
+  --tile: var(--ac-grape-soft);
+  --tile-ink: var(--ac-grape);
+  align-items: center;
+  background: var(--tile);
+  border: 2px solid var(--tile-ink);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 7.5rem;
+  min-width: 7.5rem;
+  padding: .6rem .8rem .5rem;
+  position: relative;
+}
+.access-card__drawing:nth-child(3n+2) { --tile: var(--ac-sun-soft); --tile-ink: var(--ac-sun); }
+.access-card__drawing:nth-child(3n+3) { --tile: var(--ac-leaf-soft); --tile-ink: var(--ac-leaf); }
+.access-card__emoji { font-size: 3.6rem; line-height: 1.1; }
+.access-card__word { color: var(--tile-ink); font-size: 1.15rem; font-weight: 700; margin-top: .2rem; }
+.access-card__order {
+  align-items: center;
+  background: var(--tile-ink);
+  border-radius: 50%;
+  color: #fff;
+  display: inline-flex;
+  font-size: .85rem;
+  font-weight: 700;
+  height: 1.6rem;
+  justify-content: center;
+  left: .4rem;
+  position: absolute;
+  top: .4rem;
+  width: 1.6rem;
+}
+
+.access-card__steps {
+  display: grid;
+  gap: .6rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  list-style: none;
+  margin: 1.1rem 0 0;
+  padding: 0;
+}
+.access-card__step {
+  align-items: center;
+  background: var(--ac-surface);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: .35rem;
+  padding: .6rem .5rem;
+  text-align: center;
+}
+.access-card__step svg { color: var(--ac-primary); flex: none; height: 2rem; width: 2rem; }
+.access-card__step span { font-size: .86rem; line-height: 1.35; }
+.access-card__step b { color: var(--ac-primary); }
+
+.access-card__pin {
+  border-top: 2px dashed var(--ac-line);
+  color: var(--ac-ink-soft);
+  font-size: .95rem;
+  margin: 1rem 0 0;
+  padding-top: .7rem;
+  text-align: center;
+}
+.access-card__pin strong { color: var(--ac-ink); font-variant-numeric: tabular-nums; letter-spacing: .08em; }
+
+@container (max-width: 420px) {
+  .access-card__head { padding: .9rem; }
+  .access-card__code { width: 100%; }
+  .access-card__body { padding: 1rem .9rem .9rem; }
+  .access-card__drawing { min-width: 6.25rem; min-height: 7rem; }
+  .access-card__steps { grid-template-columns: 1fr; }
+  .access-card__step { flex-direction: row; text-align: left; }
+}
+
+/* Teacher-facing dialog shell around the card */
+.access-dialog .modal-dialog { max-width: min(640px, calc(100% - 1rem)); }
+.access-dialog .modal-title { margin-bottom: .35rem; }
+.access-dialog .eyebrow { margin-bottom: .3rem; }
+.access-dialog__note { color: #475467; line-height: 1.55; margin: 0; }
+.access-dialog__tutor {
+  background: #f5f7fb;
+  border: 1px solid #d9dde7;
+  border-radius: 12px;
+  color: #293241;
+  padding: .85rem 1rem;
+}
+.access-dialog__tutor strong { display: block; margin-bottom: .25rem; }
+.access-dialog__tutor code { color: #1f3d5a; font-size: .95rem; }
+.access-dialog__tutor small { color: #475467; display: block; margin-top: .35rem; }
+.access-dialog .modal-footer { border-top: 1px solid #edf0f5; gap: .5rem; padding: .85rem 1.35rem 1.1rem; }
+.access-dialog .modal-footer .btn,
+.access-card-actions .btn { align-items: center; display: inline-flex; gap: .45rem; justify-content: center; min-height: 48px; padding-inline: 1.15rem; }
+@media (max-width: 575.98px) {
+  .access-dialog .admin-dialog__body { padding-inline: .75rem; }
+  .access-dialog .modal-footer .btn { flex: 1 1 auto; }
+}
+
+/* Standalone card page (after "Nueva clave de dibujos") */
+.access-card-page { padding: 2rem 1rem 3rem; }
+.access-card-page__intro { margin: 0 auto 1.25rem; max-width: 560px; }
+.access-card-page__intro h1 { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 800; margin: 0 0 .35rem; }
+.access-card-page__intro p { color: #475467; margin: 0; }
+.access-card-actions { display: flex; flex-wrap: wrap; gap: .75rem; justify-content: center; margin: 1.25rem auto 0; max-width: 560px; }
+
+/* Printed copy is built by access-card.js on beforeprint. */
+.access-card-print { display: none; }
+
+@media print {
+  @page { margin: 12mm; }
+  html.access-card-printing,
+  html.access-card-printing body { background: #fff !important; overflow: visible !important; padding: 0 !important; }
+  html.access-card-printing body > :not(.access-card-print) { display: none !important; }
+  html.access-card-printing .access-card-print { display: block !important; padding: 5mm; }
+  .access-card-print .access-card {
+    border-color: #7a6a52;
+    font-size: 11pt;
+    max-width: none;
+    outline: .4mm dashed #555;
+    outline-offset: 4mm;
+    width: 14cm;
+    break-inside: avoid;
+  }
+  .access-card-print .access-card__drawing { min-height: 3.2cm; min-width: 3.2cm; }
+  .access-card-print .access-card__emoji { font-size: 44pt; }
+}

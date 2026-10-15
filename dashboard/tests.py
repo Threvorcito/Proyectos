@@ -1547,6 +1547,28 @@ class AcademicRelationshipPermissionTests(TestCase):
         student = StudentProfile.objects.get(name='Nuevo Alumno')
         self.assertTrue(self.teacher.students.filter(pk=student.pk).exists())
 
+    def test_quick_student_creation_shows_printable_access_card(self):
+        self.client.force_login(self.teacher_user)
+
+        with patch('learning.models.secrets.SystemRandom.sample', return_value=['sun', 'car']):
+            response = self.client.post(reverse('dashboard:quick_student_create'), data={
+                'name': 'pablo rivas',
+                'grade': '1',
+                'school': 'public',
+                'modality': 'regular',
+                'zone': 'urban',
+                'reading_level': self.level.pk,
+            })
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Tarjeta de acceso de Pablo Rivas')
+        self.assertContains(response, 'data-access-card')
+        self.assertContains(response, '>sol<')
+        self.assertContains(response, '>carro<')
+        self.assertContains(response, 'Código del aula')
+        self.assertContains(response, self.teacher.classroom_code)
+        self.assertContains(response, 'en cualquier orden')
+
     def test_quick_student_creation_links_existing_parent(self):
         parent_user = CustomUser.objects.create_user(username='tutorexistente', email='tutorexistente@example.com', password='Tutor12345!', role=CustomUser.Role.PARENT)
         parent = ParentProfile.objects.create(user=parent_user, name='Tutor Existente')

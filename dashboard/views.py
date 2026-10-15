@@ -976,8 +976,11 @@ def teacher_student_visual_key_regenerate(request, pk):
     action = 'regeneró' if request.POST.get('had_visual_key') == '1' else 'creó'
     write_audit(request, f'{action}_student_visual_key', student, {'visual_key_version': student.visual_key_version})
     messages.success(request, 'Dibujos secretos listos. Guarda esta tarjeta en un lugar seguro.')
+    own_profile = getattr(request.user, 'teacher_profile', None)
+    code_owner = own_profile if own_profile and own_profile.students.filter(pk=student.pk).exists() else student.teachers.filter(is_active=True).order_by('pk').first()
     return render(request, 'dashboard/student_visual_key_card.html', {
         'student': student,
+        'classroom_code': code_owner.classroom_code if code_owner else '',
         'visual_key': visual_key,
         'pin': request.POST.get('pin', ''),
         'back_url': 'dashboard:teacher_students' if request.user.role == 'TEACHER' else 'dashboard:redirect',

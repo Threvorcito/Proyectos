@@ -386,7 +386,14 @@ class QuickStudentCreationForm(forms.Form):
         if teacher is not None:
             teacher.students.add(student)
         self.save_parent_links(student)
-        self.created_credentials = {'username': user.username, 'password': password, 'visual_key': visual_items}
+        code_owner = teacher or student.teachers.filter(is_active=True).order_by('pk').first()
+        self.created_credentials = {
+            'username': user.username,
+            'password': password,
+            'visual_key': visual_items,
+            'name': student.display_name,
+            'classroom_code': code_owner.classroom_code if code_owner else '',
+        }
         if self.created_parent_credentials:
             self.created_credentials['parent_username'] = self.created_parent_credentials['username']
             self.created_credentials['parent_password'] = self.created_parent_credentials['password']

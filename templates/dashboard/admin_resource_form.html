@@ -10,6 +10,7 @@
   body { background: #f6f7fb; }
 </style>
 <link rel="stylesheet" href="{% static 'css/admin-ui.css' %}?v=20261014-admin-ui-10">
+{% if credentials.visual_key %}<link rel="stylesheet" href="{% static 'css/access-card.css' %}?v=20261014-access-1">{% endif %}
 {% endblock %}
 {% block content %}
 <div class="{% if teacher_resource_page %}teacher-dashboard{% else %}admin-console{% endif %}">
@@ -20,7 +21,22 @@
       <div class="mx-auto" style="max-width: 860px;">
         <span class="eyebrow">{{ config.title }}</span>
         <h1>{% if is_edit %}Editar{% else %}Agregar{% endif %} {{ config.singular }}</h1>
-        {% if credentials %}
+        {% if credentials.visual_key %}
+          <div class="mt-4">
+            <h2 class="h5">Tarjeta de acceso de {{ credentials.name|title }}</h2>
+            <p class="access-dialog__note mb-3">Imprime la tarjeta y entrégasela. Los dibujos no se vuelven a mostrar.</p>
+            {% include 'dashboard/partials/student_access_card.html' with name=credentials.name visual_key=credentials.visual_key pin=credentials.password classroom_code=credentials.classroom_code %}
+            {% if credentials.parent_username %}
+              <div class="access-dialog__tutor mt-3">
+                <strong>Acceso del tutor (solo para ti)</strong>
+                <div>Usuario del tutor: <code>{{ credentials.parent_username }}</code></div>
+                <div>Contraseña del tutor: <code>{{ credentials.parent_password }}</code></div>
+                <small>Entrégalo al tutor. No se volverá a mostrar.</small>
+              </div>
+            {% endif %}
+            <div class="access-card-actions"><button class="btn btn-primary" type="button" data-access-card-print>Imprimir tarjeta</button></div>
+          </div>
+        {% elif credentials %}
           <div class="alert alert-success mt-4">
             <strong>Usuario creado para iniciar sesión:</strong>
             <div>Usuario: <code>{{ credentials.username }}</code></div>
@@ -44,3 +60,4 @@
   </section>
 </div>
 {% endblock %}
+{% block extra_js %}{% if credentials.visual_key %}<script src="{% static 'js/access-card.js' %}?v=20261014-access-1"></script>{% endif %}{% endblock %}
