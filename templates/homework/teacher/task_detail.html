@@ -35,15 +35,42 @@
         </div>
 
         <div class="lesson-report__table-card dt-card mb-4">
-          <div class="lesson-report__table-head"><div><h2>Pasos</h2></div></div>
+          <div class="lesson-report__table-head">
+            <div><h2>Pasos</h2></div>
+            {% if can_manage and task.is_active and not locked %}
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStepModal"><span>+</span> Agregar paso</button>
+            {% endif %}
+          </div>
+          {% if locked %}
+            <p class="p-3 mb-0 text-muted">Un alumno ya empezó esta tarea. Para cambiar los pasos, duplícala.</p>
+          {% endif %}
           <div class="dt-wrap dt-wrap--page">
             <table class="table table-stack data-table align-middle">
-              <thead><tr><th>#</th><th>Tipo</th></tr></thead>
+              <thead><tr><th>N.º</th><th>Tipo</th><th>Resumen</th>{% if can_manage and task.is_active and not locked %}<th class="text-end dt-actions">Acciones</th>{% endif %}</tr></thead>
               <tbody>
-                {% for step in steps %}
-                  <tr><td data-label="#">{{ step.order }}</td><td data-label="Tipo">{{ step.get_step_type_display }}</td></tr>
+                {% for step, summary in steps %}
+                  <tr>
+                    <td data-label="N.º">{{ step.order }}</td>
+                    <td data-label="Tipo">{{ step.get_step_type_display }}</td>
+                    <td data-label="Resumen">{{ summary|truncatechars:60 }}</td>
+                    {% if can_manage and task.is_active and not locked %}
+                      <td data-label="Acciones" class="text-end dt-actions">
+                        <div class="table-actions">
+                          <details class="action-menu">
+                            {% include 'dashboard/partials/action_menu_toggle.html' with name=step.get_step_type_display %}
+                            <div class="action-menu-panel">
+                              <a href="{% url 'homework:step_update' task.pk step.pk %}">Editar</a>
+                              <form method="post" action="{% url 'homework:step_move' task.pk step.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="up"><button type="submit">Subir</button></form>
+                              <form method="post" action="{% url 'homework:step_move' task.pk step.pk %}">{% csrf_token %}<input type="hidden" name="direction" value="down"><button type="submit">Bajar</button></form>
+                              <form method="post" action="{% url 'homework:step_delete' task.pk step.pk %}">{% csrf_token %}<button type="submit">Eliminar</button></form>
+                            </div>
+                          </details>
+                        </div>
+                      </td>
+                    {% endif %}
+                  </tr>
                 {% empty %}
-                  <tr><td colspan="2"><div class="dt-empty"><strong>Esta tarea aún no tiene pasos.</strong></div></td></tr>
+                  <tr><td colspan="4"><div class="dt-empty"><strong>Esta tarea aún no tiene pasos.</strong></div></td></tr>
                 {% endfor %}
               </tbody>
             </table>
@@ -88,6 +115,26 @@
   </section>
 </div>
 {% else %}
+</div>
+{% endif %}
+{% if can_manage and task.is_active and not locked %}
+<div class="modal fade admin-dialog" id="addStepModal" tabindex="-1" aria-labelledby="addStepModalTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="addStepModalTitle">Agregar paso</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body admin-dialog__body">
+        <p>Elige qué tipo de paso quieres agregar.</p>
+        <div class="d-grid gap-2">
+          {% for slug, label in step_types %}
+            <a class="btn btn-outline-primary" href="{% url 'homework:step_create' task.pk slug %}">{{ label }}</a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 {% endif %}
 {% endblock %}

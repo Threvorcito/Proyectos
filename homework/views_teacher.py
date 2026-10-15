@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
@@ -8,12 +9,22 @@ from django.views.decorators.http import require_POST
 
 from dashboard.views import RESOURCE_PAGE_SIZE, is_admin_user, write_audit
 
-from .forms import AssignStudentsForm, TaskForm
-from .models import Task
+from .forms import STEP_FORMS, AssignStudentsForm, TaskForm
+from .models import Task, TaskStep
 from .permissions import can_manage_tasks, can_view_task
-from .services import assign_students
+from .services import (
+    TaskLocked,
+    append_step,
+    assign_students,
+    delete_step,
+    duplicate_task,
+    ensure_editable,
+    move_step,
+    update_step,
+)
 
 DENIED = 'No tienes permiso para gestionar tareas.'
+LOCKED = 'Un alumno ya empezó esta tarea. Para cambiar los pasos, duplícala.'
 
 
 def _deny(request):
@@ -84,6 +95,11 @@ def task_update(request, pk):
     return render(request, 'homework/teacher/task_form.html', {'form': form, 'task': task, 'is_edit': True, 'locked': locked})
 
 
+def _summary(step):
+    payload = step.payload
+    return payload.get('question') or step.text or ''
+
+
 @login_required
 def task_detail(request, pk):
     if not (is_admin_user(request.user) or can_manage_tasks(request.user)):
@@ -92,7 +108,8 @@ def task_detail(request, pk):
     can_manage = can_manage_tasks(request.user)
     return render(request, 'homework/teacher/task_detail.html', {
         'task': task,
-        'steps': task.steps.select_related('reading'),
+        'steps': [(step, _summary(step)) for step in task.steps.select_related('reading')],
+        'step_types': [(slug, TaskStep.StepType(slug).label) for slug in STEP_FORMS],
         'assignments': task.assignments.select_related('student').order_by('student__name'),
         'assign_form': AssignStudentsForm(teacher=task.teacher, task=task) if can_manage and task.is_active else None,
         'can_manage': can_manage,
@@ -131,3 +148,114 @@ def task_archive(request, pk):
     write_audit(request, 'archive_task', task)
     messages.success(request, 'Tarea archivada.')
     return redirect('homework:task_list')
+
+
+def _locked(request, task):
+    messages.error(request, LOCKED)
+    return redirect('homework:task_detail', pk=task.pk)
+
+
+def _step_form_class_or_404(step_type):
+    form_class = STEP_FORMS.get(step_type)
+    if form_class is None:
+        raise Http404
+    return form_class
+
+
+def _step_form_page(request, form, task, step_type, step=None):
+    return render(request, 'homework/teacher/step_form.html', {
+        'form': form,
+        'task': task,
+        'step': step,
+        'step_type_label': TaskStep.StepType(step_type).label,
+    })
+
+
+@login_required
+def step_create(request, pk, step_type):
+    if not can_manage_tasks(request.user):
+        return _deny(request)
+    task = _task_or_404(request, pk, active_only=True)
+    form_class = _step_form_class_or_404(step_type)
+    with transaction.atomic():
+        try:
+            ensure_editable(task)
+        except TaskLocked:
+            return _locked(request, task)
+        form = form_class(request.POST or None, request.FILES or None, task=task)
+        if request.method == 'POST' and form.is_valid():
+            step = append_step(task, step_type, form.to_payload(), **form.extras())
+            write_audit(request, 'create_task_step', task, metadata={'step': step.pk, 'type': step_type})
+            messages.success(request, 'Paso agregado.')
+            return redirect('homework:task_detail', pk=task.pk)
+        return _step_form_page(request, form, task, step_type)
+
+
+@login_required
+def step_update(request, pk, step_pk):
+    if not can_manage_tasks(request.user):
+        return _deny(request)
+    task = _task_or_404(request, pk, active_only=True)
+    with transaction.atomic():
+        try:
+            ensure_editable(task)
+        except TaskLocked:
+            return _locked(request, task)
+        step = get_object_or_404(task.steps.select_related('reading'), pk=step_pk)
+        form_class = _step_form_class_or_404(step.step_type)
+        data = (request.POST, request.FILES) if request.method == 'POST' else (None, None)
+        form = form_class(*data, task=task, step=step, initial=form_class.initial_from(step))
+        if request.method == 'POST' and form.is_valid():
+            update_step(step, form.to_payload(), **form.extras())
+            write_audit(request, 'update_task_step', task, metadata={'step': step.pk})
+            messages.success(request, 'Paso actualizado.')
+            return redirect('homework:task_detail', pk=task.pk)
+        return _step_form_page(request, form, task, step.step_type, step)
+
+
+@login_required
+@require_POST
+def step_delete(request, pk, step_pk):
+    if not can_manage_tasks(request.user):
+        return _deny(request)
+    task = _task_or_404(request, pk, active_only=True)
+    with transaction.atomic():
+        try:
+            ensure_editable(task)
+        except TaskLocked:
+            return _locked(request, task)
+        step = get_object_or_404(task.steps, pk=step_pk)
+        delete_step(step)
+        write_audit(request, 'delete_task_step', task, metadata={'step': step_pk})
+    messages.success(request, 'Paso eliminado.')
+    return redirect('homework:task_detail', pk=task.pk)
+
+
+@login_required
+@require_POST
+def step_move(request, pk, step_pk):
+    if not can_manage_tasks(request.user):
+        return _deny(request)
+    task = _task_or_404(request, pk, active_only=True)
+    direction = request.POST.get('direction')
+    if direction not in ('up', 'down'):
+        raise Http404
+    with transaction.atomic():
+        try:
+            ensure_editable(task)
+        except TaskLocked:
+            return _locked(request, task)
+        move_step(get_object_or_404(task.steps, pk=step_pk), direction)
+    return redirect('homework:task_detail', pk=task.pk)
+
+
+@login_required
+@require_POST
+def task_duplicate(request, pk):
+    if not can_manage_tasks(request.user):
+        return _deny(request)
+    task = _task_or_404(request, pk)
+    copy = duplicate_task(task)
+    write_audit(request, 'duplicate_task', copy, metadata={'source': task.pk})
+    messages.success(request, 'Tarea duplicada. Puedes cambiar sus pasos y asignarla.')
+    return redirect('homework:task_detail', pk=copy.pk)

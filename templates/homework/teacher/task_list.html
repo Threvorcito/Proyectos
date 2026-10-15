@@ -74,6 +74,10 @@
                           <div class="action-menu-panel">
                             <a href="{% url 'homework:task_detail' task.pk %}">Pasos</a>
                             {% if can_manage %}
+                              <form method="post" action="{% url 'homework:task_duplicate' task.pk %}">
+                                {% csrf_token %}
+                                <button type="submit">Duplicar</button>
+                              </form>
                               <form method="post" action="{% url 'homework:task_archive' task.pk %}">
                                 {% csrf_token %}
                                 <button type="submit">Archivar</button>
