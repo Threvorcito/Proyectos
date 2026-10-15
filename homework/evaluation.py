@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from .decoding import decode_word
 from .models import TaskStep
+from .phonemes import audio_for
 from .payloads import MAX_TEXT, build_target
 from .writing import BUILD_MAX_UNITS, check_build, split_units
 
@@ -52,13 +53,17 @@ def _tiles(payload: dict) -> list[str]:
     return tiles
 
 
-def _missing_sound(target_text: str, unit: str, units: list[str], index: int) -> str:
-    """What to say for the missing unit: its phoneme for a letter, never the letter name."""
+def _missing_sound(target_text: str, unit: str, units: list[str], index: int) -> tuple[str, str]:
+    """(say, audio URL) for the missing unit: its phoneme for a letter, never the letter name.
+
+    The audio comes from the same table decode.js uses (phonemes.PHONEME_AUDIO, keyed by the spoken string),
+    so recording a sound later needs no code change; '' means "use speech".
+    """
     if unit == 'letter':
         letters = decode_word(target_text)['letters']
         if len(letters) == len(units) and letters[index]['say']:
-            return letters[index]['say']
-    return units[index]
+            return letters[index]['say'], letters[index]['audio']
+    return units[index], audio_for(units[index])
 
 
 def _evaluate_build(step: TaskStep, payload: dict) -> Evaluation:
@@ -68,11 +73,10 @@ def _evaluate_build(step: TaskStep, payload: dict) -> Evaluation:
     check = check_build(units, tiles)
     joiner = ' ' if target.unit == 'word' else ''
     if check.status == 'omission':
-        hint = {
-            'say': _missing_sound(target.text, target.unit, units, check.hole_index),
-            'hole_index': check.hole_index,
-            'kind': 'omission',
-        }
+        say, audio = _missing_sound(target.text, target.unit, units, check.hole_index)
+        hint = {'say': say, 'hole_index': check.hole_index, 'kind': 'omission'}
+        if audio:
+            hint['audio'] = audio
     else:
         hint = {'say': target.text, 'hole_index': None, 'kind': 'try_again'}
     return Evaluation(

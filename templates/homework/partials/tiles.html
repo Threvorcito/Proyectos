@@ -14,6 +14,7 @@ The target units are rendered only in the teacher preview (`preview`), never on 
     {% endfor %}
   </ul>
   <button class="task-go task-go--ready" type="button" data-build-check disabled>Revisar</button>
+  {% if preview %}<button class="task-go task-go--soft" type="button" data-build-reset hidden>Probar otra vez</button>{% endif %}
   {% if preview %}{{ build.preview_units|json_script:units_id }}{% endif %}
 </div>
 {% endwith %}{% endwith %}

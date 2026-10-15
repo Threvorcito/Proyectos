@@ -125,6 +125,20 @@ class ArmaEvaluationTests(ArmaPlayerTestCase):
         body = self.answer(step, assignment, ['e', 's', 'a']).json()
         self.assertEqual(body['hint']['say'], 'mmm')
 
+    def test_omission_hint_carries_audio_override(self):
+        from unittest import mock
+        step, assignment = self._arma({'text': 'mesa', 'unit': 'letter'})
+        with mock.patch.dict('homework.phonemes.PHONEME_AUDIO', {'mmm': '/static/audio/mmm.mp3'}):
+            body = self.answer(step, assignment, ['e', 's', 'a']).json()
+        self.assertEqual(body['hint'], {'say': 'mmm', 'hole_index': 0, 'kind': 'omission', 'audio': '/static/audio/mmm.mp3'})
+
+    def test_syllable_hint_uses_same_audio_table(self):
+        from unittest import mock
+        step, assignment = self._arma({'text': 'mariposa', 'unit': 'syllable'})
+        with mock.patch.dict('homework.phonemes.PHONEME_AUDIO', {'ri': '/static/audio/ri.mp3'}):
+            body = self.answer(step, assignment, ['ma', 'po', 'sa']).json()
+        self.assertEqual(body['hint']['audio'], '/static/audio/ri.mp3')
+
     def test_blank_sentence_checks_only_blank(self):
         step, assignment = self._arma({'text': 'El [gato] come.', 'unit': 'word'})
         body = self.answer(step, assignment, ['gato']).json()

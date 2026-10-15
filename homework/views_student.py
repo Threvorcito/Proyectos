@@ -14,6 +14,7 @@ from .decoding import decode_word
 from .evaluation import InvalidAnswer, is_build_step
 from .models import StepResult, TaskAssignment, TaskStep
 from .payloads import build_target
+from .phonemes import audio_for
 from readings.services import MAX_READ_MS, MIN_READ_MS, PRACTICE_READS
 
 from .services import ItemClosed, mark_item_done, record_decode_help, start_assignment, step_states, submit_answer
@@ -75,10 +76,14 @@ def step_context(step, *, preview=False):
     }
     if preview:
         sounds = decode_word(target.text)['letters'] if target.unit == 'letter' else []
-        build['preview_units'] = [
-            {'text': unit, 'say': (sounds[i]['say'] if len(sounds) == len(units) and sounds[i]['say'] else unit)}
-            for i, unit in enumerate(units)
-        ]
+        aligned = len(sounds) == len(units)
+        preview_units = []
+        for i, unit in enumerate(units):
+            if aligned and sounds[i]['say']:
+                preview_units.append({'text': unit, 'say': sounds[i]['say'], 'audio': sounds[i]['audio']})
+            else:
+                preview_units.append({'text': unit, 'say': unit, 'audio': audio_for(unit)})
+        build['preview_units'] = preview_units
         build['preview_model'] = target.full_text
     return {'build': build}
 

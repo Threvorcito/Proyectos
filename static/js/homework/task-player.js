@@ -63,6 +63,25 @@
       }
     };
 
+    // A hint sound is an audio file when one is recorded (hint.audio), speech otherwise.
+    let hintAudio = null;
+    const playHint = (hint) => {
+      hintAudio?.pause();
+      hintAudio = null;
+      if (!hint) return Promise.resolve();
+      if (!hint.audio) return window.AppSpeech?.speakSequence ? window.AppSpeech.speakSequence([hint.say], {rate: 0.7}) : Promise.resolve();
+      return new Promise((resolve) => {
+        const audio = new Audio(hint.audio);
+        hintAudio = audio;
+        audio.addEventListener('ended', resolve);
+        audio.addEventListener('error', () => {
+          hintAudio = null;
+          (window.AppSpeech?.speakSequence ? window.AppSpeech.speakSequence([hint.say], {rate: 0.7}) : Promise.resolve()).then(resolve);
+        });
+        audio.play().catch(() => audio.dispatchEvent(new Event('error')));
+      });
+    };
+
     const showFeedback = (outcome) => {
       if (!feedbackBox || !outcome) return;
       const good = outcome.status === 'correct' || outcome.status === 'done';
@@ -80,7 +99,7 @@
       }
       if (isOmission(outcome) && window.AppSpeech?.speakSequence) {
         // The missing sound is its own utterance, said slowly: it is the hint (never the letter name).
-        window.AppSpeech.speakSequence([text, outcome.hint.say], {rate: 0.7});
+        window.AppSpeech.speakSequence([text], {rate: 0.7}).then(() => playHint(outcome.hint));
       } else {
         window.AppSpeech?.speak(outcome.status === 'try_again' && outcome.hint?.say ? `${text} ${outcome.hint.say}` : text);
       }
@@ -121,6 +140,7 @@
       done: (itemIndex) => send(root.dataset.doneUrl, {item_index: itemIndex}),
       answer: (itemIndex, body = {}) => send(root.dataset.answerUrl, {item_index: itemIndex, ...body}),
       showFeedback,
+      playHint,
     };
     root.taskPlayer = api; // preview stacks steps: code that needs this step's player reaches it via its root
     window.TaskPlayer = api;

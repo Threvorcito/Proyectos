@@ -10,7 +10,6 @@
  * - Preview: nothing is sent; the target units rendered for the teacher drive a local check, so the feedback can be tried.
  */
 (() => {
-  const SOUND_RATE = 0.7;
   const DRAG_PX = 8;
   const MAX_ATTEMPTS = 2;
 
@@ -43,9 +42,7 @@
       hole = null;
     };
 
-    const speakSound = (text) => {
-      if (text) window.AppSpeech?.speak(text, {rate: SOUND_RATE});
-    };
+    const speakSound = (hint) => stepRoot.taskPlayer?.playHint(hint);
 
     const labelPlaced = (tile, isPlaced) => {
       tile.classList.toggle('is-placed', isPlaced);
@@ -78,21 +75,46 @@
       sync();
     };
 
-    const showHole = (index, say) => {
+    const showHole = (hint) => {
+      const index = hint.hole_index;
       removeHole();
       hole = document.createElement('button');
       hole.type = 'button';
       hole.className = 'task-build__hole';
       hole.setAttribute('aria-label', 'Aquí falta una ficha. Toca para escuchar lo que falta.');
       hole.textContent = '👀';
-      hole.addEventListener('click', () => speakSound(say));
+      hole.addEventListener('click', () => speakSound(hint));
       const tiles = placedTiles();
       row.insertBefore(hole, tiles[index] || null);
       sync();
     };
 
+    // Preview only: put the builder back to its first state so the teacher can try again.
+    const resetButton = build.querySelector('[data-build-reset]');
+    const allTiles = [...pool.querySelectorAll('[data-tile]')];
+    resetButton?.addEventListener('click', () => {
+      allTiles.forEach((tile) => {
+        tile.disabled = false;
+        unplace(tile);
+      });
+      removeHole();
+      row.replaceChildren();
+      row.classList.remove('is-model', 'is-good', 'is-hint');
+      build.querySelectorAll('[data-build-before], [data-build-after]').forEach((node) => {
+        node.hidden = false;
+      });
+      pool.hidden = false;
+      attempts = 0;
+      locked = false;
+      resetButton.hidden = true;
+      const feedbackBox = stepRoot.querySelector('[data-task-feedback]');
+      if (feedbackBox) feedbackBox.hidden = true;
+      sync();
+    });
+
     const closeBuild = (modelAnswer) => {
       locked = true;
+      if (resetButton) resetButton.hidden = false;
       if (modelAnswer) {
         // The model is the whole sentence: it replaces the row and the words around it.
         removeHole();
@@ -124,7 +146,7 @@
       } else if (outcome.status === 'modeled') {
         closeBuild(outcome.model_answer || '');
       } else if (outcome.hint?.kind === 'omission') {
-        showHole(outcome.hint.hole_index, outcome.hint.say);
+        showHole(outcome.hint);
       } else {
         resetRow();
       }
@@ -132,7 +154,10 @@
       sync();
     };
 
-    /* ---------- preview: a local stand-in for the server check ---------- */
+    /* ---------- preview: a local stand-in for the server check ----------
+     * APPROXIMATE mirror of homework.writing.check_build for the teacher preview only (preview never writes
+     * and has no assignment to evaluate against): case-insensitive, and "omission" means the answer is a
+     * subsequence of the target. The real check is always the server's. */
     const previewUnits = () => {
       try {
         return JSON.parse(document.getElementById(build.dataset.buildUnits)?.textContent || '[]');
@@ -159,7 +184,7 @@
         return {status: 'modeled', model_answer: build.dataset.buildModel || '', step_done: false};
       }
       if (matched === answer.length && firstMissing >= 0) {
-        return {status: 'try_again', hint: {say: units[firstMissing].say, hole_index: firstMissing, kind: 'omission'}, step_done: false};
+        return {status: 'try_again', hint: {say: units[firstMissing].say, audio: units[firstMissing].audio || undefined, hole_index: firstMissing, kind: 'omission'}, step_done: false};
       }
       return {status: 'try_again', hint: {say: units.map((unit) => unit.text).join(joiner), hole_index: null, kind: 'try_again'}, step_done: false};
     };
