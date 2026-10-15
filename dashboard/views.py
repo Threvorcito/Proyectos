@@ -794,8 +794,15 @@ def student_report(request, pk):
             'percentage': round((correct / total) * 100) if total else 0,
         })
     achievements = StudentAchievement.objects.filter(student=student).select_related('achievement').order_by('-earned_at')[:6]
+    # Imported here: homework.permissions imports this module.
+    from homework.permissions import can_view_difficulty_data
+
+    task_assignments = []
+    if can_view_difficulty_data(request.user, student):
+        task_assignments = list(student.task_assignments.select_related('task').order_by('-assigned_at')[:10])
     return render(request, 'dashboard/student_report.html', {
         'student': student,
+        'task_assignments': task_assignments,
         'progress_items': progress_items,
         'difficulties': difficulties,
         'attempts_count': attempts_count,
@@ -1146,4 +1153,14 @@ def parent_dashboard(request):
         total_attempts=Count('attempts', distinct=True),
         detected_difficulties=Count('difficulties', distinct=True),
     ).order_by('name')
+    # Imported here: homework.permissions imports this module.
+    from homework.models import TaskAssignment
+
+    students = list(students)
+    for student in students:
+        # Completion only: no answers, difficulties or levels reach the family (Ley 787).
+        student.recent_tasks = list(
+            TaskAssignment.objects.filter(student=student, status=TaskAssignment.Status.COMPLETED)
+            .select_related('task').order_by('-completed_at')[:3]
+        )
     return render(request, 'dashboard/parent_dashboard.html', {'parent': parent, 'students': students})

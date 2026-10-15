@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404
+from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
@@ -12,9 +13,10 @@ from dashboard.views import RESOURCE_PAGE_SIZE, is_admin_user, write_audit
 from readings.services import MAX_READ_MS, MIN_READ_MS, PRACTICE_READS
 
 from .copy import FEEDBACK, INSTRUCTIONS
-from .forms import STEP_FORMS, AssignStudentsForm, TaskForm
-from .models import Task, TaskStep
-from .permissions import can_manage_tasks, can_view_task
+from .forms import STEP_FORMS, AssignStudentsForm, SnepaOverrideForm, TaskForm
+from .models import SnepaLevel, Task, TaskAssignment, TaskStep
+from .permissions import can_manage_tasks, can_view_difficulty_data, can_view_task
+from .reports import assignment_detail, task_rows
 from .services import (
     TaskLocked,
     append_step,
@@ -298,3 +300,64 @@ def task_duplicate(request, pk):
     write_audit(request, 'duplicate_task', copy, metadata={'source': task.pk})
     messages.success(request, 'Tarea duplicada. Puedes cambiar sus pasos y asignarla.')
     return redirect('homework:task_detail', pk=copy.pk)
+
+
+@login_required
+def task_report(request, pk):
+    if not (is_admin_user(request.user) or can_manage_tasks(request.user)):
+        return _deny(request)
+    task = _task_or_404(request, pk)
+    page_obj = Paginator(task_rows(task), RESOURCE_PAGE_SIZE).get_page(request.GET.get('page'))
+    rows = list(page_obj)
+    for row in rows:
+        row['can_detail'] = can_view_difficulty_data(request.user, row['student'])
+        row['level'] = SnepaLevel(row['assignment'].snepa_level).label if row['can_detail'] and row['assignment'].snepa_level else ''
+    return render(request, 'homework/teacher/task_report.html', {
+        'task': task,
+        'rows': rows,
+        'page_obj': page_obj,
+        'show_detail': any(row['can_detail'] for row in rows),
+    })
+
+
+def _assignment_or_404(request, assignment_pk):
+    assignment = get_object_or_404(TaskAssignment.objects.select_related('task', 'student'), pk=assignment_pk)
+    # Ley 787: difficulty data only for admins and linked teachers with report permission.
+    if not can_view_difficulty_data(request.user, assignment.student):
+        raise Http404
+    return assignment
+
+
+@login_required
+def assignment_report(request, assignment_pk):
+    assignment = _assignment_or_404(request, assignment_pk)
+    suggested = SnepaLevel(assignment.snepa_suggested).label if assignment.snepa_suggested else ''
+    final = SnepaLevel(assignment.snepa_level).label if assignment.snepa_level else ''
+    return render(request, 'homework/teacher/assignment_report.html', {
+        'assignment': assignment,
+        'task': assignment.task,
+        'student': assignment.student,
+        'detail': assignment_detail(assignment),
+        'suggested_label': suggested,
+        'final_label': final,
+        'override_form': SnepaOverrideForm(initial={'level': assignment.snepa_override}),
+    })
+
+
+@login_required
+@require_POST
+def assignment_level_update(request, assignment_pk):
+    assignment = _assignment_or_404(request, assignment_pk)
+    form = SnepaOverrideForm(request.POST)
+    if form.is_valid():
+        level = form.cleaned_data['level']
+        teacher = getattr(request.user, 'teacher_profile', None)
+        assignment.snepa_override = level
+        assignment.snepa_override_by = teacher if level else None
+        assignment.snepa_override_at = timezone.now() if level else None
+        assignment.save(update_fields=['snepa_override', 'snepa_override_by', 'snepa_override_at'])
+        write_audit(request, 'override_task_level', assignment, {'level': level})
+        messages.success(request, 'Nivel actualizado.')
+    else:
+        messages.error(request, 'Elige un nivel válido.')
+    return redirect('homework:assignment_report', assignment_pk=assignment.pk)

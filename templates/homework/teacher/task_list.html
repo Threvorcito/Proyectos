@@ -73,6 +73,7 @@
                           {% include 'dashboard/partials/action_menu_toggle.html' with name=task.title %}
                           <div class="action-menu-panel">
                             <a href="{% url 'homework:task_detail' task.pk %}">Pasos</a>
+                            <a href="{% url 'homework:task_report' task.pk %}">Reporte</a>
                             <a href="{% url 'homework:task_preview' task.pk %}">Vista previa</a>
                             {% if can_manage %}
                               <form method="post" action="{% url 'homework:task_duplicate' task.pk %}">

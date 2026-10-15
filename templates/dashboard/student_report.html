@@ -288,6 +288,27 @@
     </div>
   </section>
 
+  {% if task_assignments %}
+  <section class="feature-card dt-card mt-4">
+    <h2 class="h4">Tareas</h2>
+    <p class="text-muted mb-3">Tareas guiadas asignadas a este alumno.</p>
+    <div class="dt-wrap mt-3">
+      <table class="table table-stack data-table align-middle mb-0">
+        <thead><tr><th>Tarea</th><th>Estado</th><th class="text-end dt-actions">Detalle</th></tr></thead>
+        <tbody>
+          {% for assignment in task_assignments %}
+            <tr>
+              <td data-label="Tarea">{{ assignment.task.title }}</td>
+              <td data-label="Estado">{{ assignment.get_status_display }}</td>
+              <td data-label="Detalle" class="text-end dt-actions"><a class="btn btn-outline-primary btn-sm" href="{% url 'homework:assignment_report' assignment.pk %}">Ver tarea</a></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
   <div class="row g-4 mt-1">
     <section class="col-lg-6">
       <div class="feature-card h-100">

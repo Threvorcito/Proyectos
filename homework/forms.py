@@ -9,7 +9,7 @@ from learning.models import LessonPlan, Subject
 from readings.models import Reading
 
 from .decoding import propose_hard_words
-from .models import Task, TaskStep
+from .models import SnepaLevel, Task, TaskStep
 from .payloads import ARMA_UNITS, EXAMPLE_STEPS_MAX, EXERCISES_MAX, clean_payload
 from .services import group_students
 
@@ -83,6 +83,14 @@ class AssignStudentsForm(forms.Form):
         if self.cleaned_data.get('whole_group'):
             return group_students(self.teacher, self.task.grade)
         return self.cleaned_data['students']
+
+
+class SnepaOverrideForm(forms.Form):
+    level = forms.ChoiceField(
+        label='Nivel SNEPA final',
+        required=False,
+        choices=[('', 'Usar el sugerido')] + SnepaLevel.choices,
+    )
 
 
 class StepForm(forms.Form):

@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}Reporte: {{ task.title }}{% endblock %}
+{% block extra_css %}{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endif %}{% endblock %}
+{% block content %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<div class="admin-console">
+  {% include 'dashboard/partials/admin_sidebar.html' %}
+  <section class="admin-main">
+    {% include 'dashboard/partials/admin_topbar.html' with current_title='Tareas' %}
+    <div class="admin-content">
+{% else %}
+<div class="container py-5">
+{% endif %}
+      <section class="lesson-report dt">
+        <div class="lesson-report__hero">
+          <div>
+            <span class="eyebrow">{{ task.subject }} · {{ task.get_grade_display }}</span>
+            <h1>Reporte: {{ task.title }}</h1>
+            <p>Quién ya empezó y cuántos pasos lleva cada alumno.</p>
+          </div>
+          <div class="lesson-report__actions">
+            <a class="btn btn-outline-primary lesson-report__back" href="{% url 'homework:task_detail' task.pk %}">Volver a la tarea</a>
+          </div>
+        </div>
+
+        <div class="lesson-report__table-card dt-card">
+          <div class="dt-wrap dt-wrap--page">
+            <table class="table table-stack data-table align-middle">
+              <thead>
+                <tr>
+                  <th>Alumno</th>
+                  <th>Estado</th>
+                  <th>Pasos</th>
+                  {% if show_detail %}<th>Nivel</th><th class="text-end dt-actions">Detalle</th>{% endif %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in rows %}
+                  <tr>
+                    <td data-label="Alumno">{{ row.student.name }}</td>
+                    <td data-label="Estado">{{ row.status }}</td>
+                    <td data-label="Pasos">{{ row.steps_done }}/{{ row.steps_total }}</td>
+                    {% if show_detail %}
+                      <td data-label="Nivel">{% if row.can_detail %}{{ row.level|default:'Sin datos suficientes' }}{% endif %}</td>
+                      <td data-label="Detalle" class="text-end dt-actions">
+                        {% if row.can_detail %}<a class="btn btn-outline-primary btn-sm" href="{% url 'homework:assignment_report' row.assignment.pk %}">Ver detalle</a>{% endif %}
+                      </td>
+                    {% endif %}
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="5"><div class="dt-empty"><strong>Todavía no has asignado esta tarea.</strong></div></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include 'partials/pagination.html' %}
+        </div>
+      </section>
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+    </div>
+  </section>
+</div>
+{% else %}
+</div>
+{% endif %}
+{% endblock %}

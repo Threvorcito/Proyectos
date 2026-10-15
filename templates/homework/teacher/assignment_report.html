@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block title %}Seguimiento de {{ student.name }}{% endblock %}
+{% block extra_css %}{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endif %}{% endblock %}
+{% block content %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<div class="admin-console">
+  {% include 'dashboard/partials/admin_sidebar.html' %}
+  <section class="admin-main">
+    {% include 'dashboard/partials/admin_topbar.html' with current_title='Tareas' %}
+    <div class="admin-content">
+{% else %}
+<div class="container py-5">
+{% endif %}
+      <section class="lesson-report dt">
+        <div class="lesson-report__hero">
+          <div>
+            <span class="eyebrow">{{ task.title }}</span>
+            <h1>{{ student.name }}</h1>
+            <p>{{ assignment.get_status_display }}. Datos confidenciales: solo los ve el equipo docente autorizado.</p>
+          </div>
+          <div class="lesson-report__actions">
+            <a class="btn btn-outline-primary lesson-report__back" href="{% url 'homework:task_report' task.pk %}">Volver al reporte</a>
+          </div>
+        </div>
+
+        <div class="lesson-report__table-card dt-card mb-4">
+          <div class="lesson-report__table-head"><div><h2>Nivel SNEPA</h2></div></div>
+          <div class="p-3">
+            <p class="mb-1">Sugerido: <strong>{{ suggested_label|default:'Sin datos suficientes' }}</strong></p>
+            <p class="mb-3">Final: <strong>{{ final_label|default:'Sin datos suficientes' }}</strong>{% if assignment.snepa_override %} (ajustado por docente){% endif %}</p>
+            <form method="post" action="{% url 'homework:assignment_level_update' assignment.pk %}" class="d-flex flex-wrap gap-2 align-items-end">
+              {% csrf_token %}
+              <div>
+                <label class="form-label" for="{{ override_form.level.id_for_label }}">{{ override_form.level.label }}</label>
+                {{ override_form.level }}
+              </div>
+              <button type="submit" class="btn btn-primary">Guardar nivel</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="lesson-report__table-card dt-card mb-4">
+          <div class="lesson-report__table-head"><div><h2>Respuestas</h2></div></div>
+          <div class="dt-wrap dt-wrap--page">
+            <table class="table table-stack data-table align-middle">
+              <thead><tr><th>Paso</th><th>Pregunta</th><th>Primera respuesta</th><th>Respuesta final</th><th>Ayudas</th></tr></thead>
+              <tbody>
+                {% for item in detail.answers %}
+                  <tr>
+                    <td data-label="Paso">{{ item.step_type }}</td>
+                    <td data-label="Pregunta">{{ item.prompt|truncatechars:80 }}</td>
+                    <td data-label="Primera respuesta">{{ item.first_answer|default:'—' }}{% if item.first_try_correct %} · a la primera{% endif %}</td>
+                    <td data-label="Respuesta final">{{ item.answer|default:'—' }}{% if item.modeled %} · se le mostró{% endif %}</td>
+                    <td data-label="Ayudas">{{ item.hints_used }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="5"><div class="dt-empty"><strong>Todavía no hay respuestas.</strong></div></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="lesson-report__table-card dt-card mb-4">
+          <div class="lesson-report__table-head"><div><h2>Palabras que pidió decodificar</h2></div></div>
+          <div class="dt-wrap dt-wrap--page">
+            <table class="table table-stack data-table align-middle">
+              <thead><tr><th>Palabra</th><th>Veces</th></tr></thead>
+              <tbody>
+                {% for word, count in detail.decode_words %}
+                  <tr><td data-label="Palabra">{{ word }}</td><td data-label="Veces">{{ count }}</td></tr>
+                {% empty %}
+                  <tr><td colspan="2"><div class="dt-empty"><strong>No pidió ayuda con palabras.</strong></div></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="lesson-report__table-card dt-card">
+          <div class="lesson-report__table-head"><div><h2>Omisiones al escribir</h2></div></div>
+          <div class="dt-wrap dt-wrap--page">
+            <table class="table table-stack data-table align-middle">
+              <thead><tr><th>Palabra</th><th>Le faltó</th><th>Veces</th></tr></thead>
+              <tbody>
+                {% for target, unit, count in detail.omissions %}
+                  <tr><td data-label="Palabra">{{ target }}</td><td data-label="Le faltó">{{ unit }}</td><td data-label="Veces">{{ count }}</td></tr>
+                {% empty %}
+                  <tr><td colspan="3"><div class="dt-empty"><strong>No hay omisiones registradas.</strong></div></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+    </div>
+  </section>
+</div>
+{% else %}
+</div>
+{% endif %}
+{% endblock %}

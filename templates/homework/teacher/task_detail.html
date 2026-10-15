@@ -28,6 +28,7 @@
           </div>
           <div class="lesson-report__actions">
             <a class="btn btn-outline-primary lesson-report__back" href="{% url 'homework:task_list' %}">Volver a tareas</a>
+            <a class="btn btn-outline-primary" href="{% url 'homework:task_report' task.pk %}">Reporte</a>
             <a class="btn btn-outline-primary" href="{% url 'homework:task_preview' task.pk %}">Vista previa</a>
             {% if can_manage and task.is_active %}
               <a class="btn btn-primary" href="{% url 'homework:task_update' task.pk %}">Editar</a>

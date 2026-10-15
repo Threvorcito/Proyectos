@@ -44,6 +44,10 @@
               {% endif %}
             </p>
 
+            {% for assignment in student.recent_tasks %}
+              <p class="parent-student-card__note">{{ student.display_name }} terminó la tarea «{{ assignment.task.title }}». ¡Celebren juntos su esfuerzo!</p>
+            {% endfor %}
+
             <a class="btn btn-primary parent-student-card__action" href="{% url 'dashboard:student_report' student.pk %}">Ver progreso</a>
           </article>
         {% endfor %}
