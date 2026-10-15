@@ -18,8 +18,3 @@ FEEDBACK = {
     'modeled': 'Mira, así es: {answer}. ¡Sigamos!',
     'task_done': '¡Terminaste tu tarea! ¡Lo hiciste muy bien!',
 }
-
-CARD_TITLE = 'Mi tarea de hoy'
-CARD_SUBTITLE = 'Tu profe preparó pasos para ti'
-CARD_ACTION = '¡Vamos!'
-CARD_GREETING = '¡Hoy tienes una tarea! ¡Vamos juntos!'

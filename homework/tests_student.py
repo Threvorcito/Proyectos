@@ -153,3 +153,20 @@ class StepJsonTests(StudentTaskTestCase):
         response = self.post(1, 'step_done', {'item_index': 0})
         self.assertEqual(response.status_code, 302)
         self.assertFalse(StepResult.objects.exists())
+
+    def test_cannot_skip_ahead_on_done_or_answer(self):
+        done = self.post(2, 'step_done', {'item_index': 0})
+        answer = self.post(2, 'step_answer', {'item_index': 0, 'choice': 1})
+        for response in (done, answer):
+            self.assertEqual(response.status_code, 400)
+            self.assertEqual(response.json()['reason'], 'step')
+        self.assertFalse(StepResult.objects.exists())
+
+    def test_closed_earlier_step_keeps_friendly_409(self):
+        self.post(1, 'step_done', {'item_index': 0})
+        self.post(2, 'step_answer', {'item_index': 0, 'choice': 1})
+        again = self.post(2, 'step_answer', {'item_index': 0, 'choice': 1})
+        self.assertEqual((again.status_code, again.json()['reason']), (409, 'closed'))
+
+    def test_dashboard_card_subtitle(self):
+        self.assertContains(self.client.get(reverse('dashboard:student')), 'Tu profe preparó pasos para ti')

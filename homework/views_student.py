@@ -110,6 +110,9 @@ def _json_step_action(request, student, assignment_pk, order, action):
         step = assignment.task.steps.get(order=order)
     except TaskStep.DoesNotExist:
         return _rejected('step', 404)
+    state = next(s for s in step_states(assignment) if s.step.pk == step.pk)
+    if not (state.current or state.done):
+        return _rejected('step', 400)
     body = parse_json_object(request)
     item_index = _item_index(body) if body is not None else None
     if item_index is None:

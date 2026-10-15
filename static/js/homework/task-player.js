@@ -45,13 +45,32 @@
     return copy.correct || '';
   };
 
+  const clearMarks = () => {
+    root.querySelectorAll('.is-hint, .is-model').forEach((node) => node.classList.remove('is-hint', 'is-model'));
+  };
+
+  // Hint = audio + highlight: the question lights up; a modeled answer marks the right option.
+  const highlight = (outcome) => {
+    clearMarks();
+    if (outcome.status === 'try_again') {
+      root.querySelector('.task-question')?.classList.add('is-hint');
+    } else if (outcome.status === 'modeled') {
+      root.querySelectorAll('[data-task-choice]').forEach((button) => {
+        if (button.textContent.trim() === outcome.model_answer) button.classList.add('is-model');
+      });
+    }
+  };
+
   const showFeedback = (outcome) => {
     if (!feedbackBox || !outcome) return;
-    const good = outcome.status !== 'try_again';
+    const good = outcome.status === 'correct' || outcome.status === 'done';
+    const modeled = outcome.status === 'modeled';
+    highlight(outcome);
     const text = messageFor(outcome);
     feedbackBox.hidden = false;
     feedbackBox.classList.toggle('is-good', good);
-    feedbackBox.classList.toggle('is-try', !good);
+    feedbackBox.classList.toggle('is-try', !good && !modeled);
+    feedbackBox.classList.toggle('is-model', modeled);
     if (feedbackText) feedbackText.textContent = text;
     if (nextLink) {
       nextLink.hidden = !outcome.step_done;
