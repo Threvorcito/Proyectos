@@ -197,6 +197,9 @@ class LecturaStepTests(StudentTaskTestCase):
         assignment = TaskAssignment.objects.create(task=task, student=self.ana)
         return self.client.get(self.step_url(step.order, assignment=assignment))
 
+    def test_practice_sits_inside_reading_page_for_its_colour_tokens(self):
+        self.assertContains(self._lectura_page(), 'class="reading-page"')
+
     def _reading(self, grade):
         from readings.models import Reading
         return Reading.objects.create(level=self.level, title='Cuento', content='Un gato duerme.', grade=grade)

@@ -3,5 +3,6 @@
 <p class="task-question" data-decodable>{{ step.text }}</p>
 <p class="task-preview-note">El niño practica este texto leyendo en voz alta. Aquí solo se muestra un ejemplo de la lectura.</p>
 {% else %}
-{% include 'readings/partials/practice.html' with practice_text=step.text save_url=practice_save_url in_task=True %}
+{# .reading-page scopes the --practice-* colour tokens the practice buttons and step chips rely on #}
+<div class="reading-page">{% include 'readings/partials/practice.html' with practice_text=step.text save_url=practice_save_url in_task=True %}</div>
 {% endif %}

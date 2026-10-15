@@ -91,9 +91,9 @@
 }
 
 .task-options { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: .75rem; }
-.task-option { display: flex; align-items: center; gap: .75rem; }
+.task-option { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; } /* listen / sounds buttons wrap under the answer on a phone */
 .task-option__choice {
-  flex: 1;
+  flex: 1 1 10rem;
   min-height: var(--kid-tap-main, 64px);
   padding: .75rem 1.25rem;
   border: 2px solid var(--kid-line-strong, #7a6a52);
