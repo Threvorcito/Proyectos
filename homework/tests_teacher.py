@@ -164,3 +164,34 @@ class TaskListTests(TeacherTaskTestCase):
 
     def test_empty_state_copy(self):
         self.assertContains(self.client.get(reverse('homework:task_list')), 'Aún no tienes tareas. Crea la primera con solo la parte que hace el niño.')
+
+
+class ChromeVisibilityTests(TeacherTaskTestCase):
+    HIDE_RULE = '.accessibility-fab { display: none !important; }'
+
+    def _admin(self):
+        CustomUser.objects.create_user(username='admin1', password='x', role='ADMIN', email='admin1@example.com')
+        self.client.login(username='admin1', password='x')
+
+    def test_teacher_pages_keep_site_chrome(self):
+        task = self._task()
+        for url in (reverse('homework:task_list'), reverse('homework:task_detail', args=[task.pk]), reverse('dashboard:lesson_plans')):
+            self.assertNotContains(self.client.get(url), self.HIDE_RULE)
+
+    def test_admin_pages_hide_site_chrome(self):
+        task = self._task()
+        self._admin()
+        for url in (reverse('homework:task_list'), reverse('homework:task_detail', args=[task.pk]), reverse('dashboard:lesson_plans')):
+            self.assertContains(self.client.get(url), self.HIDE_RULE)
+
+
+class ArchivedTaskTests(TeacherTaskTestCase):
+    def test_archived_task_update_assign_archive_return_404(self):
+        task = self._task(is_active=False)
+        self.assertEqual(self.client.get(reverse('homework:task_update', args=[task.pk])).status_code, 404)
+        self.assertEqual(self.client.post(reverse('homework:task_assign', args=[task.pk]), {'whole_group': 'on'}).status_code, 404)
+        self.assertEqual(self.client.post(reverse('homework:task_archive', args=[task.pk])).status_code, 404)
+
+    def test_detail_empty_state_when_no_students_in_grade(self):
+        task = self._task(grade='3')
+        self.assertContains(self.client.get(reverse('homework:task_detail', args=[task.pk])), 'No hay estudiantes de este grado vinculados a ti.')

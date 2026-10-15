@@ -1,16 +1,14 @@
 {% extends 'base.html' %}
 {% block title %}Planes de clase{% endblock %}
-{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
-{% block extra_css %}
-<style>
-  .site-navbar,
-  .site-footer,
-  .accessibility-fab { display: none !important; }
-  .page-shell { min-height: 100vh; }
-  body { background: #f6f7fb; }
-</style>
-{% endblock %}
-{% endif %}
+{% block extra_css %}{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endif %}{% endblock %}
 {% block content %}
 {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
 <div class="admin-console">

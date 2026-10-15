@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}{{ task.title }}{% endblock %}
-{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
-{% block extra_css %}
+{% block extra_css %}{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
 <style>
   .site-navbar,
   .site-footer,
@@ -9,8 +8,7 @@
   .page-shell { min-height: 100vh; }
   body { background: #f6f7fb; }
 </style>
-{% endblock %}
-{% endif %}
+{% endif %}{% endblock %}
 {% block content %}
 {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
 <div class="admin-console">
@@ -74,7 +72,7 @@
               {% csrf_token %}
               <fieldset>
                 <legend class="h6">{{ assign_form.students.label }} de {{ task.get_grade_display|lower }}</legend>
-                <div class="admin-dialog__checklist">{{ assign_form.students }}</div>
+                <div class="admin-dialog__checklist">{% if assign_form.students.field.queryset.exists %}{{ assign_form.students }}{% else %}<p class="text-muted">No hay estudiantes de este grado vinculados a ti.</p>{% endif %}</div>
               </fieldset>
               <div class="form-check my-3">
                 {{ assign_form.whole_group }}

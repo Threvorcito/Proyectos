@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}Tareas{% endblock %}
-{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
-{% block extra_css %}
+{% block extra_css %}{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
 <style>
   .site-navbar,
   .site-footer,
@@ -9,8 +8,7 @@
   .page-shell { min-height: 100vh; }
   body { background: #f6f7fb; }
 </style>
-{% endblock %}
-{% endif %}
+{% endif %}{% endblock %}
 {% block content %}
 {% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
 <div class="admin-console">
