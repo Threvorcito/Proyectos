@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}{{ block.super }}{% if credentials %}<link rel="stylesheet" href="{% static 'css/access-card.css' %}?v=20261014-access-1">{% endif %}{% endblock %}
 {% block title %}Mis alumnos | {{ site_name }}{% endblock %}
 {% block content %}
 <div class="teacher-dashboard dt">
@@ -266,10 +268,20 @@
     {% endif %}
   </div>
 </div>
+{% include 'dashboard/partials/student_access_dialog.html' %}
 {% endblock %}
 
 {% block extra_js %}
   {{ block.super }}
+  {% if credentials %}
+    <script src="{% static 'js/access-card.js' %}?v=20261014-access-1"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        var modal = document.getElementById('studentCredentialsModal');
+        if (modal && window.bootstrap) window.bootstrap.Modal.getOrCreateInstance(modal).show();
+      });
+    </script>
+  {% endif %}
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var picker = document.querySelector('[data-create-tutor-picker]');

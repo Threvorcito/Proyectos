@@ -1,0 +1,35 @@
+{# Teacher-facing dialog around the access card. Context: credentials (see QuickStudentCreationForm.created_credentials). #}
+{% if credentials %}
+  <div class="modal fade admin-dialog admin-dialog--teacher access-dialog" id="studentCredentialsModal" tabindex="-1" aria-labelledby="studentCredentialsModalTitle" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <span class="eyebrow">Estudiante creado</span>
+            <h2 class="modal-title" id="studentCredentialsModalTitle">Tarjeta de acceso de {{ credentials.name|title }}</h2>
+            <p class="access-dialog__note">Imprime la tarjeta y entrégasela. Los dibujos no se vuelven a mostrar; si se pierde, crea una clave nueva desde Mis alumnos.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body admin-dialog__body">
+          {% include 'dashboard/partials/student_access_card.html' with name=credentials.name visual_key=credentials.visual_key pin=credentials.password classroom_code=credentials.classroom_code %}
+          {% if credentials.parent_username %}
+            <div class="access-dialog__tutor">
+              <strong>Acceso del tutor (solo para ti)</strong>
+              <div>Usuario del tutor: <code>{{ credentials.parent_username }}</code></div>
+              <div>Contraseña del tutor: <code>{{ credentials.parent_password }}</code></div>
+              <small>Entrégalo al tutor. No se volverá a mostrar.</small>
+            </div>
+          {% endif %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-primary" data-access-card-print>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="7"/></svg>
+            Imprimir tarjeta
+          </button>
+          <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendido</button>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}

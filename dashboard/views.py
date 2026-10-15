@@ -869,9 +869,9 @@ def teacher_students(request):
             return permission_response
         create_form = QuickStudentCreationForm(request.POST)
         if create_form.is_valid():
-            user, password = create_form.save(teacher=teacher_profile)
-            messages.success(request, f"Alumno creado correctamente. Usuario: {user.username} / PIN: {password}")
-            add_parent_credentials_message(request, create_form)
+            create_form.save(teacher=teacher_profile)
+            stash_new_student_card(request, teacher_profile, create_form)
+            messages.success(request, 'Alumno creado correctamente. Entrega la tarjeta de acceso al estudiante.')
             return redirect('dashboard:teacher_students')
         students = get_teacher_students_for_page(teacher_profile)
         return render(request, 'dashboard/teacher_students.html', {
@@ -884,7 +884,39 @@ def teacher_students(request):
         })
     search_term = request.GET.get('q', '').strip()
     students = get_teacher_students_for_page(teacher_profile, page_number=request.GET.get('page'), search_term=search_term)
-    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students, 'page_obj': students, 'search_term': search_term, 'create_student_form': create_form})
+    return render(request, 'dashboard/teacher_students.html', {'teacher_profile': teacher_profile, 'students': students, 'page_obj': students, 'search_term': search_term, 'create_student_form': create_form, 'credentials': pop_new_student_card(request, teacher_profile)})
+
+
+NEW_STUDENT_CARD_SESSION_KEY = 'new_student_access_card'
+
+
+def stash_new_student_card(request, teacher_profile, form):
+    """Keep the new student's card data for exactly one following page view (PRG)."""
+    credentials = form.created_credentials
+    request.session[NEW_STUDENT_CARD_SESSION_KEY] = {
+        'teacher_profile_id': teacher_profile.pk,
+        'student_id': credentials['student_id'],
+        'key_version': StudentProfile.VISUAL_KEY_PAIR,
+        'name': credentials['name'],
+        'codes': [item['code'] for item in credentials['visual_key']],
+        'pin': credentials['password'],
+        'parent_username': credentials.get('parent_username', ''),
+        'parent_password': credentials.get('parent_password', ''),
+    }
+
+
+def pop_new_student_card(request, teacher_profile):
+    data = request.session.pop(NEW_STUDENT_CARD_SESSION_KEY, None)
+    if not data or data.get('teacher_profile_id') != teacher_profile.pk:
+        return None
+    return {
+        'name': data['name'],
+        'visual_key': StudentProfile.visual_key_items_for_codes(data['codes']),
+        'password': data['pin'],
+        'classroom_code': teacher_profile.classroom_code,
+        'parent_username': data.get('parent_username', ''),
+        'parent_password': data.get('parent_password', ''),
+    }
 
 
 def get_teacher_students_for_page(teacher_profile, edit_form=None, open_edit_student=None, page_number=None, search_term=''):

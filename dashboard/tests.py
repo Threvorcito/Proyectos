@@ -721,6 +721,42 @@ class TeacherPermissionEnforcementTests(TestCase):
         student = StudentProfile.objects.get(name='Alumno Modal')
         self.assertTrue(self.teacher.students.filter(pk=student.pk).exists())
 
+    def test_students_page_shows_new_student_card_once(self):
+        self.teacher.can_create_students = True
+        self.teacher.save(update_fields=['can_create_students'])
+
+        with patch('learning.models.secrets.SystemRandom.sample', return_value=['fish', 'house']):
+            response = self.client.post(reverse('dashboard:teacher_students'), data={
+                'name': 'lucia mora',
+                'grade': '1',
+                'school': 'public',
+                'modality': 'regular',
+                'zone': 'urban',
+                'reading_level': self.level.pk,
+            }, follow=True)
+
+        self.assertContains(response, 'Tarjeta de acceso de Lucia Mora')
+        self.assertContains(response, 'data-access-card')
+        self.assertContains(response, '>pez<')
+        self.assertContains(response, '>casa<')
+        self.assertContains(response, self.teacher.classroom_code)
+        self.assertNotIn('visual_key_hash', str(dict(self.client.session)))
+
+        again = self.client.get(reverse('dashboard:teacher_students'))
+        self.assertNotContains(again, 'data-access-card')
+        self.assertNotContains(again, 'Tarjeta de acceso de Lucia Mora')
+
+    def test_new_student_card_is_not_shown_to_another_teacher(self):
+        from dashboard.views import NEW_STUDENT_CARD_SESSION_KEY
+        session = self.client.session
+        session[NEW_STUDENT_CARD_SESSION_KEY] = {'teacher_profile_id': self.teacher.pk + 999, 'name': 'Otro', 'codes': ['dog', 'cat'], 'pin': '1234'}
+        session.save()
+
+        response = self.client.get(reverse('dashboard:teacher_students'))
+
+        self.assertNotContains(response, 'data-access-card')
+        self.assertNotIn(NEW_STUDENT_CARD_SESSION_KEY, self.client.session)
+
     def test_teacher_students_create_modal_reopens_with_errors(self):
         self.teacher.can_create_students = True
         self.teacher.save(update_fields=['can_create_students'])
@@ -2268,9 +2304,9 @@ class PlanTeacherAndTutorCredentialTests(TestCase):
         self.client.force_login(self.teacher_user)
         response = self.client.post(reverse('dashboard:teacher_students'), data=self.student_with_new_tutor('Alumno Con Tutora', 'laura.tutora@example.com'), follow=True)
 
-        text = ' '.join(str(message) for message in response.context['messages'])
-        match = re.search(r'Tutor: (\S+) / Contraseña: (\S+)', text)
-        self.assertIsNotNone(match, text)
+        text = response.content.decode()
+        match = re.search(r'Usuario del tutor: <code>([^<]+)</code>.*?Contraseña del tutor: <code>([^<]+)</code>', text, re.S)
+        self.assertIsNotNone(match)
         username, password = match.groups()
         self.assertEqual(CustomUser.objects.get(email='laura.tutora@example.com').username, username)
         self.assertIsNotNone(authenticate(username=username, password=password))

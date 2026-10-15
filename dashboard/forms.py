@@ -391,7 +391,8 @@ class QuickStudentCreationForm(forms.Form):
             'username': user.username,
             'password': password,
             'visual_key': visual_items,
-            'name': student.display_name,
+            'student_id': student.pk,
+            'name': student.display_name(),
             'classroom_code': code_owner.classroom_code if code_owner else '',
         }
         if self.created_parent_credentials:
