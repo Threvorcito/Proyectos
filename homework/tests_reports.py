@@ -100,6 +100,21 @@ class AssignmentReportTests(ReportTestCase):
         self.assertEqual(self.assignment.snepa_level, 'AS')
         self.assertIsNone(self.assignment.snepa_override_by)
 
+    def test_admin_override_is_audited_with_actor(self):
+        admin = self._user('admin1', 'ADMIN')
+        self.client.login(username='admin1', password='x')
+        self.client.post(reverse('homework:assignment_level_update', args=[self.assignment.pk]), {'level': 'AA'})
+        self.assignment.refresh_from_db()
+        self.assertEqual(self.assignment.snepa_level, 'AA')
+        log = AuditLog.objects.get(action='override_task_level')
+        self.assertEqual(log.metadata, {'level': 'AA', 'actor': admin.pk})
+
+    def test_unchanged_level_writes_no_audit(self):
+        self.client.login(username='duena', password='x')
+        self.client.post(reverse('homework:assignment_level_update', args=[self.assignment.pk]), {'level': 'AF'})
+        self.client.post(reverse('homework:assignment_level_update', args=[self.assignment.pk]), {'level': 'AF'})
+        self.assertEqual(AuditLog.objects.filter(action='override_task_level').count(), 1)
+
     def test_override_denied_without_permission(self):
         self.owner.can_view_student_reports = False
         self.owner.save()
@@ -149,6 +164,28 @@ class TaskReportTests(ReportTestCase):
         response = self.client.get(reverse('homework:task_report', args=[self.task.pk]))
         self.assertNotContains(response, self.url)
         self.assertNotContains(response, 'Aprendizaje')
+
+    def _add_assignments(self, count):
+        for index in range(count):
+            student = self._student(f'extra{self.task.assignments.count()}_{index}', f'Extra {index}')
+            self.owner.students.add(student)
+            assignment = TaskAssignment.objects.create(task=self.task, student=student, status='in_progress')
+            StepResult.objects.create(assignment=assignment, step=self.contesta, completed_at=timezone.now())
+
+    def _count_queries(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(reverse('homework:task_report', args=[self.task.pk]))
+        self.assertEqual(response.status_code, 200)
+        return len(queries)
+
+    def test_task_report_query_count_does_not_grow_with_assignments(self):
+        self.client.login(username='duena', password='x')
+        self._add_assignments(1)
+        small = self._count_queries()
+        self._add_assignments(7)
+        self.assertEqual(self._count_queries(), small)
 
     def test_other_teacher_gets_404(self):
         self._teacher('otra', can_assign_lesson_plans=True, can_view_student_reports=True)

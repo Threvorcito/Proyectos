@@ -4,8 +4,8 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404
-from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from dashboard.views import RESOURCE_PAGE_SIZE, is_admin_user, write_audit
@@ -15,7 +15,7 @@ from readings.services import MAX_READ_MS, MIN_READ_MS, PRACTICE_READS
 from .copy import FEEDBACK, INSTRUCTIONS
 from .forms import STEP_FORMS, AssignStudentsForm, SnepaOverrideForm, TaskForm
 from .models import SnepaLevel, Task, TaskAssignment, TaskStep
-from .permissions import can_manage_tasks, can_view_difficulty_data, can_view_task
+from .permissions import can_manage_tasks, can_view_difficulty_data, can_view_task, difficulty_viewer
 from .reports import assignment_detail, task_rows
 from .services import (
     TaskLocked,
@@ -307,10 +307,12 @@ def task_report(request, pk):
     if not (is_admin_user(request.user) or can_manage_tasks(request.user)):
         return _deny(request)
     task = _task_or_404(request, pk)
-    page_obj = Paginator(task_rows(task), RESOURCE_PAGE_SIZE).get_page(request.GET.get('page'))
-    rows = list(page_obj)
+    assignments = task.assignments.select_related('student').order_by('student__name', 'pk')
+    page_obj = Paginator(assignments, RESOURCE_PAGE_SIZE).get_page(request.GET.get('page'))
+    rows = task_rows(task, page_obj)
+    can_view = difficulty_viewer(request.user)
     for row in rows:
-        row['can_detail'] = can_view_difficulty_data(request.user, row['student'])
+        row['can_detail'] = can_view(row['student'])
         row['level'] = SnepaLevel(row['assignment'].snepa_level).label if row['can_detail'] and row['assignment'].snepa_level else ''
     return render(request, 'homework/teacher/task_report.html', {
         'task': task,
@@ -351,12 +353,14 @@ def assignment_level_update(request, assignment_pk):
     form = SnepaOverrideForm(request.POST)
     if form.is_valid():
         level = form.cleaned_data['level']
+        if level in (assignment.snepa_override, assignment.snepa_level):
+            return redirect('homework:assignment_report', assignment_pk=assignment.pk)
         teacher = getattr(request.user, 'teacher_profile', None)
         assignment.snepa_override = level
         assignment.snepa_override_by = teacher if level else None
         assignment.snepa_override_at = timezone.now() if level else None
         assignment.save(update_fields=['snepa_override', 'snepa_override_by', 'snepa_override_at'])
-        write_audit(request, 'override_task_level', assignment, {'level': level})
+        write_audit(request, 'override_task_level', assignment, {'level': level, 'actor': request.user.pk})
         messages.success(request, 'Nivel actualizado.')
     else:
         messages.error(request, 'Elige un nivel válido.')

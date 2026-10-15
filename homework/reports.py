@@ -1,23 +1,24 @@
 """Teacher-side read models for a task: progress rows and one child's difficulty detail."""
 from collections import Counter
 
-from .models import TaskStep
-from .services import step_states
+from .models import StepResult, TaskStep
 
 
-def task_rows(task) -> list[dict]:
-    assignments = task.assignments.select_related('student', 'task').order_by('student__name')
-    rows = []
-    for assignment in assignments:
-        states = step_states(assignment)
-        rows.append({
-            'assignment': assignment,
-            'student': assignment.student,
-            'status': assignment.get_status_display(),
-            'steps_done': sum(1 for state in states if state.done),
-            'steps_total': len(states),
-        })
-    return rows
+def task_rows(task, assignments) -> list[dict]:
+    """Rows for the given assignments (one page); a fixed number of queries however many there are."""
+    assignments = list(assignments)
+    steps = list(task.steps.all())
+    done_items: dict[tuple[int, int], set[int]] = {}
+    completed = StepResult.objects.filter(assignment__in=assignments, completed_at__isnull=False)
+    for assignment_id, step_id, item_index in completed.values_list('assignment_id', 'step_id', 'item_index'):
+        done_items.setdefault((assignment_id, step_id), set()).add(item_index)
+    return [{
+        'assignment': assignment,
+        'student': assignment.student,
+        'status': assignment.get_status_display(),
+        'steps_done': sum(1 for step in steps if len(done_items.get((assignment.pk, step.pk), ())) >= step.item_count),
+        'steps_total': len(steps),
+    } for assignment in assignments]
 
 
 def _prompt(step, item_index) -> str:

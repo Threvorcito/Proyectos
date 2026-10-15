@@ -23,3 +23,14 @@ def can_view_difficulty_data(user, student) -> bool:
         is_report_admin_user(user)
         or (teacher_has_permission(user, 'can_view_student_reports') and teacher_can_access_student(user, student))
     )
+
+
+def difficulty_viewer(user):
+    """Resolve the viewer once; the returned callable answers can_view_difficulty_data(user, student) per student."""
+    if is_report_admin_user(user):
+        return lambda student: True
+    teacher = getattr(user, 'teacher_profile', None)
+    if not (teacher_has_permission(user, 'can_view_student_reports') and is_teacher(user) and teacher is not None and teacher.is_active):
+        return lambda student: False
+    linked = set(teacher.students.values_list('pk', flat=True))
+    return lambda student: student.pk in linked
