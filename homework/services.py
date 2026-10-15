@@ -9,6 +9,7 @@ from django.utils import timezone
 from learning.models import StudentProfile, TeacherProfile
 
 from .evaluation import InvalidAnswer, evaluate
+from .levels import suggest_for_assignment
 from .models import DecodeHelpEvent, OmissionEvent, StepResult, Task, TaskAssignment, TaskStep
 
 
@@ -294,7 +295,8 @@ def complete_assignment(assignment: TaskAssignment) -> int:
         locked.status = TaskAssignment.Status.COMPLETED
         locked.completed_at = now
         locked.points_awarded = TASK_POINTS
-        locked.save(update_fields=['status', 'completed_at', 'points_awarded'])
+        locked.snepa_suggested = suggest_for_assignment(locked)
+        locked.save(update_fields=['status', 'completed_at', 'points_awarded', 'snepa_suggested'])
         StudentProfile.objects.filter(pk=student.pk).update(
             points=F('points') + TASK_POINTS,
             stars=F('stars') + TASK_STARS,
