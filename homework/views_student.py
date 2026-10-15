@@ -69,13 +69,13 @@ def _ejemplo_context(step, *, preview=False):
         row = {
             'index': index,
             'prompt': exercise['prompt'],
-            'options': [{'index': i, 'text': text, 'sounds': text.isalpha()} for i, text in order],
+            'options': [{'index': i, 'text': text} for i, text in order],
         }
         if preview:
             row['answer_index'] = exercise['options'].index(exercise['answer'])
         exercises.append(row)
     words = [*payload['example_steps'], *(e['prompt'] for e in payload['exercises'])]
-    words += [o['text'] for e in exercises for o in e['options'] if o['sounds']]
+    words += [o['text'] for e in exercises for o in e['options']]
     return {'lines': payload['example_steps'], 'exercises': exercises, 'decode_text': ' '.join(words)}
 
 
@@ -100,6 +100,7 @@ def step_context(step, *, preview=False):
         'unit': target.unit,
         'tiles': build_tiles(units, target.unit, seed=step.task_id * 1000 + step.pk),
         'listen_text': target.full_text,
+        'decode_text': f'{target.before} {target.after}'.strip(),  # the words around the blank, never the answer
     }
     if preview:
         sounds = decode_word(target.text)['letters'] if target.unit == 'letter' else []
@@ -134,10 +135,10 @@ def student_task(request, student, assignment_pk):
 def student_step(request, student, assignment_pk, order):
     assignment = _assignment_for(student, assignment_pk)
     step = get_object_or_404(assignment.task.steps, order=order)
-    start_assignment(assignment)
     current = next((state for state in step_states(assignment) if state.current), None)
     if current is None or current.step.pk != step.pk:
         return redirect(_path_url(assignment))
+    start_assignment(assignment)
     kwargs = {'assignment_pk': assignment.pk, 'order': step.order}
     return render(request, 'homework/student/step.html', {
         **_practice_context(student, step),

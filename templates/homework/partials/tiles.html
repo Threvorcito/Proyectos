@@ -4,9 +4,9 @@ The target units are rendered only in the teacher preview (`preview`), never on 
 {% endcomment %}{% with pk=step.pk|stringformat:'s' %}{% with units_id='build-units-'|add:pk %}
 <div class="task-build" data-build data-build-unit="{{ build.unit }}"{% if preview %} data-build-units="{{ units_id }}" data-build-model="{{ build.preview_model }}"{% endif %}>
   <p class="task-build__line">
-    {% if build.before %}<span class="task-build__context" data-build-before>{{ build.before }}</span>{% endif %}
+    {% if build.before %}<span class="task-build__context" data-decodable data-build-before>{{ build.before }}</span>{% endif %}
     <span class="task-build__row" data-build-row role="group" aria-label="Tu respuesta"></span>
-    {% if build.after %}<span class="task-build__context" data-build-after>{{ build.after }}</span>{% endif %}
+    {% if build.after %}<span class="task-build__context" data-decodable data-build-after>{{ build.after }}</span>{% endif %}
   </p>
   <ul class="task-build__tiles" data-build-tiles aria-label="Fichas para armar">
     {% for tile in build.tiles %}

@@ -2,7 +2,8 @@
  * Tile builder (arma and contesta "build"): the child taps (or drags) tiles into the answer row and presses "Revisar".
  *
  * - Tap a tile in the pool: it goes to the row (into the 👀 hole when there is one). Tap a placed tile: it goes back.
- * - Drag also works (pointer events, touch included); tapping always works, with keyboard too.
+ * - Drag also works (pointer events); tapping always works, with keyboard too. Tiles are touch-action: pan-y so a swipe
+ *   can still scroll to "Revisar"; on touch a mostly horizontal drag moves a tile, a vertical swipe scrolls instead.
  * - The step's player (task-player.js) is reached through the step root, never through window.TaskPlayer:
  *   the teacher preview stacks several steps on one page.
  * - Outcome 'try_again' + hint.kind 'omission': a 👀 hole marks the missing place and its sound is played

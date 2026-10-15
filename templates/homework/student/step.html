@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}{{ assignment.task.title }}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-6">{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endif %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-7">{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endif %}{% endblock %}
 {% block content %}
 <div class="task-page">
   <div class="container py-4 py-md-5">
@@ -29,4 +29,4 @@
 {% include 'homework/partials/decode_overlay.html' %}
 {% endblock %}
 {% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}
-{% block extra_js %}{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='js' %}{% endif %}<script src="{% static 'js/homework/decode.js' %}?v=20261015-tasks-4"></script><script src="{% static 'js/homework/task-player.js' %}?v=20261015-tasks-8"></script><script src="{% static 'js/homework/tiles.js' %}?v=20261015-tasks-6"></script>{% endblock %}
+{% block extra_js %}{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='js' %}{% endif %}<script src="{% static 'js/homework/decode.js' %}?v=20261015-tasks-4"></script><script src="{% static 'js/homework/task-player.js' %}?v=20261015-tasks-9"></script><script src="{% static 'js/homework/tiles.js' %}?v=20261015-tasks-7"></script>{% endblock %}

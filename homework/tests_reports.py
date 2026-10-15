@@ -81,6 +81,19 @@ class AssignmentReportTests(ReportTestCase):
         self.client.login(username='otra', password='x')
         self.assertContains(self.client.get(self.url), 'leyeron')
 
+    def test_back_link_goes_to_student_report_when_viewer_cannot_see_the_task(self):
+        other = self._teacher('otra', can_view_student_reports=True)
+        other.students.add(self.ana)
+        self.client.login(username='otra', password='x')
+        html = self.client.get(self.url).content.decode()
+        self.assertNotIn(reverse('homework:task_report', args=[self.task.pk]), html)
+        self.assertIn(reverse('dashboard:student_report', args=[self.ana.pk]), html)
+
+    def test_back_link_goes_to_task_report_for_the_owner(self):
+        self.client.login(username='duena', password='x')
+        html = self.client.get(self.url).content.decode()
+        self.assertIn(reverse('homework:task_report', args=[self.task.pk]), html)
+
     def test_admin_sees_detail(self):
         self._user('admin1', 'ADMIN')
         self.client.login(username='admin1', password='x')

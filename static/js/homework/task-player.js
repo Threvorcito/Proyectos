@@ -12,8 +12,6 @@
     } catch (error) {
       copy = {};
     }
-    let busy = false;
-
     const csrfToken = () => document.cookie.split('; ').find((row) => row.startsWith('csrftoken='))?.split('=')[1] || '';
 
     const post = async (url, body) => {
@@ -84,6 +82,18 @@
       });
     };
 
+    // Network failure or 5xx: neutral note, never "Casi…" (the answer may well have been right) and no Lumi cheer/encourage.
+    const showSaveFailed = () => {
+      if (!feedbackBox) return;
+      clearMarks();
+      const text = copy.save_failed || '';
+      feedbackBox.hidden = false;
+      feedbackBox.classList.remove('is-good', 'is-try', 'is-model');
+      if (feedbackText) feedbackText.textContent = text;
+      if (nextLink) nextLink.hidden = true;
+      window.AppSpeech?.speak(text);
+    };
+
     const showFeedback = (outcome) => {
       if (!feedbackBox || !outcome) return;
       const good = outcome.status === 'correct' || outcome.status === 'done';
@@ -108,14 +118,20 @@
       window.Mascot?.react(good ? 'cheer' : 'encourage', {say: text});
     };
 
-    const send = async (url, body) => {
+    // Calls run one after another: a second one waits its turn instead of being dropped.
+    let chain = Promise.resolve();
+    const send = (url, body) => {
       if (preview) {
         // Preview never saves: show how the feedback looks and stop.
         showFeedback({status: 'correct', step_done: false});
-        return {status: 'correct', step_done: false};
+        return Promise.resolve({status: 'correct', step_done: false});
       }
-      if (busy) return null;
-      busy = true;
+      const run = chain.then(() => transmit(url, body));
+      chain = run.catch(() => {});
+      return run;
+    };
+
+    const transmit = async (url, body) => {
       lock(true);
       try {
         const {ok, status, data} = await post(url, body);
@@ -127,14 +143,12 @@
           return outcome;
         }
         lock(false);
-        showFeedback({status: 'try_again', step_done: false});
+        showSaveFailed();
         return null;
       } catch (error) {
         lock(false);
-        showFeedback({status: 'try_again', step_done: false});
+        showSaveFailed();
         return null;
-      } finally {
-        busy = false;
       }
     };
 
@@ -160,9 +174,12 @@
       if (root.dataset.stepType !== 'palabras') return;
       const card = event.target.closest('[data-palabra]');
       if (!card) return;
-      card.classList.add('is-done');
-      card.querySelector('[data-palabra-star]')?.removeAttribute('hidden');
-      api.done(Number(card.dataset.palabra));
+      // The star is earned once the server has the word; on a failure the card stays open so the child can try again.
+      api.done(Number(card.dataset.palabra)).then((outcome) => {
+        if (!outcome) return;
+        card.classList.add('is-done');
+        card.querySelector('[data-palabra-star]')?.removeAttribute('hidden');
+      });
     });
 
     // The reading practice (readings/partials/practice.html) announces the end of its 3-read cycle.

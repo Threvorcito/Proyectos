@@ -160,6 +160,26 @@ class DecodableChildTextTests(StudentTaskTestCase):
         html = self.client.get(self.step_url(2)).content.decode()
         self.assertIn('data-decode-option="zanahoria"', html)
 
+    def test_arma_context_around_the_blank_is_decodable(self):
+        task = self._task(title='Arma')
+        append_step(task, 'arma', {'text': 'El [ratón] come queso', 'unit': 'syllable'})
+        assignment = TaskAssignment.objects.create(task=task, student=self.ana)
+        html = self.client.get(self.step_url(1, assignment=assignment)).content.decode()
+        self.assertIn('class="task-build__context" data-decodable data-build-before', html)
+        self.assertIn('class="task-build__context" data-decodable data-build-after', html)
+        self.assertIn('id="decode-map-', html)
+        self.assertIn('"queso"', html)
+        self.assertNotIn('"rat', html)  # the hidden answer is not handed over in a map
+
+    def test_multi_word_options_are_decodable_per_word(self):
+        task = self._task(title='Frases')
+        append_step(task, 'contesta', {'question': '¿Qué hace?', 'kind': 'choice', 'options': ['come queso', 'duerme'], 'answer': 'duerme'})
+        assignment = TaskAssignment.objects.create(task=task, student=self.ana)
+        html = self.client.get(self.step_url(1, assignment=assignment)).content.decode()
+        self.assertIn('data-decode-option="come"', html)
+        self.assertIn('data-decode-option="queso"', html)
+        self.assertIn('"queso"', html)
+
     def test_mira_step_is_decodable(self):
         html = self.client.get(self.step_url(1)).content.decode()
         self.assertIn('data-decodable', html)

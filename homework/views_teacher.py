@@ -339,6 +339,7 @@ def assignment_report(request, assignment_pk):
         'assignment': assignment,
         'task': assignment.task,
         'student': assignment.student,
+        'can_view_task': can_view_task(request.user, assignment.task),
         'detail': assignment_detail(assignment),
         'suggested_label': suggested,
         'final_label': final,

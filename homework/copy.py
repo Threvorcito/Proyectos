@@ -15,6 +15,7 @@ FEEDBACK = {
     'correct': '¡Muy bien!',
     'try_again': 'Casi. Escucha otra vez y vuelve a intentar.',
     'omission': 'Aquí falta un sonido. ¡Escúchalo y búscalo!',
+    'save_failed': 'No se pudo guardar. Probemos otra vez.',
     'modeled': 'Mira, así es: {answer}. ¡Sigamos!',
     'task_done': '¡Terminaste tu tarea! ¡Lo hiciste muy bien!',
 }

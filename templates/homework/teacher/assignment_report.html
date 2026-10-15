@@ -27,7 +27,7 @@
             <p>{{ assignment.get_status_display }}. Datos confidenciales: solo los ve el equipo docente autorizado.</p>
           </div>
           <div class="lesson-report__actions">
-            <a class="btn btn-outline-primary lesson-report__back" href="{% url 'homework:task_report' task.pk %}">Volver al reporte</a>
+            <a class="btn btn-outline-primary lesson-report__back" href="{% if can_view_task %}{% url 'homework:task_report' task.pk %}{% else %}{% url 'dashboard:student_report' student.pk %}{% endif %}">Volver al reporte</a>
           </div>
         </div>
 

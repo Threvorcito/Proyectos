@@ -91,12 +91,30 @@ class PathAndStepPageTests(StudentTaskTestCase):
         response = self.client.get(self.step_url(2))
         self.assertRedirects(response, self.path_url(), fetch_redirect_response=False)
 
+    def test_future_step_get_does_not_start_the_assignment(self):
+        self.client.get(self.step_url(2))
+        self.assignment.refresh_from_db()
+        self.assertIsNone(self.assignment.started_at)
+
     def test_contesta_step_renders_one_button_per_option(self):
         self.post(1, 'step_done', {'item_index': 0})
         response = self.client.get(self.step_url(2))
         self.assertContains(response, 'data-task-choice=', count=2)
         self.assertContains(response, 'piedra')
         self.assertNotContains(response, 'incorrecto')
+
+    def test_page_carries_neutral_save_failed_copy(self):
+        html = self.client.get(self.step_url(1)).content.decode()
+        self.assertIn('No se pudo guardar. Probemos otra vez.', html)
+
+    def test_player_script_queues_calls_and_stars_only_after_the_server_answers(self):
+        from django.contrib.staticfiles import finders
+
+        source = open(finders.find('js/homework/task-player.js'), encoding='utf-8').read()
+        self.assertNotIn('if (busy) return null', source)
+        self.assertIn('chain.then', source)
+        self.assertIn('showSaveFailed()', source)
+        self.assertLess(source.index("api.done(Number(card.dataset.palabra))"), source.index("card.classList.add('is-done')"))
 
     def test_hecho_flag_makes_lumi_cheer(self):
         self.assertContains(self.client.get(self.path_url() + '?hecho=1'), 'data-mascot-on-load="cheer"')

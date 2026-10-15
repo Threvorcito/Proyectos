@@ -303,7 +303,7 @@
   font: inherit;
   font-size: 1.5rem;
   font-weight: 700;
-  touch-action: none;
+  touch-action: pan-y; /* a swipe scrolls the page; the drag sets none on the tile while it moves */
   cursor: pointer;
   user-select: none;
 }

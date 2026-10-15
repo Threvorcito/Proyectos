@@ -9,7 +9,7 @@
       <li class="task-option">
         <button class="task-option__choice" type="button" data-task-choice="{{ forloop.counter0 }}">{{ option }}</button>
         {% include 'partials/listen_button.html' with text=option label='Escuchar' %}
-        {% if option|wordcount == 1 %}{% decode_map option %}<button class="decode-option" type="button" data-decode-option="{{ option|lower }}" aria-label="Ver los sonidos de {{ option }}">Sonidos</button>{% endif %}
+        {% include 'homework/partials/option_sounds.html' with text=option %}
         {% if preview and option == step.payload.answer %}<span class="task-option__key">✓ correcta</span>{% endif %}
       </li>
     {% endfor %}

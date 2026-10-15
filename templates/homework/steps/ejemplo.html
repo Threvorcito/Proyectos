@@ -23,7 +23,7 @@
             <li class="task-option">
               <button class="task-option__choice" type="button" data-task-choice="{{ option.index }}" data-task-item="{{ exercise.index }}">{{ option.text }}</button>
               {% include 'partials/listen_button.html' with text=option.text label='Escuchar' %}
-              {% if option.sounds %}<button class="decode-option" type="button" data-decode-option="{{ option.text|lower }}" aria-label="Ver los sonidos de {{ option.text }}">Sonidos</button>{% endif %}
+              {% include 'homework/partials/option_sounds.html' with text=option.text %}
               {% if preview and option.index == exercise.answer_index %}<span class="task-option__key">✓ correcta</span>{% endif %}
             </li>
           {% endfor %}

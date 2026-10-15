@@ -1,4 +1,5 @@
-<div class="task-arma">
+{% load decoding %}<div class="task-arma">
+  {% if build.decode_text %}{% decode_map build.decode_text %}{% endif %}
   {% include 'partials/listen_button.html' with text=build.listen_text label='Escuchar' %}
   {% include 'homework/partials/tiles.html' %}
 </div>
