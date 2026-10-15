@@ -10,11 +10,14 @@ from django.views.decorators.http import require_POST
 from core.json_payload import parse_json_object
 
 from .copy import FEEDBACK, INSTRUCTIONS
-from .evaluation import InvalidAnswer
+from .decoding import decode_word
+from .evaluation import InvalidAnswer, is_build_step
 from .models import StepResult, TaskAssignment, TaskStep
+from .payloads import build_target
 from readings.services import MAX_READ_MS, MIN_READ_MS, PRACTICE_READS
 
 from .services import ItemClosed, mark_item_done, record_decode_help, start_assignment, step_states, submit_answer
+from .writing import build_tiles, split_units
 
 
 def _student_only(view):
@@ -43,9 +46,41 @@ def _path_url(assignment, *, done=False):
 
 
 def _instruction_key(step):
+    if step.step_type == TaskStep.StepType.ARMA and '[' in step.payload.get('text', ''):
+        return 'arma_blank'
     if step.step_type == TaskStep.StepType.CONTESTA and step.payload.get('kind') == 'build':
         return 'contesta_build'
     return step.step_type
+
+
+def step_context(step, *, preview=False):
+    """Per-step render context shared by the child page and the teacher preview.
+
+    Build steps get their tiles. The shuffle is seeded from the task and step ids (the
+    preview has no assignment), so a reload never reshuffles and the teacher sees the child's order.
+    ``preview`` also hands the target units to the page so the preview can mimic the feedback;
+    the child page never receives them.
+    """
+    if not is_build_step(step):
+        return {}
+    target = build_target(step.step_type, step.payload)
+    units = split_units(target.text, target.unit)
+    build = {
+        'before': target.before,
+        'after': target.after,
+        'has_blank': bool(target.before or target.after),
+        'unit': target.unit,
+        'tiles': build_tiles(units, target.unit, seed=step.task_id * 1000 + step.pk),
+        'listen_text': target.full_text,
+    }
+    if preview:
+        sounds = decode_word(target.text)['letters'] if target.unit == 'letter' else []
+        build['preview_units'] = [
+            {'text': unit, 'say': (sounds[i]['say'] if len(sounds) == len(units) and sounds[i]['say'] else unit)}
+            for i, unit in enumerate(units)
+        ]
+        build['preview_model'] = target.full_text
+    return {'build': build}
 
 
 @_student_only
@@ -74,6 +109,7 @@ def student_step(request, student, assignment_pk, order):
     kwargs = {'assignment_pk': assignment.pk, 'order': step.order}
     return render(request, 'homework/student/step.html', {
         **_practice_context(student, step),
+        **step_context(step),
         'step': step,
         'assignment': assignment,
         'instruction': INSTRUCTIONS[_instruction_key(step)],

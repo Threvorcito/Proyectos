@@ -25,7 +25,7 @@ from .services import (
     move_step,
     update_step,
 )
-from .views_student import _instruction_key
+from .views_student import _instruction_key, step_context
 
 DENIED = 'No tienes permiso para gestionar tareas.'
 LOCKED = 'Un alumno ya empezó esta tarea. Para cambiar los pasos, duplícala.'
@@ -101,7 +101,7 @@ def task_update(request, pk):
 
 def _summary(step):
     payload = step.payload
-    return payload.get('question') or step.text or ''
+    return payload.get('question') or payload.get('text') or step.text or ''
 
 
 @login_required
@@ -138,6 +138,7 @@ def task_preview(request, pk):
             'qid': f'task-question-{step.order}',
             'instruction_id': f'task-step-instruction-{step.order}',
             'hide_practice': is_lectura and shown_practice,
+            **step_context(step, preview=True),
         })
         shown_practice = shown_practice or is_lectura
     return render(request, 'homework/teacher/task_preview.html', {

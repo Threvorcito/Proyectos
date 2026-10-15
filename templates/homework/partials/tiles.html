@@ -1,0 +1,19 @@
+{% comment %}
+Tile builder for arma and contesta-build steps (static/js/homework/tiles.js). Needs `build` from views_student.step_context.
+The target units are rendered only in the teacher preview (`preview`), never on the child page.
+{% endcomment %}{% with pk=step.pk|stringformat:'s' %}{% with units_id='build-units-'|add:pk %}
+<div class="task-build" data-build data-build-unit="{{ build.unit }}"{% if preview %} data-build-units="{{ units_id }}" data-build-model="{{ build.preview_model }}"{% endif %}>
+  <p class="task-build__line">
+    {% if build.before %}<span class="task-build__context" data-build-before>{{ build.before }}</span>{% endif %}
+    <span class="task-build__row" data-build-row role="group" aria-label="Tu respuesta"></span>
+    {% if build.after %}<span class="task-build__context" data-build-after>{{ build.after }}</span>{% endif %}
+  </p>
+  <ul class="task-build__tiles" data-build-tiles aria-label="Fichas para armar">
+    {% for tile in build.tiles %}
+      <li class="task-build__slot" data-tile-slot><button class="task-tile" type="button" data-tile="{{ tile }}">{{ tile }}</button></li>
+    {% endfor %}
+  </ul>
+  <button class="task-go task-go--ready" type="button" data-build-check disabled>Revisar</button>
+  {% if preview %}{{ build.preview_units|json_script:units_id }}{% endif %}
+</div>
+{% endwith %}{% endwith %}

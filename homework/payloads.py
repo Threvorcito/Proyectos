@@ -1,7 +1,10 @@
 """Typed JSON payloads for homework steps: validation and normalization."""
 import re
+from typing import NamedTuple
 
 from django.core.exceptions import ValidationError
+
+from .writing import BUILD_MAX_UNITS, split_units
 
 MAX_TEXT = 255
 MAX_LECTURA_TEXT = 5000
@@ -66,6 +69,39 @@ def parse_blank(text: str) -> tuple[str, str, str]:
     return text[:match.start()], blank, text[match.end():]
 
 
+class BuildTarget(NamedTuple):
+    """What the child builds with tiles: ``text`` between ``before`` and ``after`` (the rest of a sentence)."""
+
+    before: str
+    text: str
+    after: str
+    unit: str
+
+    @property
+    def full_text(self) -> str:
+        return f'{self.before}{self.text}{self.after}'
+
+
+def _build_parts(text: str, unit: str) -> BuildTarget:
+    before, blank, after = parse_blank(text)
+    target = BuildTarget(before, blank or text, after, unit) if blank else BuildTarget('', text, '', unit)
+    try:
+        count = len(split_units(target.text, unit))
+    except ValueError:
+        raise ValidationError('Para letras o sílabas usa una sola palabra.')
+    if not 1 <= count <= BUILD_MAX_UNITS:
+        raise ValidationError(f'Usa entre 1 y {BUILD_MAX_UNITS} piezas para armar.')
+    return target
+
+
+def build_target(step_type: str, payload: dict) -> BuildTarget:
+    """The build target of an arma step, or of a contesta step with ``kind == 'build'`` (a stored, valid payload)."""
+    if step_type == 'contesta':
+        answer = payload['answer']
+        return _build_parts(answer, 'word' if ' ' in answer.strip() else 'syllable')
+    return _build_parts(payload['text'], payload['unit'])
+
+
 def _clean_mira(data):
     return {'question': _text(data.get('question'), 'Pregunta')}
 
@@ -88,6 +124,10 @@ def _clean_contesta(data):
     question = _text(data.get('question'), 'Pregunta')
     answer = _text(data.get('answer'), 'Respuesta')
     options = _options(data.get('options', []), answer, 'Opciones') if kind == 'choice' else []
+    if kind == 'build':
+        if '[' in answer or ']' in answer:
+            raise ValidationError('La respuesta no lleva corchetes.')
+        _build_parts(answer, 'word' if ' ' in answer else 'syllable')
     return {'question': question, 'kind': kind, 'options': options, 'answer': answer}
 
 
@@ -96,7 +136,7 @@ def _clean_arma(data):
     if unit not in ARMA_UNITS:
         raise ValidationError('Unidad no válida.')
     text = _text(data.get('text'), 'Texto')
-    parse_blank(text)
+    _build_parts(text, unit)
     return {'text': text, 'unit': unit}
 
 

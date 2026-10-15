@@ -9,6 +9,7 @@ BUILD_MAX_UNITS = 12
 CONFUSABLE = {'b': 'd', 'd': 'b', 'p': 'q', 'q': 'p', 'm': 'n', 'n': 'm', 'u': 'n'}
 FILLER_WORDS = ('el', 'la', 'los', 'un', 'una')
 _LETTER_POOL = 'bdpqmnaeiou'
+_SYLLABLE_POOL = ('ma', 'sa', 'la', 'ta', 'pa', 'na', 'lo', 'so', 'to', 'ne')
 _VOWEL_CYCLE = {'a': 'e', 'e': 'i', 'i': 'o', 'o': 'u', 'u': 'a'}
 _PLAIN = str.maketrans('áéíóú', 'aeiou')
 MISSING_UNIT_MAX = 30  # matches the model field cap
@@ -55,7 +56,7 @@ def _candidates(units, unit):
             if not shifted:
                 break
             yield shifted
-    yield from FILLER_WORDS if unit == 'word' else _LETTER_POOL
+    yield from {'word': FILLER_WORDS, 'syllable': _SYLLABLE_POOL}.get(unit, _LETTER_POOL)
 
 
 def build_tiles(units, unit, seed):

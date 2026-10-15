@@ -3,6 +3,7 @@
   <p class="task-question" id="{{ qid }}" data-decodable>{{ question }}</p>
   {% decode_map question %}
   {% include 'partials/listen_button.html' with target='#'|add:qid %}
+  {% if build %}{% include 'homework/partials/tiles.html' %}{% else %}
   <ul class="task-options">
     {% for option in step.payload.options %}
       <li class="task-option">
@@ -13,5 +14,6 @@
       </li>
     {% endfor %}
   </ul>
+  {% endif %}
 </div>
 {% endwith %}

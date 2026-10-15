@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}{{ assignment.task.title }}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-4">{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endif %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-5">{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endif %}{% endblock %}
 {% block content %}
 <div class="task-page">
   <div class="container py-4 py-md-5">
@@ -14,7 +14,8 @@
       {% if step.step_type == 'mira' %}{% include 'homework/steps/mira.html' %}
       {% elif step.step_type == 'lectura' %}{% include 'homework/steps/lectura.html' %}
       {% elif step.step_type == 'palabras' %}{% include 'homework/steps/palabras.html' %}
-      {% elif step.step_type == 'contesta' %}{% include 'homework/steps/contesta.html' %}{% endif %}
+      {% elif step.step_type == 'contesta' %}{% include 'homework/steps/contesta.html' %}
+      {% elif step.step_type == 'arma' %}{% include 'homework/steps/arma.html' %}{% endif %}
 
       <div class="task-feedback" data-task-feedback role="status" aria-live="polite" hidden>
         <p class="task-feedback__text" data-task-feedback-text></p>
@@ -27,4 +28,4 @@
 {% include 'homework/partials/decode_overlay.html' %}
 {% endblock %}
 {% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}
-{% block extra_js %}{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='js' %}{% endif %}<script src="{% static 'js/homework/decode.js' %}?v=20261015-tasks-4"></script><script src="{% static 'js/homework/task-player.js' %}?v=20261015-tasks-4"></script>{% endblock %}
+{% block extra_js %}{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='js' %}{% endif %}<script src="{% static 'js/homework/decode.js' %}?v=20261015-tasks-4"></script><script src="{% static 'js/homework/task-player.js' %}?v=20261015-tasks-5"></script><script src="{% static 'js/homework/tiles.js' %}?v=20261015-tasks-5"></script>{% endblock %}

@@ -9,7 +9,7 @@ from readings.models import Reading
 
 from .decoding import propose_hard_words
 from .models import Task, TaskStep
-from .payloads import clean_payload
+from .payloads import ARMA_UNITS, clean_payload
 from .services import group_students
 
 
@@ -179,15 +179,15 @@ class ContestaStepForm(StepForm):
     question = forms.CharField(
         label='Pregunta', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control'})
     )
-    # Task 12 adds ('build', ...) once the tile builder exists.
     kind = forms.ChoiceField(
         label='Tipo de respuesta',
-        choices=[('choice', 'Elegir una opción')],
+        choices=[('choice', 'Elegir una opción'), ('build', 'Armar la respuesta con fichas')],
         initial='choice',
         widget=forms.RadioSelect,
     )
     options = forms.CharField(
-        label='Opciones (una opción por línea)',
+        label='Opciones (una opción por línea; solo si eliges una opción)',
+        required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
     )
     answer = forms.CharField(
@@ -247,10 +247,32 @@ class PalabrasStepForm(StepForm):
         return {'words': '\n'.join(step.payload.get('words', []))}
 
 
-# Tasks 12 and 13 register arma and ejemplo here.
+ARMA_UNIT_LABELS = {'letter': 'Letras', 'syllable': 'Sílabas', 'word': 'Palabras'}
+
+
+class ArmaStepForm(StepForm):
+    step_type = 'arma'
+    text = forms.CharField(
+        label='Palabra u oración (escribe [entre corchetes] lo que el niño debe completar)',
+        max_length=255,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+    unit = forms.ChoiceField(
+        label='Fichas de',
+        choices=[(unit, ARMA_UNIT_LABELS[unit]) for unit in ARMA_UNITS],
+        initial='syllable',
+        widget=forms.RadioSelect,
+    )
+
+    def to_payload(self):
+        return {'text': self.cleaned_data['text'], 'unit': self.cleaned_data['unit']}
+
+
+# Task 13 registers ejemplo here.
 STEP_FORMS: dict[str, type[StepForm]] = {
     'mira': MiraStepForm,
     'lectura': LecturaStepForm,
     'palabras': PalabrasStepForm,
     'contesta': ContestaStepForm,
+    'arma': ArmaStepForm,
 }

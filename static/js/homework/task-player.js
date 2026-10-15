@@ -38,7 +38,10 @@
       });
     };
 
+    const isOmission = (outcome) => outcome.status === 'try_again' && outcome.hint?.kind === 'omission';
+
     const messageFor = (outcome) => {
+      if (isOmission(outcome)) return copy.omission || '';
       if (outcome.status === 'try_again') return copy.try_again || '';
       if (outcome.status === 'modeled') return (copy.modeled || '').replace('{answer}', outcome.model_answer || '');
       return copy.correct || '';
@@ -48,11 +51,11 @@
       root.querySelectorAll('.is-hint, .is-model').forEach((node) => node.classList.remove('is-hint', 'is-model'));
     };
 
-    // Hint = audio + highlight: the question lights up; a modeled answer marks the right option.
+    // Hint = audio + highlight: the question (or the tile row) lights up; a modeled answer marks the right option.
     const highlight = (outcome) => {
       clearMarks();
       if (outcome.status === 'try_again') {
-        root.querySelector('.task-question')?.classList.add('is-hint');
+        (root.querySelector('.task-question') || root.querySelector('[data-build-row]'))?.classList.add('is-hint');
       } else if (outcome.status === 'modeled') {
         root.querySelectorAll('[data-task-choice]').forEach((button) => {
           if (button.textContent.trim() === outcome.model_answer) button.classList.add('is-model');
@@ -75,7 +78,12 @@
         nextLink.hidden = !outcome.step_done;
         if (outcome.step_done && outcome.next_url) nextLink.href = outcome.next_url;
       }
-      window.AppSpeech?.speak(outcome.status === 'try_again' && outcome.hint?.say ? `${text} ${outcome.hint.say}` : text);
+      if (isOmission(outcome) && window.AppSpeech?.speakSequence) {
+        // The missing sound is its own utterance, said slowly: it is the hint (never the letter name).
+        window.AppSpeech.speakSequence([text, outcome.hint.say], {rate: 0.7});
+      } else {
+        window.AppSpeech?.speak(outcome.status === 'try_again' && outcome.hint?.say ? `${text} ${outcome.hint.say}` : text);
+      }
       window.Mascot?.react(good ? 'cheer' : 'encourage', {say: text});
     };
 
@@ -114,7 +122,8 @@
       answer: (itemIndex, body = {}) => send(root.dataset.answerUrl, {item_index: itemIndex, ...body}),
       showFeedback,
     };
-    window.TaskPlayer = api; // preview stacks steps: code that needs this step's player reaches it via its root
+    root.taskPlayer = api; // preview stacks steps: code that needs this step's player reaches it via its root
+    window.TaskPlayer = api;
 
     // Asking for help is logged for the teacher (never in preview, never on palabras: there tapping is the exercise).
     root.addEventListener('decode:help', (event) => {
