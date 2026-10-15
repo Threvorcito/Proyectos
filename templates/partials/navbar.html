@@ -1,6 +1,9 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top site-navbar">
   <div class="container">
-    <a class="navbar-brand brand-mark" href="{% url 'core:home' %}">{{ site_name }}</a>
+    <a class="navbar-brand brand-mark" href="{% url 'core:home' %}">
+      {% load static %}<img class="brand-mark__logo" src="{% static 'img/brand/mark-96.webp' %}" width="44" height="44" alt="">
+      <span>{{ site_name }}</span>
+    </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
       <span class="navbar-toggler-icon"></span>
     </button>

@@ -1,8 +1,11 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block extra_css %}
 <style>
   .kid-access { background: #fbf6ec; min-height: 78vh; }
   .kid-access__shell { margin: 0 auto; max-width: 1040px; padding: 2rem 1rem 4rem; }
+  .kid-access__brand { align-items: center; color: #0b3d6b; display: flex; font-weight: 800; gap: .6rem; margin: 0 0 1rem; }
+  .kid-access__brand img { border-radius: 10px; }
   .kid-access__header { align-items: center; display: flex; gap: 1rem; justify-content: space-between; margin-bottom: 1.5rem; }
   .kid-access__header h1 { color: #26303d; font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 800; margin: 0; }
   .kid-access__header p { color: #4a5565; font-size: 1.2rem; margin: .35rem 0 0; }
@@ -60,6 +63,7 @@
 {% block content %}
 <section class="kid-access">
   <div class="kid-access__shell">
+    <p class="kid-access__brand"><img src="{% static 'img/brand/mark-96.webp' %}" width="40" height="40" alt=""><span>Lectura sin Límites</span></p>
     {% block kid_access_content %}{% endblock %}
   </div>
 </section>

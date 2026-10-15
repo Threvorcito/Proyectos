@@ -5348,3 +5348,10 @@ a { text-decoration: none; }
 /* Voice chooser in the reading settings panel: 48px touch targets. */
 .accessibility-voice .form-select,
 .accessibility-voice .btn { font-size: 1.05rem; min-height: 48px; }
+
+/* Brand logo marks */
+.brand-mark { align-items: center; display: inline-flex; gap: .6rem; }
+.brand-mark__logo { border-radius: 10px; flex: 0 0 auto; height: 44px; width: 44px; }
+.admin-brand__mark { background: #fff; overflow: hidden; }
+.admin-brand__mark img { display: block; height: 100%; width: 100%; }
+@media (max-width: 400px) { .brand-mark__logo { height: 36px; width: 36px; } .site-navbar .navbar-brand { font-size: 1.05rem; margin-right: 0; } }

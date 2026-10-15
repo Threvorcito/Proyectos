@@ -1,6 +1,6 @@
-<aside class="admin-sidebar">
+{% load static %}<aside class="admin-sidebar">
   <a class="admin-brand" href="{% url 'dashboard:admin' %}">
-    <span class="admin-brand__mark">LS</span>
+    <span class="admin-brand__mark"><img src="{% static 'img/brand/mark-96.webp' %}" width="38" height="38" alt=""></span>
     <strong>Lectura Sin Límites</strong>
   </a>
 
