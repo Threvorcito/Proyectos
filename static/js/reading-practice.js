@@ -304,6 +304,11 @@
     if (synth) synth.cancel();
   };
 
+  // The FAS overlay speaks over the story: stop the listen sequence and its timers, and leave it paused.
+  document.addEventListener('decode:open', () => {
+    if (mode === 'playing') pauseListening();
+  });
+
   const startListening = (fromIndex) => {
     stopSpeech();
     mode = 'playing';

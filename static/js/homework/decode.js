@@ -100,11 +100,10 @@
         button.textContent = letter.text;
         button.setAttribute('aria-label', `Letra ${letter.text}`);
         button.addEventListener('click', () => {
-          token += 1;
-          stopSound();
-          clearMarks();
+          abort();
           button.classList.add('is-sounding');
           playLetter(letter).then(() => button.classList.remove('is-sounding'));
+          if (current?.entry) againButton.hidden = false;
         });
         lettersBox.append(button);
         nodes.push(button);
@@ -141,12 +140,19 @@
     window.Mascot?.react('cheer', {say: `¡Muy bien! Ya sabes leer «${word}».`});
   };
 
-  const blend = async () => {
-    if (!current) return;
-    const run = ++token;
-    const {word, entry, source, letterNodes} = current;
+  // One reset for letter taps, close and open: abort any blend and show the idle state again.
+  const abort = () => {
+    token += 1;
     stopSound();
     clearMarks();
+    blendButton.disabled = false;
+  };
+
+  const blend = async () => {
+    if (!current) return;
+    abort();
+    const run = token;
+    const {word, entry, source, letterNodes} = current;
     const alive = () => run === token;
     blendButton.disabled = true;
     againButton.hidden = true;
@@ -173,6 +179,7 @@
       await beat(say([word]));
       if (!alive()) return;
       announce(word);
+      wholeBox.textContent = `${word} · ¡Muy bien!`;
       againButton.hidden = false;
       source.dispatchEvent(new CustomEvent('decode:done', {bubbles: true, detail: {word}}));
     } finally {
@@ -186,17 +193,16 @@
   const open = (rawWord, source) => {
     const word = normalize(String(rawWord || '').trim());
     if (!word) return;
-    token += 1;
-    stopSound();
+    abort();
     const entry = lookup(word);
     current = {word, entry, source: source || document, letterNodes: []};
     current.letterNodes = render(word, entry);
-    blendButton.disabled = false;
     if (typeof overlay.showModal === 'function') {
       if (!overlay.open) overlay.showModal();
     } else {
       overlay.setAttribute('open', '');
     }
+    document.dispatchEvent(new CustomEvent('decode:open', {detail: {word}}));
     current.source.dispatchEvent(new CustomEvent('decode:help', {bubbles: true, detail: {word}}));
     window.Mascot?.react('encourage', {say: '¡Vamos a leerla juntos!'});
     if (!entry) {
@@ -206,9 +212,7 @@
   };
 
   const close = () => {
-    token += 1;
-    stopSound();
-    clearMarks();
+    abort();
     if (overlay.open) overlay.close();
     else overlay.removeAttribute('open');
   };
@@ -216,10 +220,7 @@
   blendButton.addEventListener('click', blend);
   againButton.addEventListener('click', blend);
   closeButton.addEventListener('click', close);
-  overlay.addEventListener('close', () => {
-    token += 1;
-    stopSound();
-  });
+  overlay.addEventListener('close', abort); // Escape closes the dialog natively
   overlay.addEventListener('click', (event) => {
     if (event.target === overlay) close(); // the dim backdrop
   });

@@ -134,11 +134,15 @@
 
   // options.onend({cancelled}) runs once: on utterance end or error, when a newer speak() replaced this
   // one (cancelled: true), or at once when speech is unavailable.
+  // Some engines never fire `end`, and Chrome may collect an utterance that nobody references.
+  let currentUtterance = null;
   const speak = (text, options = {}) => {
     let finished = false;
+    let safety = 0;
     const finish = (cancelled) => {
       if (finished) return;
       finished = true;
+      window.clearTimeout(safety);
       if (typeof options.onend === 'function') options.onend({cancelled});
     };
     if (!('speechSynthesis' in window) || !text) {
@@ -170,6 +174,8 @@
       const ended = () => finish(currentToken !== speakToken);
       utterance.addEventListener('end', ended);
       utterance.addEventListener('error', ended);
+      currentUtterance = utterance;
+      safety = window.setTimeout(() => finish(false), Math.max(1500, 120 * text.length) / (options.rate || 1));
       window.speechSynthesis.speak(utterance);
     };
     window.setTimeout(() => startSpeaking(), 40);

@@ -230,3 +230,19 @@ class PalabrasStepTests(StudentTaskTestCase):
         self.done(1)
         html = self.client.get(self.step_url(1, assignment=self.palabras_assignment)).content.decode()
         self.assertEqual(html.count('is-done'), 1)
+
+
+class ScriptHookTests(SimpleTestCase):
+    """JS-independent guards: the scripts keep the hooks the overlay relies on."""
+
+    def read(self, path):
+        from pathlib import Path
+        from django.conf import settings
+        return (Path(settings.BASE_DIR) / path).read_text(encoding='utf-8')
+
+    def test_overlay_announces_open_and_practice_listens_for_it(self):
+        self.assertIn("'decode:open'", self.read('static/js/homework/decode.js'))
+        self.assertIn("'decode:open'", self.read('static/js/reading-practice.js'))
+
+    def test_speak_has_a_safety_timeout(self):
+        self.assertIn('safety = window.setTimeout', self.read('static/js/main.js'))
