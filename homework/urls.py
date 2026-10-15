@@ -21,4 +21,5 @@ urlpatterns = [
     path('mi-tarea/<int:assignment_pk>/paso/<int:order>/', views_student.student_step, name='student_step'),
     path('mi-tarea/<int:assignment_pk>/paso/<int:order>/listo/', views_student.step_done, name='step_done'),
     path('mi-tarea/<int:assignment_pk>/paso/<int:order>/responder/', views_student.step_answer, name='step_answer'),
+    path('mi-tarea/<int:assignment_pk>/ayuda/', views_student.decode_help, name='decode_help'),
 ]

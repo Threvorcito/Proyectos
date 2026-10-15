@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from readings.models import Reading
 
-from .forms import STEP_FORMS, LecturaStepForm
+from .forms import STEP_FORMS, LecturaStepForm, PalabrasStepForm
 from .models import Task, TaskAssignment
 from .services import (
     TaskLocked,
@@ -147,8 +147,8 @@ class StepViewTests(TeacherTaskTestCase):
     def test_unregistered_step_type_is_404(self):
         task = self._task()
         self.assertEqual(self.client.get(reverse('homework:step_create', args=[task.pk, 'desconocido'])).status_code, 404)
-        self.assertEqual(self.client.post(reverse('homework:step_create', args=[task.pk, 'palabras'])).status_code, 404)
-        self.assertEqual(set(STEP_FORMS), {'mira', 'lectura', 'contesta'})
+        self.assertEqual(self.client.post(reverse('homework:step_create', args=[task.pk, 'arma'])).status_code, 404)
+        self.assertEqual(set(STEP_FORMS), {'mira', 'lectura', 'palabras', 'contesta'})
 
     def test_update_step_changes_payload(self):
         task = self._task()
@@ -225,3 +225,42 @@ class StepViewTests(TeacherTaskTestCase):
         self.assertEqual(self.client.post(reverse('homework:task_duplicate', args=[task.pk])).status_code, 404)
         own = self._task()
         self.assertEqual(self.client.get(reverse('homework:task_duplicate', args=[own.pk])).status_code, 405)
+
+
+class PalabrasFormTests(TeacherTaskTestCase):
+    def _form(self, task, words):
+        return PalabrasStepForm({'words': words}, task=task)
+
+    def test_palabras_form_initial_proposes_words_from_lectura(self):
+        task = self._task()
+        append_step(task, 'lectura', {'text': 'El murciélago y la mariposa leyeron un libro'})
+        value = PalabrasStepForm(task=task)['words'].value()
+        self.assertEqual(value.splitlines()[:3], ['murciélago', 'mariposa', 'leyeron'])
+
+    def test_palabras_form_initial_uses_library_reading(self):
+        task = self._task()
+        reading = Reading.objects.create(title='R', content='Mariposa de colores', level=self.level, grade='1')
+        append_step(task, 'lectura', {'text': ''}, reading=reading)
+        self.assertIn('mariposa', PalabrasStepForm(task=task)['words'].value().splitlines())
+
+    def test_palabras_form_initial_empty_without_lectura(self):
+        self.assertFalse(PalabrasStepForm(task=self._task())['words'].value())
+
+    def test_palabras_form_saves_words_payload(self):
+        task = self._task()
+        form = self._form(task, 'sol\nluna\n  mar \n\n')
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.to_payload(), {'words': ['sol', 'luna', 'mar']})
+
+    def test_palabras_form_rejects_wrong_count_digits_and_long_words(self):
+        task = self._task()
+        for words in ('sol\nluna', 'a\nb\nc\nd\ne\nf\ng', 'sol\nluna\nmar2', 'sol\nluna\nel sol', 'sol\nluna\n' + 'a' * 31):
+            self.assertFalse(self._form(task, words).is_valid(), words)
+
+    def test_palabras_step_created_and_edited_through_views(self):
+        task = self._task()
+        self.client.post(reverse('homework:step_create', args=[task.pk, 'palabras']), {'words': 'sol\nluna\nmar'})
+        step = task.steps.get()
+        self.assertEqual(step.payload, {'words': ['sol', 'luna', 'mar']})
+        response = self.client.get(reverse('homework:step_update', args=[task.pk, step.pk]))
+        self.assertEqual(response.context['form']['words'].value(), 'sol\nluna\nmar')

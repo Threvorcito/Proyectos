@@ -1,0 +1,12 @@
+{% load decoding %}
+<div class="task-palabras">
+  {% decode_map step.payload.words|join:" " %}
+  <ul class="task-palabras__list">
+    {% for word in step.payload.words %}
+      <li class="task-palabra{% if forloop.counter0 in done_items %} is-done{% endif %}" data-palabra="{{ forloop.counter0 }}">
+        <span class="task-palabra__word" data-decodable>{{ word }}</span>
+        <span class="task-palabra__star" data-palabra-star{% if forloop.counter0 not in done_items %} hidden{% endif %}><span aria-hidden="true">⭐</span><span class="visually-hidden">Palabra lista</span></span>
+      </li>
+    {% endfor %}
+  </ul>
+</div>

@@ -1,0 +1,17 @@
+{% comment %}
+FAS overlay: shown by static/js/homework/decode.js when the child taps a word. Include once per page.
+{% endcomment %}<dialog class="decode-overlay" data-decode-overlay aria-labelledby="decode-overlay-title">
+  <div class="decode-overlay__panel">
+    <button class="decode-overlay__close" type="button" data-decode-close aria-label="Cerrar">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <h2 class="decode-overlay__title" id="decode-overlay-title">Vamos a leer esta palabra</h2>
+    <p class="decode-overlay__hint">Toca cada letra para escuchar su sonido.</p>
+    <div class="decode-overlay__letters" data-decode-letters role="group" aria-label="Letras de la palabra"></div>
+    <p class="decode-overlay__whole" data-decode-whole aria-live="polite"></p>
+    <div class="decode-overlay__actions">
+      <button class="task-go decode-overlay__blend" type="button" data-decode-blend autofocus>Juntar los sonidos</button>
+      <button class="task-go task-go--soft" type="button" data-decode-again hidden>Otra vez</button>
+    </div>
+  </div>
+</dialog>

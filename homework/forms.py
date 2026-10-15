@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -5,7 +7,8 @@ from django.db.models import Q
 from learning.models import LessonPlan, Subject
 from readings.models import Reading
 
-from .models import Task
+from .decoding import propose_hard_words
+from .models import Task, TaskStep
 from .payloads import clean_payload
 from .services import group_students
 
@@ -202,9 +205,52 @@ class ContestaStepForm(StepForm):
         return {**payload, 'options': '\n'.join(payload.get('options', []))}
 
 
-# Tasks 10, 12 and 13 register palabras, arma and ejemplo here.
+WORD_ONLY = re.compile(r'^[^\W\d_]+$')
+PALABRA_MAX_LENGTH = 30
+
+
+class PalabrasStepForm(StepForm):
+    step_type = 'palabras'
+    words = forms.CharField(
+        label='Una palabra por línea (3 a 6)',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 6}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'words' not in self.initial:
+            proposed = self._proposed_words()
+            if proposed:
+                self.initial['words'] = '\n'.join(proposed)
+
+    def _proposed_words(self):
+        lectura = self.task.steps.filter(step_type=TaskStep.StepType.LECTURA).select_related('reading').first()
+        return propose_hard_words(lectura.text) if lectura is not None else []
+
+    def _lines(self, text):
+        return [line.strip() for line in text.splitlines() if line.strip()]
+
+    def clean_words(self):
+        lines = self._lines(self.cleaned_data['words'])
+        for line in lines:
+            if len(line) > PALABRA_MAX_LENGTH or not WORD_ONLY.match(line):
+                raise ValidationError(
+                    f'Escribe una sola palabra por línea, solo con letras y de {PALABRA_MAX_LENGTH} letras o menos: "{line}".'
+                )
+        return '\n'.join(lines)
+
+    def to_payload(self):
+        return {'words': self._lines(self.cleaned_data['words'])}
+
+    @classmethod
+    def initial_from(cls, step):
+        return {'words': '\n'.join(step.payload.get('words', []))}
+
+
+# Tasks 12 and 13 register arma and ejemplo here.
 STEP_FORMS: dict[str, type[StepForm]] = {
     'mira': MiraStepForm,
     'lectura': LecturaStepForm,
+    'palabras': PalabrasStepForm,
     'contesta': ContestaStepForm,
 }

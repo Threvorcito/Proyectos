@@ -1,7 +1,8 @@
-{% with question=step.payload.question qid=qid|default:'task-question' %}
+{% load decoding %}{% with question=step.payload.question qid=qid|default:'task-question' %}
 <div class="task-mira">
   {% if step.image %}<img class="task-mira__image" src="{{ step.image.url }}" alt="{{ question }}">{% endif %}
-  <p class="task-question" id="{{ qid }}">{{ question }}</p>
+  <p class="task-question" id="{{ qid }}" data-decodable>{{ question }}</p>
+  {% decode_map question %}
   {% include 'partials/listen_button.html' with target='#'|add:qid %}
   <button class="task-go task-go--ready" type="button" data-task-done="0">Listo</button>
 </div>

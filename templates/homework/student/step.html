@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}{{ assignment.task.title }}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-3">{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endif %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-4">{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endif %}{% endblock %}
 {% block content %}
 <div class="task-page">
   <div class="container py-4 py-md-5">
-    <section class="task-step" data-task-step data-done-url="{{ done_url }}" data-answer-url="{{ answer_url }}" data-preview="{% if preview %}1{% else %}0{% endif %}" aria-labelledby="task-step-title">
+    <section class="task-step" data-task-step data-done-url="{{ done_url }}" data-answer-url="{{ answer_url }}" data-preview="{% if preview %}1{% else %}0{% endif %}" data-step-type="{{ step.step_type }}" data-step-order="{{ step.order }}" data-help-url="{{ help_url }}" aria-labelledby="task-step-title">
       <h1 id="task-step-title" class="visually-hidden">{{ step.get_step_type_display }}</h1>
       <p class="task-step__instruction" id="task-step-instruction">{{ instruction }}</p>
       {% include 'partials/listen_button.html' with target='#task-step-instruction' extra_class='kid-listen--below' %}
@@ -13,6 +13,7 @@
 
       {% if step.step_type == 'mira' %}{% include 'homework/steps/mira.html' %}
       {% elif step.step_type == 'lectura' %}{% include 'homework/steps/lectura.html' %}
+      {% elif step.step_type == 'palabras' %}{% include 'homework/steps/palabras.html' %}
       {% elif step.step_type == 'contesta' %}{% include 'homework/steps/contesta.html' %}{% endif %}
 
       <div class="task-feedback" data-task-feedback role="status" aria-live="polite" hidden>
@@ -23,6 +24,7 @@
   </div>
 </div>
 {{ feedback|json_script:'task-feedback-copy' }}
+{% include 'homework/partials/decode_overlay.html' %}
 {% endblock %}
 {% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}
-{% block extra_js %}{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='js' %}{% endif %}<script src="{% static 'js/homework/task-player.js' %}?v=20261015-tasks-3"></script>{% endblock %}
+{% block extra_js %}{% if step.step_type == 'lectura' %}{% include 'readings/partials/practice_assets.html' with part='js' %}{% endif %}<script src="{% static 'js/homework/decode.js' %}?v=20261015-tasks-4"></script><script src="{% static 'js/homework/task-player.js' %}?v=20261015-tasks-4"></script>{% endblock %}

@@ -132,12 +132,26 @@
     }, 5000);
   };
 
+  // options.onend({cancelled}) runs once: on utterance end or error, when a newer speak() replaced this
+  // one (cancelled: true), or at once when speech is unavailable.
   const speak = (text, options = {}) => {
-    if (!('speechSynthesis' in window) || !text) return;
+    let finished = false;
+    const finish = (cancelled) => {
+      if (finished) return;
+      finished = true;
+      if (typeof options.onend === 'function') options.onend({cancelled});
+    };
+    if (!('speechSynthesis' in window) || !text) {
+      finish(false);
+      return;
+    }
     const currentToken = ++speakToken;
     window.speechSynthesis.cancel();
     const startSpeaking = (retried = false) => {
-      if (currentToken !== speakToken) return;
+      if (currentToken !== speakToken) {
+        finish(true);
+        return;
+      }
       const voice = pickVoice();
       if (!voice && !voices.length && !retried) {
         window.setTimeout(() => startSpeaking(true), 250);
@@ -145,6 +159,7 @@
       }
       if (!voice) {
         showSpeechNotice(missingSpanishVoiceMessage);
+        finish(false);
         return;
       }
       const utterance = new SpeechSynthesisUtterance(text);
@@ -152,10 +167,34 @@
       utterance.rate = options.rate || DEFAULT_RATE;
       utterance.pitch = options.pitch || DEFAULT_PITCH;
       utterance.voice = voice;
+      const ended = () => finish(currentToken !== speakToken);
+      utterance.addEventListener('end', ended);
+      utterance.addEventListener('error', ended);
       window.speechSynthesis.speak(utterance);
     };
     window.setTimeout(() => startSpeaking(), 40);
   };
+
+  // Speaks the items one after another; resolves when done, or early when something else spoke over it.
+  const speakSequence = (items, options = {}) =>
+    new Promise((resolve) => {
+      const gapMs = options.gapMs ?? 250;
+      const queue = items.filter(Boolean);
+      const next = () => {
+        if (!queue.length) {
+          resolve();
+          return;
+        }
+        speak(queue.shift(), {
+          rate: options.rate,
+          onend: ({cancelled}) => {
+            if (cancelled) resolve();
+            else window.setTimeout(next, queue.length ? gapMs : 0);
+          },
+        });
+      };
+      next();
+    });
 
   const onVoicesChanged = (callback) => listeners.push(callback);
 
@@ -169,6 +208,7 @@
   }
   window.AppSpeech = {
     speak,
+    speakSequence,
     loadVoices,
     pickVoice,
     spanishVoices,

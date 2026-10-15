@@ -1,10 +1,17 @@
+import json
 from unittest import mock
 
 from django.template import Context, Template
 from django.test import SimpleTestCase
+from django.urls import reverse
+
+from readings.models import Reading
 
 from .decoding import decode_map, decode_word, propose_hard_words
+from .models import DecodeHelpEvent, TaskAssignment
 from .phonemes import PHONEME_AUDIO, audio_for
+from .services import append_step, record_decode_help
+from .tests_student import StudentTaskTestCase
 
 # Names of continuant letters: a child must hear the sound, never these.
 CONTINUANT_LETTER_NAMES = {
@@ -85,3 +92,141 @@ class TemplateTagTests(SimpleTestCase):
         out = Template('{% load decoding %}{% decode_map text %}').render(Context({'text': 'Leyeron'}))
         self.assertIn('id="decode-map-', out)
         self.assertIn('"leyeron"', out)
+
+
+class DecodeHelpTests(StudentTaskTestCase):
+    def help_url(self, assignment=None):
+        return reverse('homework:decode_help', args=[(assignment or self.assignment).pk])
+
+    def send(self, body):
+        return self.client.post(self.help_url(), data=json.dumps(body), content_type='application/json')
+
+    def test_decode_help_records_event(self):
+        response = self.send({'word': 'Leyeron', 'step_order': 2})
+        self.assertEqual(response.json(), {'saved': True})
+        event = DecodeHelpEvent.objects.get()
+        self.assertEqual((event.word, event.step.order, event.assignment), ('leyeron', 2, self.assignment))
+
+    def test_decode_help_without_known_step_is_saved_with_no_step(self):
+        self.send({'word': 'sol', 'step_order': None})
+        self.send({'word': 'luz', 'step_order': 99})
+        self.assertEqual(
+            list(DecodeHelpEvent.objects.order_by('pk').values_list('word', 'step')), [('sol', None), ('luz', None)]
+        )
+
+    def test_decode_help_rejects_empty_word(self):
+        self.assertEqual(self.send({'word': '   ', 'step_order': 1}).status_code, 400)
+        self.assertEqual(self.send({'step_order': 1}).status_code, 400)
+        self.assertEqual(self.send({'word': 12}).status_code, 400)
+        self.assertFalse(DecodeHelpEvent.objects.exists())
+
+    def test_decode_help_rejects_bad_json_and_bad_step_order(self):
+        response = self.client.post(self.help_url(), data='nope', content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.send({'word': 'sol', 'step_order': 'x'}).status_code, 400)
+        self.assertEqual(self.send({'word': 'sol', 'step_order': True}).status_code, 400)
+
+    def test_decode_help_is_post_only(self):
+        self.assertEqual(self.client.get(self.help_url()).status_code, 405)
+
+    def test_decode_help_other_student_404(self):
+        self.client.login(username='beto', password='x')
+        self.assertEqual(self.send({'word': 'sol'}).status_code, 404)
+        self.assertFalse(DecodeHelpEvent.objects.exists())
+
+    def test_decode_help_not_for_teachers(self):
+        self.client.login(username='maestra', password='x')
+        self.assertNotEqual(self.send({'word': 'sol'}).status_code, 200)
+        self.assertFalse(DecodeHelpEvent.objects.exists())
+
+    def test_record_decode_help_normalizes_and_truncates(self):
+        event = record_decode_help(self.assignment, None, '  ' + 'Á' * 100 + ' ')
+        self.assertEqual(event.word, 'á' * 80)
+        self.assertEqual(DecodeHelpEvent.objects.get().word, 'á' * 80)
+
+
+class DecodableChildTextTests(StudentTaskTestCase):
+    def test_contesta_step_ships_decode_map_and_decodable_text(self):
+        self.mira.delete()
+        html = self.client.get(self.step_url(2)).content.decode()
+        self.assertIn('data-decodable', html)
+        self.assertIn('id="decode-map-', html)
+        self.assertIn('"conejo"', html)
+        self.assertIn('class="decode-overlay"', html)
+        self.assertIn('js/homework/decode.js', html)
+
+    def test_contesta_options_get_a_sounds_button(self):
+        self.mira.delete()
+        html = self.client.get(self.step_url(2)).content.decode()
+        self.assertIn('data-decode-option="zanahoria"', html)
+
+    def test_mira_step_is_decodable(self):
+        html = self.client.get(self.step_url(1)).content.decode()
+        self.assertIn('data-decodable', html)
+        self.assertIn('"conejo"', html)
+
+    def test_lectura_step_text_is_decodable(self):
+        task = self._task(title='Leer')
+        append_step(task, 'lectura', {'text': 'Los pingüinos nadan'})
+        assignment = TaskAssignment.objects.create(task=task, student=self.ana)
+        html = self.client.get(self.step_url(1, assignment=assignment)).content.decode()
+        self.assertIn('data-decode-text', html)
+        self.assertIn('"ping' + chr(92) + 'u00fcinos"', html)  # json_script escapes non-ASCII
+        self.assertIn('class="decode-overlay"', html)
+
+    def test_student_step_tells_the_player_where_to_log_help(self):
+        html = self.client.get(self.step_url(1)).content.decode()
+        self.assertIn('data-help-url="%s"' % reverse('homework:decode_help', args=[self.assignment.pk]), html)
+        self.assertIn('data-step-order="1"', html)
+
+    def test_preview_has_overlay_but_no_help_url(self):
+        self.client.login(username='maestra', password='x')
+        html = self.client.get(reverse('homework:task_preview', args=[self.task.pk])).content.decode()
+        self.assertEqual(html.count('class="decode-overlay"'), 1)
+        self.assertIn('data-decodable', html)
+        self.assertNotIn('/ayuda/', html)
+
+    def test_overlay_copy(self):
+        html = self.client.get(self.step_url(1)).content.decode()
+        for text in ('Vamos a leer esta palabra', 'Toca cada letra para escuchar su sonido.',
+                     'Juntar los sonidos', 'Otra vez', 'aria-label="Cerrar"'):
+            self.assertIn(text, html)
+
+    def test_reading_detail_is_decodable(self):
+        reading = Reading.objects.create(title='R', content='Leyeron un libro', level=self.level, grade='1')
+        html = self.client.get(reverse('readings:detail', args=[reading.pk])).content.decode()
+        self.assertIn('data-decodable', html)
+        self.assertIn('"leyeron"', html)
+        self.assertIn('class="decode-overlay"', html)
+        self.assertIn('js/homework/decode.js', html)
+
+
+class PalabrasStepTests(StudentTaskTestCase):
+    def setUp(self):
+        super().setUp()
+        self.palabras_task = self._task(title='Palabras')
+        append_step(self.palabras_task, 'palabras', {'words': ['leyeron', 'libro', 'sol']})
+        self.palabras_assignment = TaskAssignment.objects.create(task=self.palabras_task, student=self.ana)
+
+    def done(self, index):
+        return self.client.post(
+            self.step_url(1, 'step_done', self.palabras_assignment),
+            data=json.dumps({'item_index': index}),
+            content_type='application/json',
+        ).json()
+
+    def test_palabras_step_renders_one_card_per_word(self):
+        html = self.client.get(self.step_url(1, assignment=self.palabras_assignment)).content.decode()
+        self.assertEqual(html.count('data-palabra="'), 3)
+        self.assertIn('data-step-type="palabras"', html)
+        self.assertIn('"leyeron"', html)
+
+    def test_palabras_items_complete_step(self):
+        self.assertFalse(self.done(0)['step_done'])
+        self.assertFalse(self.done(1)['step_done'])
+        self.assertTrue(self.done(2)['step_done'])
+
+    def test_finished_words_come_back_starred(self):
+        self.done(1)
+        html = self.client.get(self.step_url(1, assignment=self.palabras_assignment)).content.decode()
+        self.assertEqual(html.count('is-done'), 1)

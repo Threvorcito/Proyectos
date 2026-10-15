@@ -11,10 +11,10 @@ from core.json_payload import parse_json_object
 
 from .copy import FEEDBACK, INSTRUCTIONS
 from .evaluation import InvalidAnswer
-from .models import TaskAssignment, TaskStep
+from .models import StepResult, TaskAssignment, TaskStep
 from readings.services import MAX_READ_MS, MIN_READ_MS, PRACTICE_READS
 
-from .services import ItemClosed, mark_item_done, start_assignment, step_states, submit_answer
+from .services import ItemClosed, mark_item_done, record_decode_help, start_assignment, step_states, submit_answer
 
 
 def _student_only(view):
@@ -80,8 +80,18 @@ def student_step(request, student, assignment_pk, order):
         'preview': False,
         'done_url': reverse('homework:step_done', kwargs=kwargs),
         'answer_url': reverse('homework:step_answer', kwargs=kwargs),
+        'help_url': reverse('homework:decode_help', args=[assignment.pk]),
+        'done_items': _done_items(assignment, step),
         'feedback': FEEDBACK,
     })
+
+
+def _done_items(assignment, step):
+    """Palabras the child already finished, so their cards come back starred."""
+    if step.step_type != TaskStep.StepType.PALABRAS:
+        return set()
+    rows = StepResult.objects.filter(assignment=assignment, step=step, completed_at__isnull=False)
+    return set(rows.values_list('item_index', flat=True))
 
 
 def _practice_context(student, step):
@@ -167,3 +177,20 @@ def step_answer(request, student, assignment_pk, order):
             assignment, step, index, {key: body[key] for key in ('choice', 'tiles') if key in body}
         ),
     )
+
+
+@require_POST
+@_student_only
+def decode_help(request, student, assignment_pk):
+    """The child tapped a word to hear its sounds: log it for the teacher, never for anyone else."""
+    assignment = _assignment_for(student, assignment_pk)
+    body = parse_json_object(request)
+    word = body.get('word') if body is not None else None
+    step_order = body.get('step_order') if body is not None else None
+    if not isinstance(word, str) or not word.strip():
+        return JsonResponse({'saved': False, 'reason': 'payload'}, status=400)
+    if step_order is not None and (isinstance(step_order, bool) or not isinstance(step_order, int)):
+        return JsonResponse({'saved': False, 'reason': 'payload'}, status=400)
+    step = assignment.task.steps.filter(order=step_order).first() if step_order is not None else None
+    record_decode_help(assignment, step, word)
+    return JsonResponse({'saved': True})

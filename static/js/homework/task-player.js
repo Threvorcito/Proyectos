@@ -114,7 +114,25 @@
       answer: (itemIndex, body = {}) => send(root.dataset.answerUrl, {item_index: itemIndex, ...body}),
       showFeedback,
     };
-    window.TaskPlayer = api;
+    window.TaskPlayer = api; // preview stacks steps: code that needs this step's player reaches it via its root
+
+    // Asking for help is logged for the teacher (never in preview, never on palabras: there tapping is the exercise).
+    root.addEventListener('decode:help', (event) => {
+      const helpUrl = root.dataset.helpUrl;
+      if (preview || !helpUrl || root.dataset.stepType === 'palabras') return;
+      const order = Number(root.dataset.stepOrder);
+      post(helpUrl, {word: event.detail.word, step_order: Number.isInteger(order) ? order : null}).catch(() => {});
+    });
+
+    // Palabras: finishing the sounds of word i completes item i and stars its card.
+    root.addEventListener('decode:done', (event) => {
+      if (root.dataset.stepType !== 'palabras') return;
+      const card = event.target.closest('[data-palabra]');
+      if (!card) return;
+      card.classList.add('is-done');
+      card.querySelector('[data-palabra-star]')?.removeAttribute('hidden');
+      api.done(Number(card.dataset.palabra));
+    });
 
     // The reading practice (readings/partials/practice.html) announces the end of its 3-read cycle.
     root.addEventListener('reading-practice:done', () => api.done(0));

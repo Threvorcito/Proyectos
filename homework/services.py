@@ -1,3 +1,4 @@
+import unicodedata
 from dataclasses import dataclass
 from typing import Iterable
 
@@ -8,7 +9,7 @@ from django.utils import timezone
 from learning.models import StudentProfile, TeacherProfile
 
 from .evaluation import InvalidAnswer, evaluate
-from .models import OmissionEvent, StepResult, Task, TaskAssignment, TaskStep
+from .models import DecodeHelpEvent, OmissionEvent, StepResult, Task, TaskAssignment, TaskStep
 
 
 def group_students(teacher: TeacherProfile, grade: str):
@@ -269,6 +270,17 @@ def submit_answer(assignment: TaskAssignment, step: TaskStep, item_index: int, p
         result.save()
         step_done, task_done = (False, False) if status == 'try_again' else _finish(assignment, step)
     return ItemOutcome(status, hint, model_answer, step_done, task_done)
+
+
+def record_decode_help(assignment: TaskAssignment, step: TaskStep | None, word: str) -> DecodeHelpEvent:
+    """Log that the child asked to hear a word's sounds; the word is stored lowercase, at most 80 characters."""
+    event = DecodeHelpEvent(
+        assignment=assignment,
+        step=step,
+        word=unicodedata.normalize('NFC', word).strip().lower()[:80],
+    )
+    event.save()  # not bulk_create: DecodeHelpEvent.save() enforces the length
+    return event
 
 
 def complete_assignment(assignment: TaskAssignment) -> int:

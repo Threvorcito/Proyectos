@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Vista previa: {{ task.title }}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-3">{% if has_lectura %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endif %}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-4">{% if has_lectura %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endif %}{% endblock %}
 {% block content %}
 <div class="task-page">
   <div class="container py-4 py-md-5">
@@ -12,7 +12,7 @@
     </aside>
     {% for item in items %}
       {% with step=item.step %}
-      <section class="task-step task-step--preview" data-task-step data-preview="1" aria-labelledby="task-step-title-{{ step.order }}">
+      <section class="task-step task-step--preview" data-task-step data-preview="1" data-step-type="{{ step.step_type }}" data-step-order="{{ step.order }}" aria-labelledby="task-step-title-{{ step.order }}">
         <p class="task-preview-label">Paso {{ forloop.counter }} de {{ items|length }}</p>
         <h2 id="task-step-title-{{ step.order }}" class="visually-hidden">{{ step.get_step_type_display }}</h2>
         <p class="task-step__instruction" id="{{ item.instruction_id }}">{{ item.instruction }}</p>
@@ -21,6 +21,7 @@
 
         {% if step.step_type == 'mira' %}{% include 'homework/steps/mira.html' with qid=item.qid %}
         {% elif step.step_type == 'lectura' %}{% include 'homework/steps/lectura.html' with hide_practice=item.hide_practice %}
+        {% elif step.step_type == 'palabras' %}{% include 'homework/steps/palabras.html' %}
         {% elif step.step_type == 'contesta' %}{% include 'homework/steps/contesta.html' with qid=item.qid %}{% endif %}
 
         <div class="task-feedback" data-task-feedback role="status" aria-live="polite" hidden>
@@ -34,6 +35,7 @@
   </div>
 </div>
 {{ feedback|json_script:'task-feedback-copy' }}
+{% include 'homework/partials/decode_overlay.html' %}
 {% endblock %}
 {% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}
-{% block extra_js %}{% if has_lectura %}{% include 'readings/partials/practice_assets.html' with part='js' %}{% endif %}<script src="{% static 'js/homework/task-player.js' %}?v=20261015-tasks-3"></script>{% endblock %}
+{% block extra_js %}{% if has_lectura %}{% include 'readings/partials/practice_assets.html' with part='js' %}{% endif %}<script src="{% static 'js/homework/decode.js' %}?v=20261015-tasks-4"></script><script src="{% static 'js/homework/task-player.js' %}?v=20261015-tasks-4"></script>{% endblock %}

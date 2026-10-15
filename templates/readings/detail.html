@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
-{% load static %}
-{% block extra_css %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endblock %}
+{% load static decoding %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261015-tasks-4">{% include 'readings/partials/practice_assets.html' with part='css' %}{% endblock %}
 {% block content %}
 <div class="container py-5 reading-page">
   <div class="reading-card">
@@ -21,11 +21,12 @@
     <div class="reading-actions mb-3">
       <button class="btn btn-outline-primary" type="button" data-speak-text="{{ reading.content|escapejs }}">Escuchar lectura completa</button>
     </div>
+    {% decode_map reading.content %}
     <article class="reading-content reading-blocks" data-reading-text>
       {% for paragraph in reading.content.splitlines %}
         {% if paragraph %}
           <section class="reading-block">
-            <p>{{ paragraph }}</p>
+            <p data-decodable>{{ paragraph }}</p>
             <button class="btn btn-sm btn-soft" type="button" data-speak-text="{{ paragraph|escapejs }}">Escuchar este bloque</button>
           </section>
         {% endif %}
@@ -64,7 +65,9 @@
 {% endblock %}
 
 {% block extra_js %}
+{% include 'homework/partials/decode_overlay.html' %}
 {% include 'readings/partials/practice_assets.html' with part='js' %}
+<script src="{% static 'js/homework/decode.js' %}?v=20261015-tasks-4"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var root = document.querySelector('[data-reading-comprehension]');
