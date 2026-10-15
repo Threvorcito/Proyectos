@@ -35,7 +35,14 @@ class DecodeWordTests(SimpleTestCase):
 
     def test_silent_h_and_coda_stop(self):
         self.assertEqual(blends(decode_word('hola')), [['o'], ['lll', 'a']])
-        self.assertEqual(blends(decode_word('insecto')), [['i', 'nnn'], ['sss', 'e'], ['to']])
+        self.assertEqual(blends(decode_word('insecto')), [['i', 'nnn'], ['sec'], ['to']])
+
+    def test_coda_stop_syllable_blended_whole(self):
+        self.assertEqual(blends(decode_word('doctor')), [['doc'], ['to', 'rrr']])
+        self.assertEqual(blends(decode_word('ciudad'))[-1], ['dad'])
+        self.assertEqual(blends(decode_word('acción'))[0], ['ac'])
+        self.assertEqual(blends(decode_word('acto')), [['ac'], ['to']])
+        self.assertEqual(blends(decode_word('extra'))[0], ['ex'])
 
     def test_never_letter_names(self):
         text = 'mamá nene sol efe jirafa perro yema llave ñandú zorro hola gente tren'

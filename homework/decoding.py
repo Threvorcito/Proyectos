@@ -47,12 +47,14 @@ def decode_word(word):
             else:
                 say = unit.text
             letters.append({'text': unit.text, 'say': say, 'audio': audio_for(say)})
-        blend = [
-            start + o for o in range(len(syl))
-            if letters[start + o]['say'] != ''
-            and (start + o) not in coda_stops
-            and (start + o) not in covered
-        ]
+        if coda_stops:
+            # A closed stop syllable is blended whole ('doc', 'dad'), never split.
+            blend = [min(coda_stops)]
+        else:
+            blend = [
+                start + o for o in range(len(syl))
+                if letters[start + o]['say'] != '' and (start + o) not in covered
+            ]
         syllables.append({'text': syllable_text, 'blend': blend})
         pos += len(syl)
     return {'word': word, 'letters': letters, 'syllables': syllables}
