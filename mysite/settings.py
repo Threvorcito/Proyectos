@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'activities',
     'games',
     'readings',
+    'homework',
     'progress',
     'gamification',
     'dashboard',
