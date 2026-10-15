@@ -13,6 +13,7 @@ urlpatterns = [
     path('lecturas/', include('readings.urls')),
     path('progreso/', include('progress.urls')),
     path('panel/', include('dashboard.urls')),
+    path('tareas/', include('homework.urls')),
     path('admin/', admin.site.urls),
 ]
 

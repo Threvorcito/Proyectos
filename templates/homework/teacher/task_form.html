@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}Editar tarea{% else %}Nueva tarea{% endif %}{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="lesson-report">
+    <div class="lesson-report__hero">
+      <div>
+        <span class="eyebrow">Tareas guiadas</span>
+        <h1>{% if is_edit %}Editar tarea{% else %}Nueva tarea{% endif %}</h1>
+        {% if locked %}
+          <p>Un alumno ya empezó esta tarea. Solo puedes cambiar la fecha de entrega.</p>
+        {% else %}
+          <p>Elige materia y grado. Si vinculas un plan de clase, se copian su materia y su grado.</p>
+        {% endif %}
+      </div>
+      <div class="lesson-report__actions">
+        <a class="btn btn-outline-primary lesson-report__back" href="{% if is_edit %}{% url 'homework:task_detail' task.pk %}{% else %}{% url 'homework:task_list' %}{% endif %}">Volver</a>
+      </div>
+    </div>
+    <div class="lesson-report__table-card dt-card p-4">
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <div class="admin-dialog__grid">
+          {% for field in form %}
+            <p>{{ field.label_tag }}{{ field }}{{ field.errors }}</p>
+          {% endfor %}
+        </div>
+        <div class="mt-3">
+          <button type="submit" class="btn btn-primary">Guardar tarea</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

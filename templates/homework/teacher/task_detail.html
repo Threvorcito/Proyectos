@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}{{ task.title }}{% endblock %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+{% block extra_css %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endblock %}
+{% endif %}
+{% block content %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<div class="admin-console">
+  {% include 'dashboard/partials/admin_sidebar.html' %}
+  <section class="admin-main">
+    {% include 'dashboard/partials/admin_topbar.html' with current_title='Tareas' %}
+    <div class="admin-content">
+{% else %}
+<div class="container py-5">
+{% endif %}
+      <section class="lesson-report dt">
+        <div class="lesson-report__hero">
+          <div>
+            <span class="eyebrow">{{ task.subject }} · {{ task.get_grade_display }}</span>
+            <h1>{{ task.title }}</h1>
+            <p>Fecha de entrega: {{ task.due_date|date:'d/m/Y'|default:'sin fecha' }}{% if not task.is_active %} · Archivada{% endif %}</p>
+          </div>
+          <div class="lesson-report__actions">
+            <a class="btn btn-outline-primary lesson-report__back" href="{% url 'homework:task_list' %}">Volver a tareas</a>
+            {% if can_manage and task.is_active %}
+              <a class="btn btn-primary" href="{% url 'homework:task_update' task.pk %}">Editar</a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="lesson-report__table-card dt-card mb-4">
+          <div class="lesson-report__table-head"><div><h2>Pasos</h2></div></div>
+          <div class="dt-wrap dt-wrap--page">
+            <table class="table table-stack data-table align-middle">
+              <thead><tr><th>#</th><th>Tipo</th></tr></thead>
+              <tbody>
+                {% for step in steps %}
+                  <tr><td data-label="#">{{ step.order }}</td><td data-label="Tipo">{{ step.get_step_type_display }}</td></tr>
+                {% empty %}
+                  <tr><td colspan="2"><div class="dt-empty"><strong>Esta tarea aún no tiene pasos.</strong></div></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="lesson-report__table-card dt-card">
+          <div class="lesson-report__table-head"><div><h2>Alumnos</h2></div></div>
+          <div class="dt-wrap dt-wrap--page">
+            <table class="table table-stack data-table align-middle">
+              <thead><tr><th>Alumno</th><th>Estado</th></tr></thead>
+              <tbody>
+                {% for assignment in assignments %}
+                  <tr>
+                    <td data-label="Alumno">{{ assignment.student.name }}</td>
+                    <td data-label="Estado">{{ assignment.get_status_display }}</td>
+                  </tr>
+                {% empty %}
+                  <tr><td colspan="2"><div class="dt-empty"><strong>Todavía no has asignado esta tarea.</strong></div></td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% if assign_form %}
+            <form method="post" action="{% url 'homework:task_assign' task.pk %}" class="p-3">
+              {% csrf_token %}
+              <fieldset>
+                <legend class="h6">{{ assign_form.students.label }} de {{ task.get_grade_display|lower }}</legend>
+                <div class="admin-dialog__checklist">{{ assign_form.students }}</div>
+              </fieldset>
+              <div class="form-check my-3">
+                {{ assign_form.whole_group }}
+                <label class="form-check-label" for="{{ assign_form.whole_group.id_for_label }}">{{ assign_form.whole_group.label }}</label>
+              </div>
+              <button type="submit" class="btn btn-primary">Asignar</button>
+            </form>
+          {% endif %}
+        </div>
+      </section>
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+    </div>
+  </section>
+</div>
+{% else %}
+</div>
+{% endif %}
+{% endblock %}

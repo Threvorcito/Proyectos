@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Tareas{% endblock %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+{% block extra_css %}
+<style>
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab { display: none !important; }
+  .page-shell { min-height: 100vh; }
+  body { background: #f6f7fb; }
+</style>
+{% endblock %}
+{% endif %}
+{% block content %}
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+<div class="admin-console">
+  {% include 'dashboard/partials/admin_sidebar.html' %}
+  <section class="admin-main">
+    {% include 'dashboard/partials/admin_topbar.html' with current_title='Tareas' %}
+    <div class="admin-content">
+{% else %}
+<div class="container py-5">
+{% endif %}
+      <section class="lesson-report dt{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %} lesson-report--console dt-fit-col{% endif %}">
+        <div class="lesson-report__hero">
+          <div>
+            <span class="eyebrow">Tareas guiadas</span>
+            <h1>Tareas</h1>
+            <p>Pasos cortos para tus alumnos: crea la tarea, agrega los pasos y asígnala.</p>
+          </div>
+          <div class="lesson-report__actions">
+            {% if can_manage %}
+              <a class="btn btn-outline-primary lesson-report__back" href="{% url 'dashboard:teacher' %}">Volver al panel docente</a>
+              <a class="btn btn-primary lesson-report__add" href="{% url 'homework:task_create' %}"><span>+</span> Nueva tarea</a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="lesson-report__table-card dt-card{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %} dt-fit-col{% endif %}">
+          <div class="dt-toolbar">
+            <form class="dt-search-form" method="get" role="search">
+              <div class="dt-search">
+                <span aria-hidden="true">⌕</span>
+                <input type="search" name="q" value="{{ search_term }}" placeholder="Buscar por título..." aria-label="Buscar tareas">
+              </div>
+              <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+            </form>
+          </div>
+          <div class="dt-wrap dt-wrap--page{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %} dt-fit{% endif %}">
+            <table class="table table-stack lesson-report__table data-table align-middle">
+              <thead>
+                <tr>
+                  <th>Título</th>
+                  <th>Materia</th>
+                  <th>Grado</th>
+                  <th>Fecha</th>
+                  <th>Avance</th>
+                  <th class="text-end dt-actions">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for task in tasks %}
+                  <tr>
+                    <td data-label="Título">
+                      <a href="{% url 'homework:task_detail' task.pk %}"><strong>{{ task.title }}</strong></a>
+                      <small>{{ task.teacher.name }}</small>
+                    </td>
+                    <td data-label="Materia">{{ task.subject }}</td>
+                    <td data-label="Grado">{{ task.get_grade_display }}</td>
+                    <td data-label="Fecha">{{ task.due_date|date:'d/m/Y'|default:'Sin fecha' }}</td>
+                    <td data-label="Avance">{{ task.completed }}/{{ task.total }} terminaron</td>
+                    <td data-label="Acciones" class="text-end dt-actions">
+                      <div class="table-actions">
+                        <details class="action-menu">
+                          {% include 'dashboard/partials/action_menu_toggle.html' with name=task.title %}
+                          <div class="action-menu-panel">
+                            <a href="{% url 'homework:task_detail' task.pk %}">Pasos</a>
+                            {% if can_manage %}
+                              <form method="post" action="{% url 'homework:task_archive' task.pk %}">
+                                {% csrf_token %}
+                                <button type="submit">Archivar</button>
+                              </form>
+                            {% endif %}
+                          </div>
+                        </details>
+                      </div>
+                    </td>
+                  </tr>
+                {% empty %}
+                  <tr>
+                    <td colspan="6">
+                      <div class="dt-empty">
+                        {% if search_term %}
+                          <strong>No hay resultados para “{{ search_term }}”.</strong>
+                          <span>Prueba con otro título.</span>
+                        {% else %}
+                          <strong>Aún no tienes tareas. Crea la primera con solo la parte que hace el niño.</strong>
+                        {% endif %}
+                      </div>
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% include 'partials/pagination.html' %}
+        </div>
+      </section>
+{% if request.user.role == 'ADMIN' or request.user.is_staff or request.user.is_superuser %}
+    </div>
+  </section>
+</div>
+{% else %}
+</div>
+{% endif %}
+{% endblock %}

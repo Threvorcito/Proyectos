@@ -10,6 +10,7 @@
     <a class="{% if resource == 'profesores' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'profesores' %}"><span>🧑‍🏫</span>Docentes y permisos</a>
     <a class="{% if resource == 'alumnos' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'alumnos' %}"><span>🎒</span>Estudiantes</a>
     <a class="{% if request.resolver_match.url_name == 'lesson_plans' or request.resolver_match.url_name == 'lesson_plan_create' or request.resolver_match.url_name == 'lesson_plan_update' %}is-active{% endif %}" href="{% url 'dashboard:lesson_plans' %}"><span>🗂</span>Planes de clase</a>
+    <a class="{% if request.resolver_match.app_name == 'homework' %}is-active{% endif %}" href="{% url 'homework:task_list' %}"><span>📝</span>Tareas</a>
 
     <small>Recursos educativos</small>
     <a class="{% if resource == 'niveles' %}is-active{% endif %}" href="{% url 'dashboard:admin_resource' 'niveles' %}"><span>📊</span>Niveles</a>

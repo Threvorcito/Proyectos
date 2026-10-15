@@ -40,6 +40,7 @@
     <section class="teacher-action-panel" aria-label="Accesos de gestión">
       {% if teacher_profile.can_create_students %}<a href="{% url 'dashboard:teacher_students' %}"><strong>Alumnos</strong><span>Ver y agregar estudiantes</span></a>{% endif %}
       {% if teacher_profile.can_create_lesson_plans or teacher_profile.can_edit_lesson_plans or teacher_profile.can_assign_lesson_plans %}<a href="{% url 'dashboard:lesson_plans' %}"><strong>Planes</strong><span>Ver reportes y crear planificación</span></a>{% endif %}
+      {% if teacher_profile.can_assign_lesson_plans %}<a href="{% url 'homework:task_list' %}"><strong>Tareas</strong><span>Pasos cortos para tus alumnos</span></a>{% endif %}
       {% if teacher_profile.can_manage_activities %}<a href="{% url 'dashboard:teacher_resource' 'actividades' %}"><strong>Actividades</strong><span>Gestionar práctica guiada</span></a>{% endif %}
       {% if teacher_profile.can_manage_readings %}<a href="{% url 'dashboard:teacher_resource' 'lecturas' %}"><strong>Lecturas</strong><span>Actualizar biblioteca de apoyo</span></a>{% endif %}
       {% if teacher_profile.can_manage_games %}<a href="{% url 'dashboard:teacher_resource' 'juegos' %}"><strong>Juegos</strong><span>Administrar recursos lúdicos</span></a>{% endif %}
