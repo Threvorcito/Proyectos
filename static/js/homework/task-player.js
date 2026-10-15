@@ -173,7 +173,10 @@
         return;
       }
       const choice = event.target.closest('[data-task-choice]');
-      if (choice) api.answer(0, {choice: Number(choice.dataset.taskChoice)});
+      if (choice) {
+        const itemIndex = Number(choice.dataset.taskItem || 0);
+        api.answer(itemIndex, {choice: Number(choice.dataset.taskChoice)}).then((outcome) => afterAnswer(outcome, itemIndex));
+      }
     });
   };
   document.querySelectorAll('[data-task-step]').forEach(init);

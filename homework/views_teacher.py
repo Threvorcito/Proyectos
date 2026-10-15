@@ -101,7 +101,7 @@ def task_update(request, pk):
 
 def _summary(step):
     payload = step.payload
-    return payload.get('question') or payload.get('text') or step.text or ''
+    return payload.get('question') or payload.get('text') or step.text or (payload.get('example_steps') or [''])[0]
 
 
 @login_required

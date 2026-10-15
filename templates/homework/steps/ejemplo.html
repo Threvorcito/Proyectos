@@ -1,0 +1,36 @@
+{% load decoding %}{% with example=ejemplo %}
+<div class="task-ejemplo" data-ejemplo{% if done_items %} data-ejemplo-resume{% endif %}>
+  {% decode_map example.decode_text %}
+  {% if step.image %}<img class="task-mira__image" src="{{ step.image.url }}" alt="">{% endif %}
+  <section class="task-ejemplo__show" data-ejemplo-show aria-label="El ejemplo">
+    <ol class="task-ejemplo__lines">
+      {% for line in example.lines %}
+        <li class="task-ejemplo__item" data-ejemplo-line{% if not forloop.first %} hidden{% endif %}>
+          <p class="task-ejemplo__line" data-decodable>{{ line }}</p>
+          {% include 'partials/listen_button.html' with text=line label='Escuchar este paso' %}
+        </li>
+      {% endfor %}
+    </ol>
+    <button class="task-go task-go--ready" type="button" data-ejemplo-next>{% if example.lines|length == 1 %}¡Ahora yo!{% else %}Siguiente{% endif %}</button>
+  </section>
+  <section class="task-ejemplo__practice" data-ejemplo-practice aria-label="Ahora tú" hidden>
+    {% for exercise in example.exercises %}
+      <div class="task-exercise{% if exercise.index in done_items %} is-done{% endif %}" data-exercise="{{ exercise.index }}" hidden>
+        <p class="task-question" data-decodable tabindex="-1">{{ exercise.prompt }}</p>
+        {% include 'partials/listen_button.html' with text=exercise.prompt %}
+        <ul class="task-options">
+          {% for option in exercise.options %}
+            <li class="task-option">
+              <button class="task-option__choice" type="button" data-task-choice="{{ option.index }}" data-task-item="{{ exercise.index }}">{{ option.text }}</button>
+              {% include 'partials/listen_button.html' with text=option.text label='Escuchar' %}
+              {% if option.sounds %}<button class="decode-option" type="button" data-decode-option="{{ option.text|lower }}" aria-label="Ver los sonidos de {{ option.text }}">Sonidos</button>{% endif %}
+              {% if preview and option.index == exercise.answer_index %}<span class="task-option__key">✓ correcta</span>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+        <button class="task-go task-go--ready" type="button" data-ejemplo-continue hidden>Siguiente</button>
+      </div>
+    {% endfor %}
+  </section>
+</div>
+{% endwith %}

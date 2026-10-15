@@ -1,3 +1,4 @@
+import random
 from functools import wraps
 
 from django.contrib.auth.decorators import login_required
@@ -54,6 +55,30 @@ def _instruction_key(step):
     return step.step_type
 
 
+def _ejemplo_context(step, *, preview=False):
+    """The worked example lines and the exercises, options shuffled but carrying their stored index.
+
+    The shuffle is seeded from the task, step and exercise ids (so a reload and the preview agree);
+    the right answer's index only goes to the preview.
+    """
+    payload = step.payload
+    exercises = []
+    for index, exercise in enumerate(payload['exercises']):
+        order = list(enumerate(exercise['options']))
+        random.Random(step.task_id * 1000 + step.pk + index).shuffle(order)
+        row = {
+            'index': index,
+            'prompt': exercise['prompt'],
+            'options': [{'index': i, 'text': text, 'sounds': text.isalpha()} for i, text in order],
+        }
+        if preview:
+            row['answer_index'] = exercise['options'].index(exercise['answer'])
+        exercises.append(row)
+    words = [*payload['example_steps'], *(e['prompt'] for e in payload['exercises'])]
+    words += [o['text'] for e in exercises for o in e['options'] if o['sounds']]
+    return {'lines': payload['example_steps'], 'exercises': exercises, 'decode_text': ' '.join(words)}
+
+
 def step_context(step, *, preview=False):
     """Per-step render context shared by the child page and the teacher preview.
 
@@ -62,6 +87,8 @@ def step_context(step, *, preview=False):
     ``preview`` also hands the target units to the page so the preview can mimic the feedback;
     the child page never receives them.
     """
+    if step.step_type == TaskStep.StepType.EJEMPLO:
+        return {'ejemplo': _ejemplo_context(step, preview=preview)}
     if not is_build_step(step):
         return {}
     target = build_target(step.step_type, step.payload)
@@ -128,8 +155,8 @@ def student_step(request, student, assignment_pk, order):
 
 
 def _done_items(assignment, step):
-    """Palabras the child already finished, so their cards come back starred."""
-    if step.step_type != TaskStep.StepType.PALABRAS:
+    """Palabras (and ejemplo exercises) the child already finished, so a reload picks up where they were."""
+    if step.step_type not in (TaskStep.StepType.PALABRAS, TaskStep.StepType.EJEMPLO):
         return set()
     rows = StepResult.objects.filter(assignment=assignment, step=step, completed_at__isnull=False)
     return set(rows.values_list('item_index', flat=True))

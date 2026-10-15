@@ -3,13 +3,14 @@ import re
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.forms import formset_factory
 
 from learning.models import LessonPlan, Subject
 from readings.models import Reading
 
 from .decoding import propose_hard_words
 from .models import Task, TaskStep
-from .payloads import ARMA_UNITS, clean_payload
+from .payloads import ARMA_UNITS, EXAMPLE_STEPS_MAX, EXERCISES_MAX, clean_payload
 from .services import group_students
 
 
@@ -268,11 +269,90 @@ class ArmaStepForm(StepForm):
         return {'text': self.cleaned_data['text'], 'unit': self.cleaned_data['unit']}
 
 
-# Task 13 registers ejemplo here.
+DISTRACTORS_MAX = 3
+
+
+class ExerciseForm(forms.Form):
+    prompt = forms.CharField(label='Ejercicio', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    answer = forms.CharField(label='Respuesta correcta', max_length=255, widget=forms.TextInput(attrs={'class': 'form-control'}))
+    distractors = forms.CharField(
+        label='Otras opciones, separadas por coma',
+        max_length=255,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+
+    def clean(self):
+        cleaned = super().clean()
+        if not self.errors:
+            answer = cleaned['answer'].strip()
+            others = [o for o in dict.fromkeys(p.strip() for p in cleaned['distractors'].split(',')) if o and o != answer]
+            if not 1 <= len(others) <= DISTRACTORS_MAX:
+                raise ValidationError(f'Escribe de 1 a {DISTRACTORS_MAX} opciones distintas de la respuesta.')
+            cleaned['options'] = [answer, *others]
+        return cleaned
+
+
+ExerciseFormSet = formset_factory(
+    ExerciseForm, extra=3, min_num=1, max_num=EXERCISES_MAX, validate_min=True,
+)
+
+
+class EjemploStepForm(StepForm):
+    """A worked example (one line per step) followed by exercises, edited together as one form + a formset."""
+
+    step_type = 'ejemplo'
+    example_steps = forms.CharField(
+        label=f'Un paso del ejemplo por línea (1 a {EXAMPLE_STEPS_MAX})',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+    )
+    image = forms.ImageField(
+        label='Imagen (opcional)', required=False, widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        initial = self.initial.get('exercises') if not self.is_bound else None
+        self.exercises = ExerciseFormSet(self.data if self.is_bound else None, prefix='exercises', initial=initial)
+
+    def is_valid(self):
+        # Evaluate both so every error shows at once.
+        return super().is_valid() & self.exercises.is_valid()
+
+    def clean(self):
+        if not self.exercises.is_valid():
+            return self.cleaned_data
+        return super().clean()
+
+    def _lines(self, text):
+        return [line.strip() for line in text.splitlines() if line.strip()]
+
+    def to_payload(self):
+        rows = [form.cleaned_data for form in self.exercises if form.cleaned_data]
+        return {
+            'example_steps': self._lines(self.cleaned_data['example_steps']),
+            'exercises': [{'prompt': r['prompt'], 'answer': r['answer'].strip(), 'options': r['options']} for r in rows],
+        }
+
+    def extras(self):
+        return {'image': self.cleaned_data.get('image')}
+
+    @classmethod
+    def initial_from(cls, step):
+        payload = step.payload
+        return {
+            'example_steps': '\n'.join(payload.get('example_steps', [])),
+            'exercises': [
+                {'prompt': e['prompt'], 'answer': e['answer'], 'distractors': ', '.join(o for o in e['options'] if o != e['answer'])}
+                for e in payload.get('exercises', [])
+            ],
+        }
+
+
 STEP_FORMS: dict[str, type[StepForm]] = {
     'mira': MiraStepForm,
     'lectura': LecturaStepForm,
     'palabras': PalabrasStepForm,
     'contesta': ContestaStepForm,
     'arma': ArmaStepForm,
+    'ejemplo': EjemploStepForm,
 }

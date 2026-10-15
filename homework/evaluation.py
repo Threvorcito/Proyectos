@@ -21,18 +21,16 @@ class Evaluation:
     target: str = ''
 
 
-def _evaluate_choice(step: TaskStep, payload: dict) -> Evaluation:
-    options = step.payload.get('options', [])
+def _evaluate_choice(options: list, answer: str, question: str, payload: dict) -> Evaluation:
     choice = payload.get('choice') if isinstance(payload, dict) else None
     if isinstance(choice, bool) or not isinstance(choice, int) or not 0 <= choice < len(options):
         raise InvalidAnswer('choice')
-    answer = step.payload['answer']
     picked = options[choice]
     return Evaluation(
         correct=picked == answer,
         answer_text=picked[:MAX_TEXT],
         model_answer=answer,
-        hint={'say': step.payload.get('question', ''), 'hole_index': None, 'kind': 'try_again'},
+        hint={'say': question, 'hole_index': None, 'kind': 'try_again'},
     )
 
 
@@ -91,7 +89,14 @@ def _evaluate_build(step: TaskStep, payload: dict) -> Evaluation:
 
 def evaluate(step: TaskStep, item_index: int, payload: dict) -> Evaluation:
     if step.step_type == TaskStep.StepType.CONTESTA and step.payload.get('kind') == 'choice':
-        return _evaluate_choice(step, payload)
+        data = step.payload
+        return _evaluate_choice(data.get('options', []), data['answer'], data.get('question', ''), payload)
+    if step.step_type == TaskStep.StepType.EJEMPLO:
+        exercises = step.payload.get('exercises', [])
+        if not 0 <= item_index < len(exercises):
+            raise InvalidAnswer('item')
+        exercise = exercises[item_index]
+        return _evaluate_choice(exercise['options'], exercise['answer'], exercise['prompt'], payload)
     if is_build_step(step):
         return _evaluate_build(step, payload)
     raise InvalidAnswer(step.step_type)

@@ -147,8 +147,8 @@ class StepViewTests(TeacherTaskTestCase):
     def test_unregistered_step_type_is_404(self):
         task = self._task()
         self.assertEqual(self.client.get(reverse('homework:step_create', args=[task.pk, 'desconocido'])).status_code, 404)
-        self.assertEqual(self.client.post(reverse('homework:step_create', args=[task.pk, 'ejemplo'])).status_code, 404)
-        self.assertEqual(set(STEP_FORMS), {'mira', 'lectura', 'palabras', 'contesta', 'arma'})
+        self.assertEqual(self.client.post(reverse('homework:step_create', args=[task.pk, 'desconocido'])).status_code, 404)
+        self.assertEqual(set(STEP_FORMS), {'mira', 'lectura', 'palabras', 'contesta', 'arma', 'ejemplo'})
 
     def test_update_step_changes_payload(self):
         task = self._task()

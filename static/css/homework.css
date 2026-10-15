@@ -320,3 +320,22 @@
   body:not(.reduce-motion) .task-tile { transition: background-color .2s ease; }
   body:not(.reduce-motion) .task-build__hole { animation: kid-pop .5s cubic-bezier(.16, 1, .3, 1) both; }
 }
+
+/* Ejemplo y práctica: the worked example one line at a time, then one exercise per screen. */
+.task-ejemplo__lines { list-style: none; margin: 0; padding: 0; }
+.task-ejemplo__item { display: flex; flex-direction: column; align-items: flex-start; gap: .75rem; }
+.task-ejemplo__item[hidden],
+.task-ejemplo [hidden] { display: none; }
+.task-ejemplo__line {
+  margin: 0;
+  padding: 1rem 1.25rem;
+  width: 100%;
+  border: .125rem solid var(--kid-line, #eadfcb);
+  border-radius: var(--kid-radius, 20px);
+  background: var(--kid-surface-sunk, #f6efe2);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.task-ejemplo .task-go[hidden] { display: none; }
+.task-exercise .task-question:focus-visible { outline: .25rem solid var(--kid-focus, #1d6f84); outline-offset: .2rem; }
