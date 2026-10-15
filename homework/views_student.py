@@ -218,11 +218,12 @@ def _json_step_action(request, student, assignment_pk, order, action):
         return _rejected('payload', 400)
     except ItemClosed:
         # Double tap or second tab: nothing is lost, the page just moves on.
+        done = next(s.done for s in step_states(assignment) if s.step.pk == step.pk)
         return JsonResponse({
             'saved': False,
             'reason': 'closed',
-            'step_done': True,
-            'next_url': _path_url(assignment, done=True),
+            'step_done': done,
+            'next_url': _path_url(assignment, done=True) if done else None,
         }, status=409)
     return _outcome_response(assignment, outcome)
 

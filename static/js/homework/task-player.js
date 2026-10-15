@@ -54,10 +54,12 @@
     // Hint = audio + highlight: the question (or the tile row) lights up; a modeled answer marks the right option.
     const highlight = (outcome) => {
       clearMarks();
+      // Ejemplo shows one exercise at a time: only that one is lit.
+      const scope = root.querySelector('.task-exercise:not([hidden])') || root;
       if (outcome.status === 'try_again') {
-        (root.querySelector('.task-question') || root.querySelector('[data-build-row]'))?.classList.add('is-hint');
+        (scope.querySelector('.task-question') || root.querySelector('[data-build-row]'))?.classList.add('is-hint');
       } else if (outcome.status === 'modeled') {
-        root.querySelectorAll('[data-task-choice]').forEach((button) => {
+        scope.querySelectorAll('[data-task-choice]').forEach((button) => {
           if (button.textContent.trim() === outcome.model_answer) button.classList.add('is-model');
         });
       }
@@ -118,7 +120,7 @@
       try {
         const {ok, status, data} = await post(url, body);
         if (ok || (status === 409 && data.reason === 'closed')) {
-          const outcome = ok ? data : {status: 'correct', step_done: true, next_url: data.next_url};
+          const outcome = ok ? data : {status: 'correct', step_done: Boolean(data.step_done), next_url: data.next_url};
           showFeedback(outcome);
           lock(Boolean(outcome.step_done));
           if (outcome.step_done && nextLink) nextLink.focus();
@@ -165,6 +167,73 @@
 
     // The reading practice (readings/partials/practice.html) announces the end of its 3-read cycle.
     root.addEventListener('reading-practice:done', () => api.done(0));
+
+    // Ejemplo: the worked example one line at a time, then "¡Ahora yo!" opens the exercises, one per screen.
+    let afterAnswer = () => {};
+    const ejemplo = root.querySelector('[data-ejemplo]');
+    if (ejemplo) {
+      const lines = [...ejemplo.querySelectorAll('[data-ejemplo-line]')];
+      const exercises = [...ejemplo.querySelectorAll('[data-exercise]')];
+      const show = ejemplo.querySelector('[data-ejemplo-show]');
+      const practice = ejemplo.querySelector('[data-ejemplo-practice]');
+      const nextButton = ejemplo.querySelector('[data-ejemplo-next]');
+      let lineIndex = 0;
+      const isOpen = (node) => !node.classList.contains('is-done');
+
+      const showLine = (index) => {
+        lineIndex = index;
+        lines.forEach((line, i) => { line.hidden = i !== index; });
+        nextButton.textContent = index === lines.length - 1 ? '¡Ahora yo!' : 'Siguiente';
+      };
+      const showExercise = (exercise) => {
+        exercises.forEach((node) => { node.hidden = node !== exercise; });
+        exercise?.querySelector('.task-question')?.focus();
+      };
+      const startPractice = () => {
+        show.hidden = true;
+        practice.hidden = false;
+        showExercise(exercises.find(isOpen) || exercises[exercises.length - 1]);
+        window.Mascot?.react('hello');
+      };
+
+      exercises.forEach((node) => {
+        // Exercises the server already closed start closed.
+        if (!isOpen(node)) node.querySelectorAll('[data-task-choice]').forEach((button) => { button.disabled = true; });
+      });
+      if (ejemplo.hasAttribute('data-ejemplo-resume')) startPractice(); else showLine(0);
+
+      nextButton.addEventListener('click', () => {
+        if (lineIndex < lines.length - 1) {
+          showLine(lineIndex + 1);
+          lines[lineIndex].querySelector('.kid-listen')?.focus();
+        } else {
+          startPractice();
+        }
+      });
+
+      afterAnswer = (outcome, itemIndex) => {
+        const exercise = exercises.find((node) => Number(node.dataset.exercise) === itemIndex);
+        if (!outcome || !exercise || (outcome.status !== 'correct' && outcome.status !== 'modeled')) return;
+        // A closed exercise cannot be answered again; the child moves on when ready (no timers).
+        exercise.classList.add('is-done');
+        exercise.querySelectorAll('[data-task-choice]').forEach((button) => { button.disabled = true; });
+        if (outcome.step_done) return;
+        const continueButton = exercise.querySelector('[data-ejemplo-continue]');
+        if (exercises.some(isOpen) && continueButton) {
+          continueButton.hidden = false;
+          continueButton.focus();
+        }
+      };
+
+      ejemplo.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-ejemplo-continue]');
+        if (!button) return;
+        button.hidden = true;
+        clearMarks();
+        if (feedbackBox) feedbackBox.hidden = true;
+        showExercise(exercises.find(isOpen));
+      });
+    }
 
     root.addEventListener('click', (event) => {
       const doneButton = event.target.closest('[data-task-done]');

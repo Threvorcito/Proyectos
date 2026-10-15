@@ -143,3 +143,23 @@ class EjemploPlayTests(StudentTaskTestCase):
         self.answer(0, 0)
         html = self.client.get(self.step_url(1)).content.decode()
         self.assertIn('data-ejemplo-resume', html)
+
+    def test_closed_exercise_reports_step_not_done_while_others_remain(self):
+        self.answer(0, 0)
+        again = self.answer(0, 0)
+        self.assertEqual(again.status_code, 409)
+        body = again.json()
+        self.assertFalse(body['step_done'])
+        self.assertIsNone(body['next_url'])
+
+    def test_closed_last_exercise_reports_step_done(self):
+        self.answer(0, 0)
+        self.answer(1, 1)
+        body = self.answer(1, 1).json()
+        self.assertTrue(body['step_done'])
+        self.assertTrue(body['next_url'])
+
+    def test_page_has_walkthrough_hooks(self):
+        html = self.client.get(self.step_url(1)).content.decode()
+        for hook in ('data-ejemplo-next', 'data-ejemplo-practice', 'data-ejemplo-continue', 'data-ejemplo-line', 'data-exercise="1"'):
+            self.assertIn(hook, html)
