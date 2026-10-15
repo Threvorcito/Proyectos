@@ -1,0 +1,131 @@
+/* Child homework screens: kid.css tokens only, rem/em sizes, no timers. */
+.task-page { min-height: 60vh; }
+.task-path,
+.task-step {
+  max-width: 44rem;
+  margin: 0 auto;
+  background: var(--kid-surface, #fffdf8);
+  border: 2px solid var(--kid-line, #eadfcb);
+  border-radius: var(--kid-radius-lg, 28px);
+  box-shadow: var(--kid-shadow);
+  padding: 1.5rem;
+}
+.task-path h1 { font-size: 1.75em; margin-bottom: .5rem; }
+.task-path__celebration {
+  font-size: 1.25em;
+  font-weight: 700;
+  color: var(--kid-good-ink, #1e6b3a);
+}
+
+.task-path__steps {
+  list-style: none;
+  margin: 1.25rem 0;
+  padding: 0;
+  display: grid;
+  gap: .75rem;
+}
+.task-path__step {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  min-height: var(--kid-tap, 48px);
+  padding: .5rem 1rem;
+  border-radius: var(--kid-radius, 20px);
+  background: var(--kid-surface-sunk, #f6efe2);
+  font-size: 1.125em;
+}
+.task-path__marker {
+  flex: none;
+  width: 2rem;
+  height: 2rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 2px dashed var(--kid-line-strong, #7a6a52);
+  font-size: 1.25em;
+}
+.task-path__step.is-done .task-path__marker { border: 0; }
+.task-path__step.is-current {
+  background: var(--kid-primary-soft, #e1f1f4);
+  box-shadow: 0 0 0 .25rem var(--kid-primary, #1d6f84);
+  font-weight: 700;
+}
+.task-path__step.is-current .task-path__marker {
+  border-style: solid;
+  border-color: var(--kid-primary, #1d6f84);
+}
+
+/* Big main buttons. */
+.task-go {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--kid-tap-main, 64px);
+  margin-top: 1rem;
+  padding: .75rem 1.5rem;
+  border: 0;
+  border-radius: var(--kid-radius, 20px);
+  background: var(--kid-primary, #1d6f84);
+  color: #fff;
+  font: inherit;
+  font-size: 1.375em;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.task-go:hover,
+.task-go:focus-visible { background: var(--kid-primary-strong, #165a6b); color: #fff; }
+.task-go:focus-visible,
+.task-option__choice:focus-visible { outline: .25rem solid var(--kid-focus, #1d6f84); outline-offset: .2rem; }
+.task-go:disabled { opacity: .6; cursor: default; }
+
+.task-step__instruction { font-size: 1.25em; font-weight: 600; }
+.task-question { font-size: 1.5em; font-weight: 700; margin: 1rem 0 .5rem; }
+.task-mira__image {
+  display: block;
+  max-width: 100%;
+  max-height: 22rem;
+  margin: 1rem auto;
+  border-radius: var(--kid-radius, 20px);
+}
+
+.task-options { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: .75rem; }
+.task-option { display: flex; align-items: center; gap: .75rem; }
+.task-option__choice {
+  flex: 1;
+  min-height: var(--kid-tap-main, 64px);
+  padding: .75rem 1.25rem;
+  border: 2px solid var(--kid-line-strong, #7a6a52);
+  border-radius: var(--kid-radius, 20px);
+  background: var(--kid-surface, #fffdf8);
+  color: var(--kid-ink, #26303d);
+  font: inherit;
+  font-size: 1.25em;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.task-option__choice:hover { background: var(--kid-primary-soft, #e1f1f4); }
+.task-option__choice:disabled { opacity: .6; cursor: default; }
+
+.task-feedback {
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: var(--kid-radius, 20px);
+  border: 2px solid transparent;
+}
+.task-feedback[hidden] { display: none; }
+.task-feedback.is-good { background: var(--kid-good-soft, #e4f3e7); color: var(--kid-good-ink, #1e6b3a); border-color: var(--kid-good-ink, #1e6b3a); }
+.task-feedback.is-try { background: var(--kid-try-soft, #fdf0dc); color: var(--kid-try-ink, #8a4a0c); border-color: var(--kid-try-ink, #8a4a0c); }
+.task-feedback__text { margin: 0; font-size: 1.25em; font-weight: 700; }
+.task-feedback .task-go--next[hidden] { display: none; }
+
+@media (prefers-reduced-motion: no-preference) {
+  body:not(.reduce-motion) .task-feedback:not([hidden]) { animation: kid-pop .5s cubic-bezier(.16, 1, .3, 1) both; }
+  body:not(.reduce-motion) .task-path__step.is-current { animation: task-current-pulse 2.4s ease-in-out infinite alternate; }
+}
+@keyframes task-current-pulse {
+  from { box-shadow: 0 0 0 .2rem var(--kid-primary, #1d6f84); }
+  to { box-shadow: 0 0 0 .35rem var(--kid-primary, #1d6f84); }
+}

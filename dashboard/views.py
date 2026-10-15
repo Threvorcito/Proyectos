@@ -18,6 +18,7 @@ from core.models import AuditLog
 from gamification.models import StudentAchievement
 from gamification.services import evaluate_achievements
 from games.models import Game, GameAttempt, GameAttemptAnswer
+from homework.services import next_assignment_for
 from learning.models import CurriculumCompetency, FasStep, Lesson, LessonPlan, LessonPlanAssignment, Level, MinedReference, MinedStrategy, ParentProfile, StudentProfile, Subject, Syllable, TeacherProfile, Word
 from progress.models import StudentDifficulty, StudentProgress
 from progress.services import practice_days
@@ -832,6 +833,7 @@ def student_dashboard(request):
         'recommended': recommended,
         'assigned_plans': assigned_plans,
         'today_plan': today_plan,
+        'today_task': next_assignment_for(student),
         'practice_days': practice_days(student),
         'signin_cheer': request.session.pop('kid_signin_cheer', False),
     })

@@ -1,0 +1,14 @@
+{% with question=step.payload.question %}
+<div class="task-contesta">
+  <p class="task-question" id="task-question">{{ question }}</p>
+  {% include 'partials/listen_button.html' with target='#task-question' %}
+  <ul class="task-options">
+    {% for option in step.payload.options %}
+      <li class="task-option">
+        <button class="task-option__choice" type="button" data-task-choice="{{ forloop.counter0 }}">{{ option }}</button>
+        {% include 'partials/listen_button.html' with text=option label='Escuchar' %}
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endwith %}

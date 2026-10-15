@@ -314,7 +314,7 @@ body.kid-ui:not(.high-contrast) {
 .kid-ui:not(.high-contrast) .home-levels .home-levels__header span { color: var(--kid-ink-soft); }
 
 /* Area tints: the same colour per area on every card. */
-.kid-ui :is(.kid-area--learn, .student-choice-card--class, .course-card--1, .home-levels__card--one, .activity-grade-card--1) {
+.kid-ui :is(.kid-area--learn, .student-choice-card--class, .student-choice-card--task, .course-card--1, .home-levels__card--one, .activity-grade-card--1) {
   --area: var(--kid-primary); --area-soft: var(--kid-primary-soft);
 }
 .kid-ui :is(.kid-area--practice, .student-choice-card--practice) { --area: var(--kid-coral); --area-soft: var(--kid-coral-soft); }

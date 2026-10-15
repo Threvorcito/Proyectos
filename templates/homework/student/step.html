@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ assignment.task.title }}{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261014-tasks-1">{% endblock %}
+{% block content %}
+<div class="task-page">
+  <div class="container py-4 py-md-5">
+    <section class="task-step" data-task-step data-done-url="{{ done_url }}" data-answer-url="{{ answer_url }}" data-preview="{% if preview %}1{% else %}0{% endif %}" aria-labelledby="task-step-title">
+      <h1 id="task-step-title" class="visually-hidden">{{ step.get_step_type_display }}</h1>
+      <p class="task-step__instruction" id="task-step-instruction">{{ instruction }}</p>
+      {% include 'partials/listen_button.html' with target='#task-step-instruction' extra_class='kid-listen--below' %}
+      <div class="mascot-slot" data-mascot-slot></div>
+
+      {% if step.step_type == 'mira' %}{% include 'homework/steps/mira.html' %}
+      {% elif step.step_type == 'contesta' %}{% include 'homework/steps/contesta.html' %}{% endif %}
+
+      <div class="task-feedback" data-task-feedback role="status" aria-live="polite" hidden>
+        <p class="task-feedback__text" data-task-feedback-text></p>
+        <a class="task-go task-go--next" data-task-next href="#" hidden>Seguir</a>
+      </div>
+    </section>
+  </div>
+</div>
+{{ feedback|json_script:'task-feedback-copy' }}
+{% endblock %}
+{% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}
+{% block extra_js %}<script src="{% static 'js/homework/task-player.js' %}?v=20261014-tasks-1"></script>{% endblock %}

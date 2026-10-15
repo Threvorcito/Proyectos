@@ -17,7 +17,7 @@
   {% if adult_layout %}{# Adult-only pages (e.g. register) opt out of the child layer. #}
   {% elif not request.user.is_authenticated or request.user.role == 'STUDENT' %}
     {# Child-friendly layer: students and anonymous visitors only; teacher/admin keep their look. #}
-    <link rel="stylesheet" href="{% static 'css/kid.css' %}?v=20261014-kid-5">
+    <link rel="stylesheet" href="{% static 'css/kid.css' %}?v=20261014-kid-6">
     <link rel="stylesheet" href="{% static 'css/mascot.css' %}?v=20261014-k3-1">
   {% endif %}
 </head>

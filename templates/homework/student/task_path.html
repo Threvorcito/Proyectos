@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Mi tarea de hoy{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261014-tasks-1">{% endblock %}
+{% block content %}
+<div class="task-page">
+  <div class="container py-4 py-md-5">
+    <section class="task-path" aria-labelledby="task-path-title">
+      <div id="task-path-intro">
+        <h1 id="task-path-title">{{ assignment.task.title }}</h1>
+        {% if completed %}
+          <p class="task-path__celebration">{{ feedback.task_done }}</p>
+        {% else %}
+          <p>Sigue los pasos. Vamos de uno en uno.</p>
+        {% endif %}
+        {% include 'partials/listen_button.html' with target='#task-path-intro' extra_class='kid-listen--below' %}
+      </div>
+      <div class="mascot-slot" data-mascot-slot></div>
+      {% if completed %}<span hidden data-mascot-on-load="cheer" data-mascot-say="{{ feedback.task_done }}"></span>
+      {% elif just_done %}<span hidden data-mascot-on-load="cheer" data-mascot-say="{{ feedback.correct }}"></span>
+      {% else %}<span hidden data-mascot-on-load="hello" data-mascot-say="¡Vamos paso a paso!"></span>{% endif %}
+
+      <ol class="task-path__steps">
+        {% for state in states %}
+          <li class="task-path__step{% if state.done %} is-done{% endif %}{% if state.current %} is-current{% endif %}"{% if state.current %} aria-current="step"{% endif %}>
+            <span class="task-path__marker" aria-hidden="true">{% if state.done %}⭐{% endif %}</span>
+            <span class="task-path__label">{{ state.step.get_step_type_display }}{% if state.done %} <span class="visually-hidden">(hecho)</span>{% endif %}</span>
+          </li>
+        {% endfor %}
+      </ol>
+
+      {% if current %}
+        <a class="task-go" href="{% url 'homework:student_step' assignment.pk current.step.order %}">¡Vamos!</a>
+      {% else %}
+        <a class="task-go task-go--home" href="{% url 'dashboard:student' %}">Volver al inicio</a>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}
+{% block mascot %}{% include 'partials/mascot.html' %}{% endblock %}

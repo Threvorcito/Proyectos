@@ -9,7 +9,7 @@
         <p>Hazlo con calma. Puedes escuchar, leer, practicar o jugar.</p>
         {% include 'partials/listen_button.html' with target='#student-dashboard-intro' extra_class='kid-listen--below' %}
         <div class="mascot-slot" data-mascot-slot></div>
-        {% if signin_cheer %}<span hidden data-mascot-on-load="cheer" data-mascot-say="¡Entraste! ¡Muy bien!"></span>{% endif %}
+        {% if signin_cheer %}<span hidden data-mascot-on-load="cheer" data-mascot-say="¡Entraste! ¡Muy bien!"></span>{% elif today_task %}<span hidden data-mascot-on-load="hello" data-mascot-say="¡Hoy tienes una tarea! ¡Vamos juntos!"></span>{% endif %}
       </div>
       <div class="student-dashboard-hero__badge" aria-label="Tu avance">
         <span>{{ student.stars }}</span>
@@ -18,6 +18,13 @@
     </section>
 
     <section class="student-choice-grid mt-4" aria-label="Opciones principales">
+      {% if today_task %}
+        <a class="student-choice-card student-choice-card--task" href="{% url 'homework:student_task' today_task.pk %}">
+          <span class="student-choice-card__icon" aria-hidden="true">🎒</span>
+          <span class="student-choice-card__content"><strong>Mi tarea de hoy</strong><small>Tu profe preparó pasos para ti</small></span>
+          <span class="student-choice-card__action">¡Vamos!</span>
+        </a>
+      {% endif %}
       {% if today_plan %}
         <a class="student-choice-card student-choice-card--class" href="{% url 'dashboard:student_lesson_plan' today_plan.plan.pk %}">
           <span class="student-choice-card__icon" aria-hidden="true">📘</span>

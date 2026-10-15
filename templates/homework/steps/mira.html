@@ -1,0 +1,8 @@
+{% with question=step.payload.question %}
+<div class="task-mira">
+  {% if step.image %}<img class="task-mira__image" src="{{ step.image.url }}" alt="{{ question }}">{% endif %}
+  <p class="task-question" id="task-question">{{ question }}</p>
+  {% include 'partials/listen_button.html' with target='#task-question' %}
+  <button class="task-go task-go--ready" type="button" data-task-done="0">Listo</button>
+</div>
+{% endwith %}

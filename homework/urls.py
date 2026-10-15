@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views_teacher
+from . import views_student, views_teacher
 
 app_name = 'homework'
 
@@ -16,4 +16,8 @@ urlpatterns = [
     path('<int:pk>/pasos/<int:step_pk>/mover/', views_teacher.step_move, name='step_move'),
     path('<int:pk>/duplicar/', views_teacher.task_duplicate, name='task_duplicate'),
     path('<int:pk>/archivar/', views_teacher.task_archive, name='task_archive'),
+    path('mi-tarea/<int:assignment_pk>/', views_student.student_task, name='student_task'),
+    path('mi-tarea/<int:assignment_pk>/paso/<int:order>/', views_student.student_step, name='student_step'),
+    path('mi-tarea/<int:assignment_pk>/paso/<int:order>/listo/', views_student.step_done, name='step_done'),
+    path('mi-tarea/<int:assignment_pk>/paso/<int:order>/responder/', views_student.step_answer, name='step_answer'),
 ]
