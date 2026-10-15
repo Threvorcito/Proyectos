@@ -117,6 +117,9 @@
   };
   window.TaskPlayer = api;
 
+  // The reading practice (readings/partials/practice.html) announces the end of its 3-read cycle.
+  root.addEventListener('reading-practice:done', () => api.done(0));
+
   root.addEventListener('click', (event) => {
     const doneButton = event.target.closest('[data-task-done]');
     if (doneButton) {

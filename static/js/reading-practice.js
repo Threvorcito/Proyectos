@@ -20,6 +20,8 @@
   const fullText = JSON.parse(textSource.textContent || '""');
   const saveUrl = root.dataset.saveUrl || '';
   const totalReads = Number(root.dataset.reads || 3);
+  // Inside a homework task the last read is silent (spec: model, read aloud, read silently).
+  const silentLast = root.dataset.silentLast === '1';
   const minMs = Number(root.dataset.minMs || 2000);
   const maxMs = Number(root.dataset.maxMs || 900000);
   const WORD = /[\p{L}\p{N}]+/gu;
@@ -365,6 +367,8 @@
     readLabel.textContent = `Lectura ${current} de ${totalReads}`;
   };
 
+  const isSilentRead = () => silentLast && reads.length === totalReads - 1;
+
   const resetReadButtons = () => {
     readStartedAt = 0;
     startButton.hidden = false;
@@ -416,7 +420,7 @@
     startButton.hidden = true;
     listenAgainButton.hidden = true;
     finishButton.hidden = false;
-    readMessage.textContent = 'Lee en voz alta. Al final, toca Terminé.';
+    readMessage.textContent = isSilentRead() ? 'Lee en silencio. Al final, toca Terminé.' : 'Lee en voz alta. Al final, toca Terminé.';
     finishButton.focus();
   });
 
@@ -451,7 +455,7 @@
     renderReadProgress();
     resetReadButtons();
     window.Mascot?.react('cheer', {say: '¡Muy bien leído!'});
-    readMessage.textContent = encouragements[reads.length - 1] || encouragements[0];
+    readMessage.textContent = isSilentRead() ? 'Ahora lee en silencio, solo con los ojos.' : (encouragements[reads.length - 1] || encouragements[0]);
     announce(`${readMessage.textContent} Lectura ${reads.length + 1} de ${totalReads}.`);
     startButton.focus();
   });
@@ -539,6 +543,7 @@
     pointsNote.hidden = !pointsNote.textContent;
     showStep('result', `¡Mira cómo mejoraste! ${celebration.textContent}`);
     window.Mascot?.react('cheer', {say: improved ? '¡Leíste más rápido!' : '¡Tres lecturas! ¡Bravo!'});
+    root.dispatchEvent(new CustomEvent('reading-practice:done', {bubbles: true}));
   };
 
   againButton.addEventListener('click', () => {
@@ -574,6 +579,7 @@
   };
   if (!synth) showTtsNote('Este equipo no puede leer en voz alta. Pide a un adulto que lea contigo, o toca "¡Ahora leo yo!".');
   renderReadProgress();
+  if (root.dataset.autoEnter === '1') window.ReadingPractice.enter();
 })();
 
 (() => {

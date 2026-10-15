@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/reading-practice.css' %}?v=20261014-k1-2">{% endblock %}
+{% block extra_css %}{% include 'readings/partials/practice_assets.html' with part='css' %}{% endblock %}
 {% block content %}
 <div class="container py-5 reading-page">
   <div class="reading-card">
@@ -58,101 +58,13 @@
     </section>
     </div>
 
-    <section id="reading-mode-practice" class="practice" data-reading-mode-panel="practice" data-reading-practice hidden
-      aria-label="Practicar lectura"
-      {% if student %}data-save-url="{% url 'readings:save_practice_attempt' reading.pk %}"{% endif %}
-      data-reads="{{ practice_reads }}" data-min-ms="{{ practice_min_ms }}" data-max-ms="{{ practice_max_ms }}">
-      <p class="visually-hidden" aria-live="polite" data-practice-announce></p>
-      <ol class="practice-steps" aria-label="Pasos de la práctica">
-        <li data-practice-marker="listen" aria-current="step"><span class="practice-steps__num" aria-hidden="true">1</span>Escucha</li>
-        <li data-practice-marker="read"><span class="practice-steps__num" aria-hidden="true">2</span>Lee tú</li>
-        <li data-practice-marker="result"><span class="practice-steps__num" aria-hidden="true">3</span>Tu avance</li>
-      </ol>
-
-      <div class="practice-step" data-practice-step="listen">
-        <h2 tabindex="-1">Escucha</h2>
-        <p class="practice-hint">Sigue las palabras con los ojos.</p>
-        <p class="practice-note" data-practice-tts-note role="status" hidden></p>
-        <div class="practice-text" data-practice-text></div>
-        <div class="practice-controls">
-          <button class="practice-btn practice-btn--main" type="button" data-practice-play>
-            <svg data-icon="play" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4l13 8-13 8z"/></svg>
-            <svg data-icon="pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false" hidden><path d="M7 4h3v16H7zM14 4h3v16h-3z"/></svg>
-            <span data-label>Escuchar</span>
-          </button>
-          <button class="practice-btn" type="button" data-practice-restart>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
-            <span>Desde el inicio</span>
-          </button>
-          <button class="practice-btn practice-btn--main practice-btn--go" type="button" data-practice-to-read>
-            <span data-label>¡Ahora leo yo!</span>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg>
-          </button>
-        </div>
-      </div>
-
-      <div class="practice-step" data-practice-step="read" hidden>
-        <h2 tabindex="-1">Ahora lees tú</h2>
-        <div class="practice-reads">
-          <ol class="practice-reads__dots" aria-hidden="true">
-            {% for _ in "123" %}
-              <li data-practice-dot>
-                <svg class="practice-reads__book" viewBox="0 0 24 24" focusable="false"><path d="M2 4h6a4 4 0 0 1 4 4v12a3 3 0 0 0-3-3H2z"/><path d="M22 4h-6a4 4 0 0 0-4 4v12a3 3 0 0 1 3-3h7z"/></svg>
-                <svg class="practice-reads__check" viewBox="0 0 24 24" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
-              </li>
-            {% endfor %}
-          </ol>
-          <p class="practice-reads__label" data-practice-read-label>Lectura 1 de 3</p>
-        </div>
-        <p class="practice-message" data-practice-message></p>
-        <div class="practice-text practice-text--plain" data-practice-read-text></div>
-        <div class="mascot-slot" data-mascot-slot></div>
-        <div class="practice-controls">
-          <button class="practice-btn practice-btn--main" type="button" data-practice-start>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 4l13 8-13 8z"/></svg>
-            <span>Empezar</span>
-          </button>
-          <button class="practice-btn practice-btn--main practice-btn--go" type="button" data-practice-finish hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
-            <span>Terminé</span>
-          </button>
-          <button class="practice-btn" type="button" data-practice-listen-again>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 14v-2a9 9 0 0 1 18 0v2"/><path d="M21 15a2 2 0 0 1-2 2h-1v-6h1a2 2 0 0 1 2 2zM3 15a2 2 0 0 0 2 2h1v-6H5a2 2 0 0 0-2 2z"/></svg>
-            <span>Escuchar otra vez</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="practice-step" data-practice-step="result" hidden>
-        <h2 tabindex="-1">¡Mira cómo mejoraste!</h2>
-        <div class="mascot-slot" data-mascot-slot></div>
-        <p class="practice-celebration" data-practice-celebration>
-          <svg class="practice-celebration__star" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2l-5.6 3 1.1-6.3L2.9 9.5l6.3-.9z"/></svg>
-          <span data-label></span>
-        </p>
-        <figure class="practice-chart">
-          <div data-practice-chart></div>
-          <figcaption>Palabras por minuto: cuantas más, más rápido leíste.</figcaption>
-        </figure>
-        <p class="practice-points" data-practice-points hidden></p>
-        <div class="practice-controls">
-          <button class="practice-btn practice-btn--main" type="button" data-practice-again>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
-            <span>Practicar otra vez</span>
-          </button>
-          <button class="practice-btn" type="button" data-reading-mode="listen" aria-controls="reading-mode-listen">
-            <span>Volver al cuento</span>
-          </button>
-        </div>
-      </div>
-    </section>
+    {% include 'readings/partials/practice.html' with practice_text=reading.content save_url=practice_save_url %}
   </div>
 </div>
-{{ reading.content|json_script:"reading-practice-text" }}
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/reading-practice.js' %}?v=20261014-voice-1"></script>
+{% include 'readings/partials/practice_assets.html' with part='js' %}
 <script>
   document.addEventListener('DOMContentLoaded', function () {
     var root = document.querySelector('[data-reading-comprehension]');

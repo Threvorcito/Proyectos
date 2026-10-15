@@ -170,3 +170,44 @@ class StepJsonTests(StudentTaskTestCase):
 
     def test_dashboard_card_subtitle(self):
         self.assertContains(self.client.get(reverse('dashboard:student')), 'Tu profe preparó pasos para ti')
+
+
+class LecturaStepTests(StudentTaskTestCase):
+    def _lectura_page(self, *, text='El sapo salta.', reading=None):
+        task = self._task(title='Leer')
+        step = append_step(task, 'lectura', {'text': text}, reading=reading)
+        assignment = TaskAssignment.objects.create(task=task, student=self.ana)
+        return self.client.get(self.step_url(step.order, assignment=assignment))
+
+    def _reading(self, grade):
+        from readings.models import Reading
+        return Reading.objects.create(level=self.level, title='Cuento', content='Un gato duerme.', grade=grade)
+
+    def test_lectura_step_renders_practice_with_task_text(self):
+        response = self._lectura_page()
+        self.assertContains(response, 'data-reading-practice')
+        self.assertContains(response, '"El sapo salta."')
+        self.assertContains(response, 'data-silent-last="1"')
+        self.assertContains(response, 'data-decode-text')
+        self.assertNotContains(response, 'Volver al cuento')
+        self.assertNotContains(response, 'data-reading-practice hidden')
+
+    def test_lectura_step_with_same_grade_reading_uses_k1_save_url(self):
+        reading = self._reading('1')
+        response = self._lectura_page(text='', reading=reading)
+        self.assertContains(response, '"Un gato duerme."')
+        self.assertContains(response, reverse('readings:save_practice_attempt', args=[reading.pk]))
+
+    def test_lectura_step_with_other_grade_reading_has_no_save_url(self):
+        reading = self._reading('2')
+        response = self._lectura_page(text='', reading=reading)
+        self.assertContains(response, '"Un gato duerme."')
+        self.assertNotContains(response, 'data-save-url')
+
+    def test_reading_detail_still_renders_practice(self):
+        reading = self._reading('1')
+        response = self.client.get(reverse('readings:detail', args=[reading.pk]))
+        self.assertContains(response, 'data-reading-practice')
+        self.assertContains(response, 'Volver al cuento')
+        self.assertContains(response, 'data-reading-practice hidden')
+        self.assertNotContains(response, 'data-silent-last')

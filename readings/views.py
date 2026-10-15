@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
@@ -67,6 +68,7 @@ def reading_detail(request, pk):
     return render(request, 'readings/detail.html', {
         'reading': reading,
         'student': student,
+        'practice_save_url': reverse('readings:save_practice_attempt', args=[reading.pk]) if student else '',
         'practice_reads': PRACTICE_READS,
         'practice_min_ms': MIN_READ_MS,
         'practice_max_ms': MAX_READ_MS,

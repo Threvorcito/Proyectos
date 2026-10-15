@@ -12,6 +12,8 @@ from core.json_payload import parse_json_object
 from .copy import FEEDBACK, INSTRUCTIONS
 from .evaluation import InvalidAnswer
 from .models import TaskAssignment, TaskStep
+from readings.services import MAX_READ_MS, MIN_READ_MS, PRACTICE_READS
+
 from .services import ItemClosed, mark_item_done, start_assignment, step_states, submit_answer
 
 
@@ -71,6 +73,7 @@ def student_step(request, student, assignment_pk, order):
         return redirect(_path_url(assignment))
     kwargs = {'assignment_pk': assignment.pk, 'order': step.order}
     return render(request, 'homework/student/step.html', {
+        **_practice_context(student, step),
         'step': step,
         'assignment': assignment,
         'instruction': INSTRUCTIONS[_instruction_key(step)],
@@ -79,6 +82,20 @@ def student_step(request, student, assignment_pk, order):
         'answer_url': reverse('homework:step_answer', kwargs=kwargs),
         'feedback': FEEDBACK,
     })
+
+
+def _practice_context(student, step):
+    """Settings for the reused "Practicar lectura"; progress is saved only for a same-grade library reading."""
+    if step.step_type != TaskStep.StepType.LECTURA:
+        return {}
+    reading = step.reading
+    saves = reading is not None and reading.is_active and reading.grade == student.grade
+    return {
+        'practice_save_url': reverse('readings:save_practice_attempt', args=[reading.pk]) if saves else '',
+        'practice_reads': PRACTICE_READS,
+        'practice_min_ms': MIN_READ_MS,
+        'practice_max_ms': MAX_READ_MS,
+    }
 
 
 def _item_index(body):
