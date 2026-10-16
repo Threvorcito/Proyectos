@@ -4,7 +4,11 @@
 .home-levels .home-levels__icon.char-badge,
 .course-card__cover .char-badge,
 .course-room-hero .course-room-hero__badge.char-badge,
-.course-section__char.char-badge {
+.course-section__char.char-badge,
+.activities-hero .activities-hero__badge.char-badge,
+.activity-grade-card .activity-grade-card__char.char-badge,
+.games-page .games-page__hero-visual .games-page__hero-char.char-badge,
+.kid-progress__hero .kid-progress__char.char-badge {
   --badge-bg: #dff1f6;
   --badge-glow: rgba(29, 111, 132, .22);
   background: var(--badge-bg);
@@ -148,3 +152,49 @@ body.reduce-motion .char .ch-spark { opacity: .85; }
 }
 body.reduce-motion .course-room-hero .char *,
 body.reduce-motion .course-section .char * { animation: none !important; }
+
+/* Practice / readings heroes, grade cards, games hero and progress hero. */
+.activities-hero { align-items: center; display: grid; gap: 1.2rem; grid-template-columns: minmax(0, 1fr) auto; }
+.activities-hero .activities-hero__badge.char-badge {
+  font-size: 0;
+  height: 132px;
+  position: relative;
+  width: 132px;
+  z-index: 1;
+}
+.activities-hero .activities-hero__text { min-width: 0; position: relative; z-index: 1; }
+.activity-grade-card .activity-grade-card__char.char-badge {
+  box-shadow: inset 0 0 0 3px #fff, 0 6px 14px var(--badge-glow);
+  font-size: 0;
+  height: 72px;
+  position: absolute;
+  right: .75rem;
+  top: .75rem;
+  width: 72px;
+  z-index: 1;
+}
+.activity-grade-card .activity-grade-card__header { padding-right: 84px; }
+.games-page .games-page__hero-visual-link { display: flex; justify-content: center; }
+.games-page .games-page__hero-visual .games-page__hero-char.char-badge { font-size: 0; height: 132px; width: 132px; }
+.kid-progress__hero .kid-progress__char.char-badge { height: 112px; width: 112px; }
+.activities-hero:is(:hover, :focus-within) .ch-hop,
+.activity-grade-card:is(:hover, :focus-within) .ch-hop,
+.games-page__hero-visual-link:is(:hover, :focus-visible) .ch-hop,
+.kid-progress__hero:is(:hover, :focus-within) .ch-hop { animation: ch-hop .7s ease-out 1; }
+.activities-hero:is(:hover, :focus-within) .ch-wave,
+.activity-grade-card:is(:hover, :focus-within) .ch-wave,
+.games-page__hero-visual-link:is(:hover, :focus-visible) .ch-wave { animation: ch-wave 1s ease-in-out 1; transform-origin: 50% 90%; }
+.games-page__hero-visual-link:is(:hover, :focus-visible) .ch-star,
+.kid-progress__hero:is(:hover, :focus-within) .ch-star { animation: ch-tilt 1s ease-in-out 1; }
+@media (max-width: 575.98px) {
+  .activities-hero { grid-template-columns: minmax(0, 1fr); }
+  .activities-hero .activities-hero__badge.char-badge { height: 96px; width: 96px; }
+  .games-page .games-page__hero-visual .games-page__hero-char.char-badge { height: 96px; width: 96px; }
+  .kid-progress__hero .kid-progress__char.char-badge { height: 88px; width: 88px; }
+  .activity-grade-card .activity-grade-card__char.char-badge { height: 64px; width: 64px; }
+  .activity-grade-card .activity-grade-card__header { padding-right: 72px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.activities-hero, .activity-grade-card, .games-page__hero-visual-link, .kid-progress__hero) .char * { animation: none !important; }
+}
+body.reduce-motion :is(.activities-hero, .activity-grade-card, .games-page__hero-visual-link, .kid-progress__hero) .char * { animation: none !important; }

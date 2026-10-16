@@ -1,23 +1,29 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/characters.css' %}?v=20261016-chars-3">{% endblock %}
 {% block content %}
 <div class="activities-page">
   <div class="container py-5">
     <section class="activities-hero" id="activities-intro">
-      <span class="eyebrow">Practicar</span>
-      {% if student %}
-        <h1>Estas son tus actividades</h1>
-        <p>Elige una práctica corta. Puedes escuchar la instrucción.</p>
-        {% include 'partials/listen_button.html' with target='#activities-intro h1, #activities-intro p' extra_class='kid-listen--below' %}
-      {% else %}
-        <h1>Escoge tu grado y luego tu materia</h1>
-        <p>Actividades clasificadas por grado y asignatura, con apoyo visual, repetición guiada y lectura accesible para estudiantes con dislexia.</p>
-        <a class="btn {% if not selected_grade and not selected_subject_id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'activities:list' %}">Ver todas las actividades</a>
-      {% endif %}
+      <div class="activities-hero__text">
+        <span class="eyebrow">Practicar</span>
+        {% if student %}
+          <h1>Estas son tus actividades</h1>
+          <p>Elige una práctica corta. Puedes escuchar la instrucción.</p>
+          {% include 'partials/listen_button.html' with target='#activities-intro h1, #activities-intro p' extra_class='kid-listen--below' %}
+        {% else %}
+          <h1>Escoge tu grado y luego tu materia</h1>
+          <p>Actividades clasificadas por grado y asignatura, con apoyo visual, repetición guiada y lectura accesible para estudiantes con dislexia.</p>
+          <a class="btn {% if not selected_grade and not selected_subject_id %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'activities:list' %}">Ver todas las actividades</a>
+        {% endif %}
+      </div>
+      <div class="activities-hero__badge char-badge char-badge--hummingbird" aria-hidden="true">{% include 'partials/characters/hummingbird.html' %}</div>
     </section>
 
     {% if not student %}<section class="activity-filter-board mt-4" aria-label="Filtros de actividades por grado y materia">
       {% for value, label in grades %}
         <article class="activity-grade-card activity-grade-card--{{ value }} {% if selected_grade == value %}is-active{% endif %}">
+          <span class="activity-grade-card__char char-badge {% if forloop.counter == 1 %}char-badge--turtle{% elif forloop.counter == 2 %}char-badge--bunny{% else %}char-badge--fox{% endif %}" aria-hidden="true">{% if forloop.counter == 1 %}{% include 'partials/characters/turtle.html' %}{% elif forloop.counter == 2 %}{% include 'partials/characters/bunny.html' %}{% else %}{% include 'partials/characters/fox.html' %}{% endif %}</span>
           <div class="activity-grade-card__header">
             <span>{{ value }}</span>
             <div>

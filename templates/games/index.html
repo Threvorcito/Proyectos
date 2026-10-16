@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Juegos | {{ site_name }}{% endblock %}
-{% block extra_css %}<link rel="stylesheet" href="{% static 'css/games.css' %}">{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/games.css' %}"><link rel="stylesheet" href="{% static 'css/characters.css' %}?v=20261016-chars-3">{% endblock %}
 
 {% block content %}
 <div class="games-page">
@@ -16,7 +16,7 @@
           <div class="mascot-slot" data-mascot-slot></div>
         </div>
         <a class="games-page__hero-visual games-page__hero-visual-link" href="{% url 'games:detail' 'quiz-agilidad-lectora' %}" aria-label="Jugar Quiz de agilidad lectora">
-          <span>🔎</span><span>🧩</span><span>🎧</span><span>📖</span>
+          <div class="games-page__hero-char char-badge char-badge--jaguar" aria-hidden="true">{% include 'partials/characters/jaguar.html' %}</div>
         </a>
       </div>
     </div>
