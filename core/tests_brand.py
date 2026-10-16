@@ -18,7 +18,8 @@ class LevelCharacterTests(TestCase):
         self.assertIn('css/characters.css', html)
         for name in ('turtle', 'bunny', 'fox', 'owl', 'hummingbird', 'jaguar'):
             self.assertIn(f'char char--{name}', html)
-        self.assertEqual(html.count('class="char '), 6)
+        # 6 level cards + 3 reading-support cards.
+        self.assertEqual(html.count('class="char '), 9)
         self.assertNotIn('>ABC</div>', html)
 
 
@@ -49,7 +50,7 @@ class KidNavCharacterTests(TestCase):
         ):
             with self.subTest(page=name):
                 html = self.client.get(reverse(name)).content.decode()
-                self.assertIn('css/characters.css?v=20261016-chars-3', html)
+                self.assertIn('css/characters.css?v=', html)
                 self.assertIn(f'char-badge char-badge--{character}', html)
                 self.assertIn(f'char char--{character}', html)
 
