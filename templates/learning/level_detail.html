@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/characters.css' %}?v=20261016-chars-2">{% endblock %}
 {% block content %}
 <div class="levels-page">
   <div class="container py-5">
@@ -11,7 +13,7 @@
         {% include 'partials/listen_button.html' with target='#level-intro h1, #level-intro p' extra_class='kid-listen--below' %}
         {% if student %}<strong>{{ assigned_plan_count }} plan{{ assigned_plan_count|pluralize:'es' }} asignado{{ assigned_plan_count|pluralize:'s' }} por el profesor</strong>{% endif %}
       </div>
-      <div class="course-room-hero__badge" aria-hidden="true">{% if level.number == 1 %}🔤{% elif level.number == 2 %}🧩{% else %}📚{% endif %}</div>
+      <div class="course-room-hero__badge char-badge {% if level.number == 1 %}char-badge--turtle{% elif level.number == 2 %}char-badge--bunny{% else %}char-badge--fox{% endif %}" aria-hidden="true">{% if level.number == 1 %}{% include 'partials/characters/turtle.html' %}{% elif level.number == 2 %}{% include 'partials/characters/bunny.html' %}{% else %}{% include 'partials/characters/fox.html' %}{% endif %}</div>
     </section>
 
     <nav class="course-tabs" aria-label="Secciones del nivel" data-course-tabs>
@@ -22,7 +24,7 @@
     </nav>
 
     <section class="course-section is-active" id="materias" data-course-panel="materias">
-      <header><h2>Materias del nivel</h2><p>Toca una materia para ver qué puedes hacer.</p></header>
+      <header class="course-section__head"><span class="course-section__char char-badge char-badge--owl" aria-hidden="true">{% include 'partials/characters/owl.html' %}</span><div><h2>Materias del nivel</h2><p>Toca una materia para ver qué puedes hacer.</p></div></header>
       <div class="level-subject-board" aria-label="Materias del nivel {{ level.number }}">
       {% for row in subject_rows %}
         <details class="level-subject-card level-subject-card--simple">
@@ -49,7 +51,7 @@
     </section>
 
     <section class="course-section" id="planes" data-course-panel="planes" hidden>
-      <header><h2>Planes del profesor</h2><p>Organizados por materia para saber qué toca practicar.</p></header>
+      <header class="course-section__head"><span class="course-section__char char-badge char-badge--hummingbird" aria-hidden="true">{% include 'partials/characters/hummingbird.html' %}</span><div><h2>Planes del profesor</h2><p>Organizados por materia para saber qué toca practicar.</p></div></header>
       <div class="course-module-list">
         {% for row in subject_rows %}
           <details class="course-module" {% if row.plans %}open{% endif %}>
@@ -68,7 +70,7 @@
     </section>
 
     <section class="course-section" id="calificaciones" data-course-panel="calificaciones" hidden>
-      <header><h2>Mis avances por materia</h2><p>Se calcula con los resultados de juegos y prácticas guardadas.</p></header>
+      <header class="course-section__head"><span class="course-section__char char-badge char-badge--jaguar" aria-hidden="true">{% include 'partials/characters/jaguar.html' %}</span><div><h2>Mis avances por materia</h2><p>Se calcula con los resultados de juegos y prácticas guardadas.</p></div></header>
       <div class="gradebook-panel">
         {% for row in subject_rows %}
           <article>
@@ -80,7 +82,7 @@
     </section>
 
     <section class="course-section" id="recursos" data-course-panel="recursos" hidden>
-      <header><h2>Recursos rápidos</h2><p>Accesos directos filtrados por este nivel.</p></header>
+      <header class="course-section__head"><span class="course-section__char char-badge char-badge--bunny" aria-hidden="true">{% include 'partials/characters/bunny.html' %}</span><div><h2>Recursos rápidos</h2><p>Accesos directos filtrados por este nivel.</p></div></header>
       <div class="quick-resource-grid">
         <a href="{% url 'activities:list' %}?grade={{ grade }}">Ver actividades del nivel</a>
         <a href="{% url 'readings:list' %}?grade={{ grade }}">Ver lecturas del nivel</a>

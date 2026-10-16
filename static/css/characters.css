@@ -2,7 +2,9 @@
    hummingbird, jaguar cub). Motion is gentle and transform/opacity only. */
 
 .home-levels .home-levels__icon.char-badge,
-.course-card__cover .char-badge {
+.course-card__cover .char-badge,
+.course-room-hero .course-room-hero__badge.char-badge,
+.course-section__char.char-badge {
   --badge-bg: #dff1f6;
   --badge-glow: rgba(29, 111, 132, .22);
   background: var(--badge-bg);
@@ -115,3 +117,34 @@ body.reduce-motion .char .ch-spark { opacity: .85; }
 /* Levels page: figure replaces the emoji in the course card cover. */
 .course-card__cover .course-card__figure { font-size: 0; line-height: 0; }
 .course-card__cover .char-badge { height: 96px; width: 96px; }
+
+/* Level detail page: the level's character in the hero, and a small
+   companion next to each section heading. */
+.course-room-hero .course-room-hero__badge.char-badge {
+  flex: 0 0 auto;
+  font-size: 0;
+  height: 132px;
+  width: 132px;
+}
+.course-room-hero:is(:hover, :focus-within) .ch-hop { animation: ch-hop .7s ease-out 1; }
+.course-room-hero:is(:hover, :focus-within) .ch-wave { animation: ch-wave 1s ease-in-out 1; transform-origin: 50% 90%; }
+.course-section > header.course-section__head {
+  align-items: center;
+  display: flex;
+  gap: .9rem;
+}
+.course-section__char.char-badge {
+  box-shadow: inset 0 0 0 3px #fff, 0 6px 14px var(--badge-glow);
+  height: 64px;
+  width: 64px;
+}
+.course-section:is(:hover, :focus-within) .ch-hop { animation: ch-hop .7s ease-out 1; }
+@media (max-width: 575.98px) {
+  .course-room-hero .course-room-hero__badge.char-badge { height: 96px; width: 96px; }
+  .course-section__char.char-badge { height: 52px; width: 52px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .course-room-hero .char *, .course-section .char * { animation: none !important; }
+}
+body.reduce-motion .course-room-hero .char *,
+body.reduce-motion .course-section .char * { animation: none !important; }
