@@ -198,3 +198,23 @@ body.reduce-motion .course-section .char * { animation: none !important; }
   :is(.activities-hero, .activity-grade-card, .games-page__hero-visual-link, .kid-progress__hero) .char * { animation: none !important; }
 }
 body.reduce-motion :is(.activities-hero, .activity-grade-card, .games-page__hero-visual-link, .kid-progress__hero) .char * { animation: none !important; }
+
+/* Home "Apoyo lector" info cards: a small companion replaces the glyph icon. */
+.home-info .home-info__card h3 .home-info__icon.char-badge {
+  background: var(--badge-bg, #dff1f6);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 3px #fff, 0 6px 14px var(--badge-glow, rgba(29, 111, 132, .22));
+  height: 64px;
+  line-height: 0;
+  overflow: visible;
+  width: 64px;
+}
+.home-info .home-info__card:hover .ch-hop { animation: ch-hop .7s ease-out 1; }
+.home-info .home-info__card:hover .ch-wave { animation: ch-wave 1s ease-in-out 1; transform-origin: 50% 90%; }
+@media (max-width: 575.98px) {
+  .home-info .home-info__card h3 .home-info__icon.char-badge { height: 52px; width: 52px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-info .char * { animation: none !important; }
+}
+body.reduce-motion .home-info .char * { animation: none !important; }

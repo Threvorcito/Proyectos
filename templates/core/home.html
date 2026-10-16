@@ -2,7 +2,7 @@
 {% load static %}
 {% block title %}{{ site_name }}{% endblock %}
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/characters.css' %}?v=20261016-chars-3">
+<link rel="stylesheet" href="{% static 'css/characters.css' %}?v=20261016-chars-4">
 <style>
   .home-hero {
     position: relative;
@@ -565,6 +565,7 @@
     box-shadow: 0 10px 24px rgba(15, 23, 42, .055);
     color: #102033;
     display: grid;
+    align-content: start;
     gap: .75rem;
     min-height: 100%;
     padding: 1.05rem;
@@ -888,11 +889,11 @@
   </div>
   <div class="home-info__grid">
     <article class="home-info__card">
-      <h3><span class="home-info__icon" aria-hidden="true">Aa</span>¿Qué es la dislexia?</h3>
+      <h3><span class="home-info__icon char-badge char-badge--owl" aria-hidden="true">{% include 'partials/characters/owl.html' %}</span>¿Qué es la dislexia?</h3>
       <p>Es una dificultad para leer con fluidez. Cada niño puede necesitar más tiempo, apoyo visual y práctica guiada.</p>
     </article>
     <article class="home-info__card">
-      <h3><span class="home-info__icon" aria-hidden="true">🔊</span>¿Cómo ayuda esta plataforma?</h3>
+      <h3><span class="home-info__icon char-badge char-badge--bunny" aria-hidden="true">{% include 'partials/characters/bunny.html' %}</span>¿Cómo ayuda esta plataforma?</h3>
       <p>Ofrece lectura guiada, apoyo por voz, actividades cortas, juegos educativos, accesibilidad y seguimiento del progreso.</p>
       <div class="home-info__chips" aria-label="Apoyos de la plataforma">
         <span>Voz</span>
@@ -902,7 +903,7 @@
       </div>
     </article>
     <article class="home-info__card">
-      <h3><span class="home-info__icon" aria-hidden="true">★</span>Nuestro propósito</h3>
+      <h3><span class="home-info__icon char-badge char-badge--jaguar" aria-hidden="true">{% include 'partials/characters/jaguar.html' %}</span>Nuestro propósito</h3>
       <p>Apoyar a estudiantes de 1.º, 2.º y 3.º grado con una experiencia accesible, sencilla y motivadora.</p>
     </article>
   </div>
