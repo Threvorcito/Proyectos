@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load static %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/characters.css' %}?v=20261016-chars-1">{% endblock %}
 {% block content %}
 <div class="levels-page">
   <div class="container py-5">
@@ -23,7 +25,7 @@
           <a class="course-card course-card--{{ item.level.number }}" href="{% url 'learning:level_detail' item.level.number %}">
             <div class="course-card__cover">
               <span>Nivel {{ item.level.number }}</span>
-              <strong>{% if item.level.number == 1 %}🔤{% elif item.level.number == 2 %}🧩{% else %}📚{% endif %}</strong>
+              <strong class="course-card__figure" aria-hidden="true">{% if item.level.number == 1 %}<span class="char-badge char-badge--turtle">{% include 'partials/characters/turtle.html' %}</span>{% elif item.level.number == 2 %}<span class="char-badge char-badge--bunny">{% include 'partials/characters/bunny.html' %}</span>{% else %}<span class="char-badge char-badge--fox">{% include 'partials/characters/fox.html' %}</span>{% endif %}</strong>
             </div>
             <div class="course-card__body">
               <h3>{{ item.level.name }}</h3>

@@ -10,3 +10,13 @@ class BrandAssetsTests(TestCase):
         self.assertIn('name="theme-color"', html)
         self.assertIn('brand-mark__logo', html)
         self.assertIn('Lectura sin Límites', html)
+
+
+class LevelCharacterTests(TestCase):
+    def test_home_renders_character_figures_hidden_from_assistive_tech(self):
+        html = self.client.get(reverse('core:home')).content.decode()
+        self.assertIn('css/characters.css', html)
+        for name in ('turtle', 'bunny', 'fox', 'owl', 'hummingbird', 'jaguar'):
+            self.assertIn(f'char char--{name}', html)
+        self.assertEqual(html.count('class="char '), 6)
+        self.assertNotIn('>ABC</div>', html)

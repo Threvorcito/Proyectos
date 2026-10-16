@@ -1,6 +1,8 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ site_name }}{% endblock %}
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/characters.css' %}?v=20261016-chars-1">
 <style>
   .home-hero {
     position: relative;
@@ -931,7 +933,7 @@
     {% else %}
     <a class="home-levels__card home-levels__card--one" href="{% url 'learning:level_detail' 1 %}" aria-label="Abrir Nivel 1, Primeros pasos">
     {% endif %}
-      <div class="home-levels__icon" aria-hidden="true">ABC</div>
+      <div class="home-levels__icon char-badge char-badge--turtle" aria-hidden="true">{% include 'partials/characters/turtle.html' %}</div>
       <span class="home-levels__level">Nivel 1</span>
       <h3>Primeros pasos</h3>
       <p>Descubre letras, sonidos y sílabas mientras formas tus primeras palabras.</p>
@@ -954,7 +956,7 @@
     {% else %}
     <a class="home-levels__card home-levels__card--two" href="{% url 'learning:level_detail' 2 %}" aria-label="Abrir Nivel 2, Construyo palabras">
     {% endif %}
-      <div class="home-levels__icon" aria-hidden="true">A Z</div>
+      <div class="home-levels__icon char-badge char-badge--bunny" aria-hidden="true">{% include 'partials/characters/bunny.html' %}</div>
       <span class="home-levels__level">Nivel 2</span>
       <h3>Construyo palabras</h3>
       <p>Combina sílabas, reconoce sonidos y practica palabras de forma divertida.</p>
@@ -977,12 +979,7 @@
     {% else %}
     <a class="home-levels__card home-levels__card--three" href="{% url 'learning:level_detail' 3 %}" aria-label="Abrir Nivel 3, Leo y comprendo">
     {% endif %}
-      <div class="home-levels__icon" aria-hidden="true">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" focusable="false">
-          <path d="M5 5.5c2.5 0 4.3.55 7 2.05 2.7-1.5 4.5-2.05 7-2.05v12.2c-2.4 0-4.25.5-7 2-2.75-1.5-4.6-2-7-2V5.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-          <path d="M12 7.55v12.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-        </svg>
-      </div>
+      <div class="home-levels__icon char-badge char-badge--fox" aria-hidden="true">{% include 'partials/characters/fox.html' %}</div>
       <span class="home-levels__level">Nivel 3</span>
       <h3>Leo y comprendo</h3>
       <p>Lee pequeños textos, descubre nuevas palabras y fortalece tu comprensión.</p>
@@ -1006,7 +1003,7 @@
 <section class="container py-4 home-levels home-learning-path" aria-label="Aprendo, practico y avanzo">
   <div class="home-levels__grid">
     <a class="home-levels__card home-levels__card--one" href="{% url 'learning:levels' %}" aria-label="Ir a la sección Aprender">
-      <div class="home-levels__icon" aria-hidden="true">ABC</div>
+      <div class="home-levels__icon char-badge char-badge--owl" aria-hidden="true">{% include 'partials/characters/owl.html' %}</div>
       <span class="home-levels__level">Aprender</span>
       <h3>Aprendo</h3>
       <p>Descubro letras, sonidos y sílabas paso a paso.</p>
@@ -1018,7 +1015,7 @@
       <span class="home-levels__action">Ir a Aprender →</span>
     </a>
     <a class="home-levels__card home-levels__card--two" href="{% url 'activities:list' %}" aria-label="Ir a actividades para practicar">
-      <div class="home-levels__icon" aria-hidden="true">✎</div>
+      <div class="home-levels__icon char-badge char-badge--hummingbird" aria-hidden="true">{% include 'partials/characters/hummingbird.html' %}</div>
       <span class="home-levels__level">Practicar</span>
       <h3>Practico</h3>
       <p>Refuerzo lo aprendido con actividades y pequeños retos interactivos.</p>
@@ -1030,7 +1027,7 @@
       <span class="home-levels__action">Ir a Practicar →</span>
     </a>
     <a class="home-levels__card home-levels__card--advance" href="{% if user.is_authenticated %}{% url 'progress:overview' %}{% else %}{% url 'accounts:login' %}{% endif %}" aria-label="Ir a mi progreso y logros">
-      <div class="home-levels__icon" aria-hidden="true">★</div>
+      <div class="home-levels__icon char-badge char-badge--jaguar" aria-hidden="true">{% include 'partials/characters/jaguar.html' %}</div>
       <span class="home-levels__level">Progreso</span>
       <h3>Avanzo</h3>
       <p>Celebro mis logros y continúo avanzando a mi propio ritmo.</p>
