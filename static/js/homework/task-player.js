@@ -52,10 +52,10 @@
     // Hint = audio + highlight: the question (or the tile row) lights up; a modeled answer marks the right option.
     const highlight = (outcome) => {
       clearMarks();
-      // Ejemplo shows one exercise at a time: only that one is lit.
-      const scope = root.querySelector('.task-exercise:not([hidden])') || root;
+      // Ejemplo and dictado show one exercise or item at a time: only that one is lit.
+      const scope = root.querySelector('.task-exercise:not([hidden]), [data-dictado-item]:not([hidden])') || root;
       if (outcome.status === 'try_again') {
-        (scope.querySelector('.task-question') || root.querySelector('[data-build-row]'))?.classList.add('is-hint');
+        (scope.querySelector('.task-question') || scope.querySelector('[data-build-row]'))?.classList.add('is-hint');
       } else if (outcome.status === 'modeled') {
         scope.querySelectorAll('[data-task-choice]').forEach((button) => {
           if (button.textContent.trim() === outcome.model_answer) button.classList.add('is-model');
@@ -249,6 +249,42 @@
         clearMarks();
         if (feedbackBox) feedbackBox.hidden = true;
         showExercise(exercises.find(isOpen));
+      });
+    }
+
+    // Dictado: one item per screen. The child hears it (data-speak-text, never printed) and builds it with tiles;
+    // once the server closes it (correct or modeled), "Siguiente" opens the next open item and says it aloud.
+    const dictado = root.querySelector('[data-dictado]');
+    if (dictado) {
+      const items = [...dictado.querySelectorAll('[data-dictado-item]')];
+      const isOpen = (node) => !node.classList.contains('is-done');
+
+      root.addEventListener('build:answered', (event) => {
+        const item = event.target.closest('[data-dictado-item]');
+        const {outcome} = event.detail || {};
+        if (!item || !outcome || (outcome.status !== 'correct' && outcome.status !== 'modeled')) return;
+        item.classList.add('is-done');
+        if (outcome.step_done) return;
+        const nextButton = item.querySelector('[data-dictado-next]');
+        if (items.some(isOpen) && nextButton) {
+          nextButton.hidden = false;
+          nextButton.focus();
+        }
+      });
+
+      dictado.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-dictado-next]');
+        if (!button) return;
+        const next = items.find(isOpen);
+        if (!next) return;
+        button.hidden = true;
+        clearMarks();
+        if (feedbackBox) feedbackBox.hidden = true;
+        items.forEach((node) => { node.hidden = node !== next; });
+        // The tap is a user gesture, so the next word can be heard right away; its listen button replays it.
+        const listen = next.querySelector('.task-dictado__listen');
+        listen?.focus();
+        listen?.click();
       });
     }
 

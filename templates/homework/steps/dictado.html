@@ -1,0 +1,14 @@
+{% comment %}
+Dictado: one item on screen at a time. The child hears the word or sentence (data-speak-text, never printed) and
+builds it with tiles; task-player.js shows the next open item after each one closes. Items in `done_items` start
+closed, and `dictado_current` (first open item) is the one shown on load. Only the teacher preview prints the targets.
+{% endcomment %}<div class="task-dictado" data-dictado>
+  {% for item in dictado.items %}
+    <div class="task-dictado__item{% if item.index in done_items %} is-done{% endif %}" data-dictado-item="{{ item.index }}"{% if item.index != dictado_current|default:0 %} hidden{% endif %}>
+      {% if preview %}<p class="task-preview-label">{% if item.unit == 'letter' %}Palabra{% else %}Oración{% endif %} {{ forloop.counter }} de {{ dictado.items|length }}: <strong>{{ item.say }}</strong></p>{% endif %}
+      {% include 'partials/listen_button.html' with text=item.say label='Escuchar' extra_class='task-dictado__listen' %}
+      {% include 'homework/partials/tiles.html' with build=item %}
+      <button class="task-go task-go--ready" type="button" data-dictado-next hidden>Siguiente</button>
+    </div>
+  {% endfor %}
+</div>

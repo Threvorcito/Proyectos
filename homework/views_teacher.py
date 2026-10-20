@@ -103,6 +103,8 @@ def task_update(request, pk):
 
 def _summary(step):
     payload = step.payload
+    if step.step_type == TaskStep.StepType.DICTADO:
+        return f'Letra «{payload["letter"]}»: {", ".join(payload["words"])}'
     return payload.get('question') or payload.get('text') or step.text or (payload.get('example_steps') or [''])[0]
 
 

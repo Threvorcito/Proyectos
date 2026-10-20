@@ -96,21 +96,21 @@ Route: delegated writer.
 - Consumes: `dictation.item_target`, `ITEMS`, `writing.build_tiles`, `split_units`.
 - Produces: `step_context(step)` returns `{'dictado': {'letter': str, 'items': [{'index': int, 'unit': 'letter'|'word', 'say': str, 'tiles': list[str]}]}}` for dictado steps (tiles seeded `step.task_id * 1000 + step.pk + index`).
 
-- [ ] **Step 1: Write failing tests:**
+- [x] **Step 1: Write failing tests:**
   - `test_teacher_creates_dictado`: POST to `homework:step_create` with `step_type='dictado'`, `letter='m'`, `words` (5 lines), `sentences` (2 lines) → step saved with the normalized payload; invalid (4 words) re-renders with the Spanish error.
   - `test_dictado_in_step_type_menu`: `task_detail` context `step_types` includes `('dictado', 'Dictado')`.
   - `test_student_step_renders_listen_not_text`: GET the student step → contains one `data-speak-text="mesa"` button per word and does **not** render `mesa` as visible item text (assert the visible label/heading blocks don't include it — check the template's item markup class).
   - `test_student_resumes_dictado`: after completing items 0–2, GET the step → `done_items == {0,1,2}` in context (RF 4).
   - `test_preview_renders_dictado`: teacher preview of the task returns 200 and shows the 7 items.
-- [ ] **Step 2: Run** `DB_ENGINE=sqlite python manage.py test homework.tests_dictation_views` → FAIL.
-- [ ] **Step 3: Implement.**
+- [x] **Step 2: Run** `DB_ENGINE=sqlite python manage.py test homework.tests_dictation_views` → FAIL.
+- [x] **Step 3: Implement.**
   - `DictadoStepForm(StepForm)`: `step_type='dictado'`; fields `letter` (CharField, max 3, label `'Letra o sonido que se estudia'`), `words` (Textarea, `'5 palabras (una por línea)'`), `sentences` (Textarea, `'2 oraciones (una por línea)'`); `to_payload` splits lines, drops blanks; `initial_from` joins with `'\n'`.
   - Child copy: `INSTRUCTIONS['dictado'] = 'Escucha y arma lo que oyes con las fichas.'`
   - `dictado.html`: one item at a time (hidden others), a big listen button (`partials/listen_button.html` with the item's `say`; can replay), the tile tray (reuse `homework/partials/tiles.html` markup), "Listo" posts `{item_index, tiles}` to `answer_url`; on `correct`/`modeled` move to the next unfinished item; `try_again` shows the hint as arma does. Items in `done_items` start hidden/completed. Never print the target text.
   - JS: extend the existing player instead of a new file if it already supports multi-item steps (palabras/ejemplo); otherwise add a small `dictado` handler in `task-player.js`. Bump the `?v=` query strings you touch.
   - `_done_items`: include `DICTADO`.
-- [ ] **Step 4: Run** `DB_ENGINE=sqlite python manage.py test homework` → all PASS.
-- [ ] **Step 5: Commit** `feat(homework): teacher dictado form and child dictation screen`
+- [x] **Step 4: Run** `DB_ENGINE=sqlite python manage.py test homework` → all PASS.
+- [x] **Step 5: Commit** `feat(homework): teacher dictado form and child dictation screen`
 
 ### Task 3: Teacher break-point report and printable instrument
 
@@ -149,8 +149,8 @@ Route: inline (parent).
 
 | Task | Status | Commit | Checks | Review tier |
 |---|---|---|---|---|
-| T1 | done | (this commit) | tests_dictation 13 OK (RED: ModuleNotFoundError homework.dictation); homework 258 OK; makemigrations --check clean | |
-| T2 | pending | | | |
+| T1 | done | 8f9bb9c | tests_dictation 13 OK (RED: ModuleNotFoundError homework.dictation); homework 258 OK; makemigrations --check clean | medium — under_budget (pending in slice) |
+| T2 | done | (see git log) | tests_dictation_views 10 OK (RED: 5 fail + 5 error, step_create 404 / no dictado context); full suite 527 OK after parent updated tests_steps.py:151 STEP_FORMS set; node --check OK | pending assess |
 | T3 | pending | | | |
 | T4 | pending | | | |
 

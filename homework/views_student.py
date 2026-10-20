@@ -12,6 +12,7 @@ from core.json_payload import parse_json_object
 
 from .copy import FEEDBACK, INSTRUCTIONS
 from .decoding import decode_word
+from .dictation import ITEMS as DICTADO_ITEMS, item_target
 from .evaluation import InvalidAnswer, is_build_step
 from .models import StepResult, TaskAssignment, TaskStep
 from .payloads import build_target
@@ -89,6 +90,8 @@ def step_context(step, *, preview=False):
     """
     if step.step_type == TaskStep.StepType.EJEMPLO:
         return {'ejemplo': _ejemplo_context(step, preview=preview)}
+    if step.step_type == TaskStep.StepType.DICTADO:
+        return {'dictado': _dictado_context(step, preview=preview)}
     if not is_build_step(step):
         return {}
     target = build_target(step.step_type, step.payload)
@@ -101,19 +104,49 @@ def step_context(step, *, preview=False):
         'tiles': build_tiles(units, target.unit, seed=step.task_id * 1000 + step.pk),
         'listen_text': target.full_text,
         'decode_text': f'{target.before} {target.after}'.strip(),  # the words around the blank, never the answer
+        'id_suffix': '',  # one builder per step; dictado items set their own (see _dictado_context)
     }
     if preview:
-        sounds = decode_word(target.text)['letters'] if target.unit == 'letter' else []
-        aligned = len(sounds) == len(units)
-        preview_units = []
-        for i, unit in enumerate(units):
-            if aligned and sounds[i]['say']:
-                preview_units.append({'text': unit, 'say': sounds[i]['say'], 'audio': sounds[i]['audio']})
-            else:
-                preview_units.append({'text': unit, 'say': unit, 'audio': audio_for(unit)})
-        build['preview_units'] = preview_units
+        build['preview_units'] = _preview_units(target, units)
         build['preview_model'] = target.full_text
     return {'build': build}
+
+
+def _preview_units(target, units):
+    """The target units with the sound each one makes, for the teacher preview's local check only."""
+    sounds = decode_word(target.text)['letters'] if target.unit == 'letter' else []
+    aligned = len(sounds) == len(units)
+    preview_units = []
+    for i, unit in enumerate(units):
+        if aligned and sounds[i]['say']:
+            preview_units.append({'text': unit, 'say': sounds[i]['say'], 'audio': sounds[i]['audio']})
+        else:
+            preview_units.append({'text': unit, 'say': unit, 'audio': audio_for(unit)})
+    return preview_units
+
+
+def _dictado_context(step, *, preview=False):
+    """The 7 dictation items, each heard (``say``) and built with its own tiles, never shown as text.
+
+    Each item is shaped like a ``build`` so homework/partials/tiles.html renders it; ``id_suffix`` keeps the
+    preview's per-item target ids apart. Tiles are seeded per item, so a reload and the preview agree.
+    """
+    items = []
+    for index in range(DICTADO_ITEMS):
+        target = item_target(step.payload, index)
+        units = split_units(target.text, target.unit)
+        item = {
+            'index': index,
+            'unit': target.unit,
+            'say': target.text,
+            'tiles': build_tiles(units, target.unit, seed=step.task_id * 1000 + step.pk + index),
+            'id_suffix': f'-{index}',
+        }
+        if preview:
+            item['preview_units'] = _preview_units(target, units)
+            item['preview_model'] = target.text
+        items.append(item)
+    return {'letter': step.payload['letter'], 'items': items}
 
 
 @_student_only
@@ -140,6 +173,7 @@ def student_step(request, student, assignment_pk, order):
         return redirect(_path_url(assignment))
     start_assignment(assignment)
     kwargs = {'assignment_pk': assignment.pk, 'order': step.order}
+    done_items = _done_items(assignment, step)
     return render(request, 'homework/student/step.html', {
         **_practice_context(student, step),
         **step_context(step),
@@ -150,14 +184,15 @@ def student_step(request, student, assignment_pk, order):
         'done_url': reverse('homework:step_done', kwargs=kwargs),
         'answer_url': reverse('homework:step_answer', kwargs=kwargs),
         'help_url': reverse('homework:decode_help', args=[assignment.pk]),
-        'done_items': _done_items(assignment, step),
+        'done_items': done_items,
+        'dictado_current': next((i for i in range(DICTADO_ITEMS) if i not in done_items), 0),
         'feedback': FEEDBACK,
     })
 
 
 def _done_items(assignment, step):
-    """Palabras (and ejemplo exercises) the child already finished, so a reload picks up where they were."""
-    if step.step_type not in (TaskStep.StepType.PALABRAS, TaskStep.StepType.EJEMPLO):
+    """Palabras (and ejemplo exercises, dictado items) the child already finished, so a reload picks up where they were."""
+    if step.step_type not in (TaskStep.StepType.PALABRAS, TaskStep.StepType.EJEMPLO, TaskStep.StepType.DICTADO):
         return set()
     rows = StepResult.objects.filter(assignment=assignment, step=step, completed_at__isnull=False)
     return set(rows.values_list('item_index', flat=True))

@@ -10,7 +10,9 @@ from readings.models import Reading
 
 from .decoding import propose_hard_words
 from .models import SnepaLevel, Task, TaskStep
-from .payloads import ARMA_UNITS, EXAMPLE_STEPS_MAX, EXERCISES_MAX, clean_payload
+from .payloads import (
+    ARMA_UNITS, DICTADO_LETTER_MAX, DICTADO_SENTENCES, DICTADO_WORDS, EXAMPLE_STEPS_MAX, EXERCISES_MAX, clean_payload,
+)
 from .services import group_students
 
 
@@ -356,6 +358,42 @@ class EjemploStepForm(StepForm):
         }
 
 
+class DictadoStepForm(StepForm):
+    """FAS dictation: the letter or sound being studied, 5 words that contain it and 2 short sentences."""
+
+    step_type = 'dictado'
+    letter = forms.CharField(
+        label='Letra o sonido que se estudia',
+        max_length=DICTADO_LETTER_MAX,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+    )
+    words = forms.CharField(
+        label=f'{DICTADO_WORDS} palabras (una por línea)',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': DICTADO_WORDS}),
+    )
+    sentences = forms.CharField(
+        label=f'{DICTADO_SENTENCES} oraciones (una por línea)',
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': DICTADO_SENTENCES + 1}),
+    )
+
+    @staticmethod
+    def _lines(text):
+        return [line.strip() for line in text.splitlines() if line.strip()]
+
+    def to_payload(self):
+        data = self.cleaned_data
+        return {'letter': data['letter'], 'words': self._lines(data['words']), 'sentences': self._lines(data['sentences'])}
+
+    @classmethod
+    def initial_from(cls, step):
+        payload = step.payload
+        return {
+            'letter': payload.get('letter', ''),
+            'words': '\n'.join(payload.get('words', [])),
+            'sentences': '\n'.join(payload.get('sentences', [])),
+        }
+
+
 STEP_FORMS: dict[str, type[StepForm]] = {
     'mira': MiraStepForm,
     'lectura': LecturaStepForm,
@@ -363,4 +401,5 @@ STEP_FORMS: dict[str, type[StepForm]] = {
     'contesta': ContestaStepForm,
     'arma': ArmaStepForm,
     'ejemplo': EjemploStepForm,
+    'dictado': DictadoStepForm,
 }

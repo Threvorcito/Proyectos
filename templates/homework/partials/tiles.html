@@ -1,8 +1,9 @@
 {% comment %}
-Tile builder for arma and contesta-build steps (static/js/homework/tiles.js). Needs `build` from views_student.step_context.
+Tile builder for arma, contesta-build and dictado steps (static/js/homework/tiles.js). Needs `build` from
+views_student.step_context; a dictado item passes itself as `build`, with `index` (posted as item_index) and `id_suffix`.
 The target units are rendered only in the teacher preview (`preview`), never on the child page.
-{% endcomment %}{% with pk=step.pk|stringformat:'s' %}{% with units_id='build-units-'|add:pk %}
-<div class="task-build" data-build data-build-unit="{{ build.unit }}"{% if preview %} data-build-units="{{ units_id }}" data-build-model="{{ build.preview_model }}"{% endif %}>
+{% endcomment %}{% with pk=step.pk|stringformat:'s' %}{% with units_id='build-units-'|add:pk|add:build.id_suffix %}
+<div class="task-build" data-build data-build-unit="{{ build.unit }}"{% if build.id_suffix %} data-build-item="{{ build.index }}"{% endif %}{% if preview %} data-build-units="{{ units_id }}" data-build-model="{{ build.preview_model }}"{% endif %}>
   <p class="task-build__line">
     {% if build.before %}<span class="task-build__context" data-decodable data-build-before>{{ build.before }}</span>{% endif %}
     <span class="task-build__row" data-build-row role="group" aria-label="Tu respuesta"></span>

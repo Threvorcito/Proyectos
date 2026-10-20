@@ -9,6 +9,9 @@
  * - Outcome 'try_again' + hint.kind 'omission': a 👀 hole marks the missing place and its sound is played
  *   (the phoneme or syllable, never the letter name). 'modeled': the model answer replaces the row.
  * - Preview: nothing is sent; the target units rendered for the teacher drive a local check, so the feedback can be tried.
+ * - Dictado: one builder per item, each posting its own data-build-item as item_index; an item the server already
+ *   closed (inside .is-done) starts locked. After each answer a bubbling 'build:answered' event ({itemIndex, outcome})
+ *   lets the step's player move on to the next item.
  */
 (() => {
   const DRAG_PX = 8;
@@ -22,9 +25,10 @@
     if (!stepRoot || !row || !pool || !check) return;
     const preview = stepRoot.dataset.preview === '1';
     const joiner = build.dataset.buildUnit === 'word' ? ' ' : '';
+    const itemIndex = Number(build.dataset.buildItem || 0);
     let attempts = 0;
     let busy = false;
-    let locked = false;
+    let locked = Boolean(build.closest('.is-done'));
     let hole = null;
     let justDragged = false;
 
@@ -203,12 +207,13 @@
           outcome = previewOutcome(tiles);
           player?.showFeedback(outcome);
         } else if (player) {
-          outcome = await player.answer(0, {tiles});
+          outcome = await player.answer(itemIndex, {tiles});
         }
       } finally {
         busy = false;
       }
       apply(outcome);
+      build.dispatchEvent(new CustomEvent('build:answered', {bubbles: true, detail: {itemIndex, outcome}}));
     };
 
     check.addEventListener('click', submit);
@@ -290,6 +295,7 @@
       document.addEventListener('pointercancel', finish);
     });
 
+    if (locked) allTiles.forEach((tile) => { tile.disabled = true; });
     sync();
   };
 

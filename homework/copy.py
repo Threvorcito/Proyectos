@@ -9,6 +9,7 @@ INSTRUCTIONS = {
     'arma': 'Toca las fichas en orden para armarlo.',
     'arma_blank': 'Completa lo que falta con las fichas.',
     'ejemplo': 'Mira el ejemplo paso a paso. Después, inténtalo tú.',
+    'dictado': 'Escucha y arma lo que oyes con las fichas.',
 }
 
 FEEDBACK = {

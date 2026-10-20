@@ -339,3 +339,23 @@
 }
 .task-ejemplo .task-go[hidden] { display: none; }
 .task-exercise .task-question:focus-visible { outline: .25rem solid var(--kid-focus, #1d6f84); outline-offset: .2rem; }
+
+/* Dictado: one item per screen; the word is heard, never printed. Mobile first: a big, thumb-sized listen button. */
+.task-dictado__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+.task-dictado [hidden] { display: none; }
+.kid-listen.task-dictado__listen {
+  min-width: 9rem;
+  min-height: 4.5rem;
+  padding: .75rem 1.5rem;
+  font-size: 1.35rem;
+}
+.kid-listen.task-dictado__listen svg { width: 2.25rem; height: 2.25rem; }
+.task-dictado__item .task-build { width: 100%; }
+@media (min-width: 768px) {
+  .kid-listen.task-dictado__listen { min-width: 12rem; }
+}
