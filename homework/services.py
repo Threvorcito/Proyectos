@@ -127,7 +127,9 @@ MAX_ATTEMPTS = 2
 TASK_POINTS = 10
 TASK_STARS = 1
 
-EVALUATED_STEP_TYPES = {TaskStep.StepType.CONTESTA, TaskStep.StepType.ARMA, TaskStep.StepType.EJEMPLO}
+EVALUATED_STEP_TYPES = {
+    TaskStep.StepType.CONTESTA, TaskStep.StepType.ARMA, TaskStep.StepType.EJEMPLO, TaskStep.StepType.DICTADO,
+}
 
 
 class ItemClosed(Exception):

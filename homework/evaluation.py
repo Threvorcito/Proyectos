@@ -1,9 +1,10 @@
 from dataclasses import dataclass, field
 
 from .decoding import decode_word
+from .dictation import ITEMS as DICTADO_ITEMS, item_target
 from .models import TaskStep
 from .phonemes import audio_for
-from .payloads import MAX_TEXT, build_target
+from .payloads import MAX_TEXT, BuildTarget, build_target
 from .writing import BUILD_MAX_UNITS, check_build, split_units
 
 
@@ -64,9 +65,8 @@ def _missing_sound(target_text: str, unit: str, units: list[str], index: int) ->
     return units[index], audio_for(units[index])
 
 
-def _evaluate_build(step: TaskStep, payload: dict) -> Evaluation:
+def _evaluate_build_target(target: BuildTarget, payload: dict) -> Evaluation:
     tiles = _tiles(payload)
-    target = build_target(step.step_type, step.payload)
     units = split_units(target.text, target.unit)
     check = check_build(units, tiles)
     joiner = ' ' if target.unit == 'word' else ''
@@ -87,6 +87,10 @@ def _evaluate_build(step: TaskStep, payload: dict) -> Evaluation:
     )
 
 
+def _evaluate_build(step: TaskStep, payload: dict) -> Evaluation:
+    return _evaluate_build_target(build_target(step.step_type, step.payload), payload)
+
+
 def evaluate(step: TaskStep, item_index: int, payload: dict) -> Evaluation:
     if step.step_type == TaskStep.StepType.CONTESTA and step.payload.get('kind') == 'choice':
         data = step.payload
@@ -97,6 +101,10 @@ def evaluate(step: TaskStep, item_index: int, payload: dict) -> Evaluation:
             raise InvalidAnswer('item')
         exercise = exercises[item_index]
         return _evaluate_choice(exercise['options'], exercise['answer'], exercise['prompt'], payload)
+    if step.step_type == TaskStep.StepType.DICTADO:
+        if not 0 <= item_index < DICTADO_ITEMS:
+            raise InvalidAnswer('item')
+        return _evaluate_build_target(item_target(step.payload, item_index), payload)
     if is_build_step(step):
         return _evaluate_build(step, payload)
     raise InvalidAnswer(step.step_type)

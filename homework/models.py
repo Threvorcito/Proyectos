@@ -4,6 +4,7 @@ from django.db import models
 from learning.models import LessonPlan, StudentProfile, Subject, TeacherProfile
 from readings.models import Reading
 
+from . import dictation
 from .payloads import MAX_TEXT, clean_payload
 
 MISSING_UNIT_MAX = 30
@@ -46,6 +47,7 @@ class TaskStep(models.Model):
         CONTESTA = 'contesta', 'Contesta'
         ARMA = 'arma', 'Arma o completa'
         EJEMPLO = 'ejemplo', 'Ejemplo y práctica'
+        DICTADO = 'dictado', 'Dictado'
 
     task = models.ForeignKey(Task, on_delete=models.CASCADE, related_name='steps')
     order = models.PositiveSmallIntegerField()
@@ -69,6 +71,8 @@ class TaskStep(models.Model):
             return len(self.payload.get('words', []))
         if self.step_type == self.StepType.EJEMPLO:
             return len(self.payload.get('exercises', []))
+        if self.step_type == self.StepType.DICTADO:
+            return dictation.ITEMS
         return 1
 
     @property

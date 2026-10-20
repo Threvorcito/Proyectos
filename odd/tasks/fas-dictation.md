@@ -55,7 +55,7 @@ Route: delegated writer (2+ non-trivial files).
     - `@dataclass Criteria: sound_letter: bool; words: bool; sentences: bool`
     - `score(payload: dict, results: Mapping[int, StepResult]) -> tuple[BreakPoint, Criteria | None]` — `results` keyed by item_index; `Criteria` is `None` when incomplete.
 
-- [ ] **Step 1: Write failing tests in `homework/tests_dictation.py`** (`SimpleTestCase` for pure logic, `TeacherTaskTestCase`/`StudentTaskTestCase` from `homework/tests_student.py` for the step):
+- [x] **Step 1: Write failing tests in `homework/tests_dictation.py`** (`SimpleTestCase` for pure logic, `TeacherTaskTestCase`/`StudentTaskTestCase` from `homework/tests_student.py` for the step):
   - `test_clean_dictado_normalizes`: `clean_payload('dictado', {'letter': ' M ', 'words': ['mesa','mamá','cama','lima','humo'], 'sentences': ['Mi mamá me ama.', 'Amo a mi mamá.']})` returns `letter == 'm'` and the same lists stripped.
   - `test_clean_dictado_rejects`: raises `ValidationError` for 4 words, 6 words, duplicate words, a word with a space, a word without the letter ("sol" with letter "m"), 1 sentence, a one-word sentence, a letter with digits, an empty letter.
   - `test_item_count_is_seven`: a saved dictado step has `item_count == 7`.
@@ -69,9 +69,9 @@ Route: delegated writer (2+ non-trivial files).
   - `test_submit_dictado_word_and_sentence`: student posts `{'item_index': 0, 'tiles': ['m','e','s','a']}` → status `'correct'`; posts `{'item_index': 5, 'tiles': [...]}` wrong twice → `'modeled'`; `mark_item_done` on a dictado step raises `InvalidAnswer`.
   - `test_submit_dictado_sentence_punctuation`: tiles `['Mi','mamá','me','ama']` for "Mi mamá me ama." → `'correct'` (RF 5).
 
-- [ ] **Step 2: Run** `DB_ENGINE=sqlite python manage.py test homework.tests_dictation` → FAIL (module/step type missing).
+- [x] **Step 2: Run** `DB_ENGINE=sqlite python manage.py test homework.tests_dictation` → FAIL (module/step type missing).
 
-- [ ] **Step 3: Implement.**
+- [x] **Step 3: Implement.**
   - `models.py`: add `DICTADO`; `item_count` returns `dictation.ITEMS` for it (import inside the property to avoid a cycle if needed).
   - `payloads.py`: `_clean_dictado(data)`; letter: `_text`, stripped, casefolded, 1–3 letters only (`str.isalpha`); words: `_unique(_text_list(...))`, exactly `WORDS`, each a single word (`split_units(w, 'letter')` must not raise, ≤ `BUILD_MAX_UNITS` units) and containing the letter as a unit (casefold compare on `word_units`); sentences: `_text_list`, exactly `SENTENCES`, each 2..`BUILD_MAX_UNITS` words via `split_units(s, 'word')`. Register in `_CLEANERS`. Error copy in Spanish, e.g. `'Dictado: escribe exactamente 5 palabras distintas.'`, `'Cada palabra del dictado debe tener la letra «m».'`.
   - `dictation.py`: `letter_ok` aligns `split_units(word,'letter')` with `split_units(answer,'letter')` (casefolded) using `difflib.SequenceMatcher(autojunk=False)`; True iff every unit index of the target letter falls inside an `'equal'` opcode. Empty/unsplittable answer → False. `score` follows Global Constraints thresholds using `first_answer`, `first_try_correct`, `modeled`, `completed_at`.
@@ -79,9 +79,9 @@ Route: delegated writer (2+ non-trivial files).
   - `services.py`: add `DICTADO` to `EVALUATED_STEP_TYPES`.
   - `python manage.py makemigrations homework` (choices-only `AlterField`).
 
-- [ ] **Step 4: Run** `DB_ENGINE=sqlite python manage.py test homework` → all PASS.
+- [x] **Step 4: Run** `DB_ENGINE=sqlite python manage.py test homework` → all PASS.
 
-- [ ] **Step 5: Commit** `feat(homework): dictado step type with FAS break-point scoring`
+- [x] **Step 5: Commit** `feat(homework): dictado step type with FAS break-point scoring`
 
 ### Task 2: Teacher authoring and child dictation screen
 
@@ -149,7 +149,7 @@ Route: inline (parent).
 
 | Task | Status | Commit | Checks | Review tier |
 |---|---|---|---|---|
-| T1 | pending | | | |
+| T1 | done | (this commit) | tests_dictation 13 OK (RED: ModuleNotFoundError homework.dictation); homework 258 OK; makemigrations --check clean | |
 | T2 | pending | | | |
 | T3 | pending | | | |
 | T4 | pending | | | |

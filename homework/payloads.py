@@ -162,6 +162,36 @@ def _clean_ejemplo(data):
     return {'example_steps': steps, 'exercises': exercises}
 
 
+DICTADO_WORDS = 5
+DICTADO_SENTENCES = 2
+DICTADO_LETTER_MAX = 3
+
+
+def _clean_dictado(data):
+    letter = _text(data.get('letter'), 'Letra').casefold()
+    if len(letter) > DICTADO_LETTER_MAX or not letter.isalpha():
+        raise ValidationError(f'Letra del dictado: usa de 1 a {DICTADO_LETTER_MAX} letras.')
+    words = _unique(_text_list(data.get('words', []), 'Palabra'))
+    if len(words) != DICTADO_WORDS:
+        raise ValidationError(f'Dictado: escribe exactamente {DICTADO_WORDS} palabras distintas.')
+    for word in words:
+        try:
+            units = split_units(word, 'letter')
+        except ValueError:
+            raise ValidationError(f'«{word}»: cada palabra del dictado debe ser una sola palabra.')
+        if len(units) > BUILD_MAX_UNITS:
+            raise ValidationError(f'«{word}»: máximo {BUILD_MAX_UNITS} letras.')
+        if letter not in (unit.casefold() for unit in units):
+            raise ValidationError(f'Cada palabra del dictado debe tener la letra «{letter}».')
+    sentences = _text_list(data.get('sentences', []), 'Oración')
+    if len(sentences) != DICTADO_SENTENCES:
+        raise ValidationError(f'Dictado: escribe exactamente {DICTADO_SENTENCES} oraciones.')
+    for sentence in sentences:
+        if not 2 <= len(split_units(sentence, 'word')) <= BUILD_MAX_UNITS:
+            raise ValidationError(f'Cada oración del dictado debe tener entre 2 y {BUILD_MAX_UNITS} palabras.')
+    return {'letter': letter, 'words': words, 'sentences': sentences}
+
+
 _CLEANERS = {
     'mira': _clean_mira,
     'lectura': _clean_lectura,
@@ -169,6 +199,7 @@ _CLEANERS = {
     'contesta': _clean_contesta,
     'arma': _clean_arma,
     'ejemplo': _clean_ejemplo,
+    'dictado': _clean_dictado,
 }
 
 
