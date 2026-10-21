@@ -359,3 +359,36 @@
 @media (min-width: 768px) {
   .kid-listen.task-dictado__listen { min-width: 12rem; }
 }
+
+/* Dictation instrument: a paper checklist; boxes stay blank where the child has not done the item in the app. */
+.dictation-instrument__table th,
+.dictation-instrument__table td { text-align: center; vertical-align: middle; }
+.dictation-instrument__table td:first-child,
+.dictation-instrument__table th:first-child { text-align: left; }
+.dictation-instrument__box {
+  min-width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid #b8bfcc;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+@media print {
+  .site-navbar,
+  .site-footer,
+  .accessibility-fab,
+  .admin-sidebar,
+  .admin-topbar,
+  .system-messages,
+  .teacher-impersonation-bar,
+  .dictation-instrument__actions { display: none !important; }
+  body,
+  .page-shell { background: #fff !important; }
+  .admin-console,
+  .admin-main,
+  .admin-content { display: block !important; margin: 0 !important; padding: 0 !important; }
+  .dictation-instrument .dt-card { border: 0; box-shadow: none; }
+  .dictation-instrument .dt-wrap { overflow: visible; }
+  .dictation-instrument__table { width: 100%; font-size: 11pt; }
+  .dictation-instrument__table tr { break-inside: avoid; }
+  .dictation-instrument__box { border: 1px solid #000; }
+}

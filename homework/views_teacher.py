@@ -16,7 +16,7 @@ from .copy import FEEDBACK, INSTRUCTIONS
 from .forms import STEP_FORMS, AssignStudentsForm, SnepaOverrideForm, TaskForm
 from .models import SnepaLevel, Task, TaskAssignment, TaskStep
 from .permissions import can_manage_tasks, can_view_difficulty_data, can_view_task, difficulty_viewer
-from .reports import assignment_detail, task_rows
+from .reports import assignment_detail, break_point_groups, dictation_sheet, task_rows
 from .services import (
     TaskLocked,
     append_step,
@@ -316,11 +316,32 @@ def task_report(request, pk):
     for row in rows:
         row['can_detail'] = can_view(row['student'])
         row['level'] = SnepaLevel(row['assignment'].snepa_level).label if row['can_detail'] and row['assignment'].snepa_level else ''
+        if not row['can_detail']:
+            # Ley 787: the break point is difficulty data, like the level.
+            row['break_point'] = row['criteria'] = None
     return render(request, 'homework/teacher/task_report.html', {
         'task': task,
         'rows': rows,
         'page_obj': page_obj,
         'show_detail': any(row['can_detail'] for row in rows),
+        'show_break_point': any(row['break_point'] for row in rows),
+        'groups': break_point_groups(rows),
+    })
+
+
+@login_required
+def dictation_instrument(request, pk, step_pk):
+    if not (is_admin_user(request.user) or can_manage_tasks(request.user)):
+        return _deny(request)
+    task = _task_or_404(request, pk)
+    step = get_object_or_404(task.steps, pk=step_pk, step_type=TaskStep.StepType.DICTADO)
+    assignments = task.assignments.select_related('student').order_by('student__name', 'pk')
+    return render(request, 'homework/teacher/dictation_instrument.html', {
+        'task': task,
+        'step': step,
+        'words': step.payload['words'],
+        'sentences': step.payload['sentences'],
+        'sheet': dictation_sheet(step, assignments, difficulty_viewer(request.user)),
     })
 
 

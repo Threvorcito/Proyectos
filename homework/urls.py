@@ -18,6 +18,7 @@ urlpatterns = [
     path('<int:pk>/vista-previa/', views_teacher.task_preview, name='task_preview'),
     path('<int:pk>/archivar/', views_teacher.task_archive, name='task_archive'),
     path('<int:pk>/reporte/', views_teacher.task_report, name='task_report'),
+    path('<int:pk>/dictado/<int:step_pk>/instrumento/', views_teacher.dictation_instrument, name='dictation_instrument'),
     path('seguimiento/<int:assignment_pk>/', views_teacher.assignment_report, name='assignment_report'),
     path('seguimiento/<int:assignment_pk>/nivel/', views_teacher.assignment_level_update, name='assignment_level_update'),
     path('mi-tarea/<int:assignment_pk>/', views_student.student_task, name='student_task'),

@@ -53,7 +53,7 @@
                 {% for step, summary in steps %}
                   <tr>
                     <td data-label="N.º">{{ step.order }}</td>
-                    <td data-label="Tipo">{{ step.get_step_type_display }}</td>
+                    <td data-label="Tipo">{{ step.get_step_type_display }}{% if step.step_type == 'dictado' %} · <a href="{% url 'homework:dictation_instrument' task.pk step.pk %}">Instrumento para imprimir</a>{% endif %}</td>
                     <td data-label="Resumen">{{ summary|truncatechars:60 }}</td>
                     {% if can_manage and task.is_active and not locked %}
                       <td data-label="Acciones" class="text-end dt-actions">

@@ -127,17 +127,17 @@ Route: delegated writer.
   - Each `task_rows` row gains `'break_point': BreakPoint | None` (None when the task has no dictado step; uses the task's first dictado step) and `'criteria': Criteria | None`. Still a fixed number of queries.
   - `break_point_groups(rows) -> list[tuple[str, list]]` — label → students, ordered `SOUND_LETTER, WORDS, SENTENCES, INCOMPLETE, NONE`, empty groups omitted.
   - URL `homework:dictation_instrument` at `tareas/<int:pk>/dictado/<int:step_pk>/instrumento/` (match the existing teacher URL prefix style in `homework/urls.py`).
-- [ ] **Step 1: Write failing tests:**
+- [x] **Step 1: Write failing tests:**
   - `test_task_rows_break_point`: two assigned students, one finished with sound-letter failures, one not started → rows carry `SOUND_LETTER` and `INCOMPLETE`.
   - `test_task_rows_query_count`: `assertNumQueries` stays the same for 1 and 3 assignments.
   - `test_report_groups_by_break_point`: `task_report` response shows group headings `Sonido-letra` and `Incompleto` with the right student names.
   - `test_instrument_lists_items_and_students`: GET instrument → 200, contains the letter, 5 words, 2 sentences, every assigned student's name, and the three criterion headers.
   - `test_instrument_permissions`: another teacher → same denial as `task_report`; a parent or student → denied.
   - `test_parent_dashboard_hides_break_point`: parent of a scored student → `dashboard:parents` response contains none of the `BreakPoint` labels (Ley 787 guard).
-- [ ] **Step 2: Run** `DB_ENGINE=sqlite python manage.py test homework.tests_dictation_report` → FAIL.
-- [ ] **Step 3: Implement.** Instrument page: printable (`@media print` hides nav), header with letter, numbered words and sentences, a table with one row per assigned student, 7 item columns (blank boxes for paper use, pre-marked ✓/✗ from `first_try_correct` when the child already did it in the app), and 3 criterion columns plus "Punto de quiebre". Report: add a "Punto de quiebre" column and a grouped section "Agrupar para reforzar" above the table.
-- [ ] **Step 4: Run** `DB_ENGINE=sqlite python manage.py test homework dashboard` → all PASS.
-- [ ] **Step 5: Commit** `feat(homework): FAS break point in task report and printable dictation instrument`
+- [x] **Step 2: Run** `DB_ENGINE=sqlite python manage.py test homework.tests_dictation_report` → FAIL.
+- [x] **Step 3: Implement.** Instrument page: printable (`@media print` hides nav), header with letter, numbered words and sentences, a table with one row per assigned student, 7 item columns (blank boxes for paper use, pre-marked ✓/✗ from `first_try_correct` when the child already did it in the app), and 3 criterion columns plus "Punto de quiebre". Report: add a "Punto de quiebre" column and a grouped section "Agrupar para reforzar" above the table.
+- [x] **Step 4: Run** `DB_ENGINE=sqlite python manage.py test homework dashboard` → all PASS.
+- [x] **Step 5: Commit** `feat(homework): FAS break point in task report and printable dictation instrument`
 
 ### Task 4: Browser verification
 
@@ -150,8 +150,8 @@ Route: inline (parent).
 | Task | Status | Commit | Checks | Review tier |
 |---|---|---|---|---|
 | T1 | done | 8f9bb9c | tests_dictation 13 OK (RED: ModuleNotFoundError homework.dictation); homework 258 OK; makemigrations --check clean | medium — under_budget (pending in slice) |
-| T2 | done | (see git log) | tests_dictation_views 10 OK (RED: 5 fail + 5 error, step_create 404 / no dictado context); full suite 527 OK after parent updated tests_steps.py:151 STEP_FORMS set; node --check OK | pending assess |
-| T3 | pending | | | |
+| T2 | done | a06b261 | tests_dictation_views 10 OK (RED: 5 fail + 5 error, step_create 404 / no dictado context); full suite 527 OK after parent updated tests_steps.py:151 STEP_FORMS set; node --check OK | pending assess |
+| T3 | done | (this commit) | tests_dictation_report 12 OK (RED: ImportError break_point_groups from homework.reports); homework+dashboard 420 OK; full suite 539 OK. Break point and instrument pre-marks gated by difficulty_viewer (Ley 787) | pending assess |
 | T4 | pending | | | |
 
 ## Next step
