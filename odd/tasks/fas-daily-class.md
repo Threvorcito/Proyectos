@@ -52,17 +52,17 @@ Route: delegated writer.
   - `LESSONS: dict[str, LetterLesson]` for m, p, b, v, s, c, z, l, n, f, t, d.
   - `lesson_for(letter: str) -> LetterLesson | None`
 
-- [ ] **Step 1: failing tests** in `homework/tests_fas_content.py` (`SimpleTestCase`):
+- [x] **Step 1: failing tests** in `homework/tests_fas_content.py` (`SimpleTestCase`):
   - `test_sequence_order`: `CONSONANTS[:4] == ('m', 'p', 'b', 'v')`, `'h'` comes before `'ch'`, each grapheme appears once.
   - `test_known_letters`: `known_letters('m') == frozenset('aeioum')`; `'s' not in known_letters('v')`; `known_letters('r')` raises nothing; `known_letters('x')` raises `KeyError`.
   - `test_lessons_cover_m_to_d`: `set(LESSONS) == {'m','p','b','v','s','c','z','l','n','f','t','d'}`.
   - `test_lessons_use_only_known_letters` (RF 1): for every lesson, every unit of every word, sentence, `build_word` and the reading's words is in `known_letters(letter)` (accent-stripped, casefolded). Failure message names the lesson, the text and the offending unit.
   - `test_words_contain_letter`: each of the 6 words contains the lesson letter as a unit.
   - `test_payloads_validate`: for every lesson, `clean_payload` accepts `palabras {'words': words}`, `arma {'text': build_word, 'unit': 'syllable'}`, `arma {'text': sentences[0], 'unit': 'word'}`, `lectura {'text': reading}`, `dictado {'letter', 'words': words[:5], 'sentences': sentences}`.
-- [ ] **Step 2: run** `DB_ENGINE=sqlite python manage.py test homework.tests_fas_content` → FAIL.
-- [ ] **Step 3: implement.** Author the content: common, concrete, child-friendly Spanish words (Nicaragua), 1–3 syllables, letter in different positions where possible; sentences 3–6 words; reading 2–4 short sentences. Iterate until the tests pass — fix content, never loosen tests.
-- [ ] **Step 4: run** `DB_ENGINE=sqlite python manage.py test homework` → PASS.
-- [ ] **Step 5: commit** `feat(homework): official FAS letter sequence and lesson content bank`
+- [x] **Step 2: run** `DB_ENGINE=sqlite python manage.py test homework.tests_fas_content` → FAIL.
+- [x] **Step 3: implement.** Author the content: common, concrete, child-friendly Spanish words (Nicaragua), 1–3 syllables, letter in different positions where possible; sentences 3–6 words; reading 2–4 short sentences. Iterate until the tests pass — fix content, never loosen tests.
+- [x] **Step 4: run** `DB_ENGINE=sqlite python manage.py test homework` → PASS.
+- [x] **Step 5: commit** `feat(homework): official FAS letter sequence and lesson content bank`
 
 ### Task 2: Daily class builder and Secuencia FAS page
 
@@ -102,10 +102,10 @@ Route: inline (parent). Teacher opens Secuencia FAS, creates the m class, review
 
 | Task | Status | Commit | Checks | Review tier |
 |---|---|---|---|---|
-| T1 | pending | | | |
+| T1 | done | (this commit) | RED: ModuleNotFoundError homework.fas_content; GREEN: tests_fas_content 7 OK; homework 300 OK | |
 | T2 | pending | | | |
 | T3 | pending | | | |
 
 ## Next step
 
-T1.
+T2. T1 note: x and w are not in `CONSONANTS`/`GROUPS` (spec non-goal); `known_letters` raises `KeyError` for vowels too.
