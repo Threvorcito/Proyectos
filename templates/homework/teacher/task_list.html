@@ -29,6 +29,7 @@
           <div class="lesson-report__actions">
             {% if can_manage %}
               <a class="btn btn-outline-primary lesson-report__back" href="{% url 'dashboard:teacher' %}">Volver al panel docente</a>
+              <a class="btn btn-outline-primary" href="{% url 'homework:fas_sequence' %}">Secuencia FAS</a>
               <a class="btn btn-primary lesson-report__add" href="{% url 'homework:task_create' %}"><span>+</span> Nueva tarea</a>
             {% endif %}
           </div>

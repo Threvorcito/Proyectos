@@ -79,7 +79,7 @@ Route: delegated writer.
   - `letter_statuses(teacher) -> dict[str, str]` — `'created'` or `'assigned'` per letter, from the teacher's active tasks whose dictado step has that letter (assigned wins); one or two queries.
   - URLs: `homework:fas_sequence` at `secuencia-fas/` (GET), `homework:fas_class_create` at `secuencia-fas/<str:letter>/crear/` (POST only) → redirect to `homework:task_detail` with a success message `'Clase de la «m» creada. Revísela y asígnela a sus alumnos.'` (match the voice of existing teacher messages if they use "puedes"; keep consistent with them).
   - Subject: the `Subject` named "Lengua y Literatura"; if missing, redirect back with an error message (RF 5).
-- [ ] **Step 1: failing tests** in `homework/tests_fas_lessons.py` (reuse `TeacherTaskTestCase` from `homework/tests_student.py` / existing fixtures):
+- [x] **Step 1: failing tests** in `homework/tests_fas_lessons.py` (reuse `TeacherTaskTestCase` from `homework/tests_student.py` / existing fixtures):
   - `test_build_daily_class_steps`: for "m" → 6 steps with types `mira, palabras, arma, arma, lectura, dictado`, dictado letter `'m'`, task grade FIRST.
   - `test_build_unknown_letter`: `ValueError` for "r".
   - `test_sequence_page_lists_groups`: GET → 200, shows "Aprestamiento", every consonant, a create form for "m" and none for "r".
@@ -89,10 +89,10 @@ Route: delegated writer.
   - `test_permissions` (RF 3): student, parent and a teacher without task permission are denied on both URLs (same response as `task_create`); GET on create URL → 405.
   - `test_unknown_letter_404` (RF 4): POST for "r" and for "qq" → 404, no task.
   - `test_missing_subject` (RF 5): with "Lengua y Literatura" deleted → redirect to the sequence page with an error message, no task.
-- [ ] **Step 2: run** `DB_ENGINE=sqlite python manage.py test homework.tests_fas_lessons` → FAIL.
-- [ ] **Step 3: implement** per Interfaces; the page groups letters as in the tome, shows the status badge, and a POST button "Crear clase" for letters with a lesson.
-- [ ] **Step 4: run** `DB_ENGINE=sqlite python manage.py test` → PASS.
-- [ ] **Step 5: commit** `feat(homework): Secuencia FAS page that builds a daily FAS class`
+- [x] **Step 2: run** `DB_ENGINE=sqlite python manage.py test homework.tests_fas_lessons` → FAIL.
+- [x] **Step 3: implement** per Interfaces; the page groups letters as in the tome, shows the status badge, and a POST button "Crear clase" for letters with a lesson.
+- [x] **Step 4: run** `DB_ENGINE=sqlite python manage.py test` → PASS.
+- [x] **Step 5: commit** `feat(homework): Secuencia FAS page that builds a daily FAS class`
 
 ### Task 3: Browser verification
 
@@ -102,10 +102,10 @@ Route: inline (parent). Teacher opens Secuencia FAS, creates the m class, review
 
 | Task | Status | Commit | Checks | Review tier |
 |---|---|---|---|---|
-| T1 | done | (this commit) | RED: ModuleNotFoundError homework.fas_content; GREEN: tests_fas_content 7 OK; homework 300 OK | |
-| T2 | pending | | | |
+| T1 | done | ed9b303 (+ label fix 36a8e0e) | RED: ModuleNotFoundError homework.fas_content; GREEN: tests_fas_content 7 OK; homework 300 OK | |
+| T2 | done | (this commit) | RED: ModuleNotFoundError homework.fas_lessons; GREEN: tests_fas_lessons 15 OK; full suite 574 OK | |
 | T3 | pending | | | |
 
 ## Next step
 
-T2. T1 note: x and w are not in `CONSONANTS`/`GROUPS` (spec non-goal); `known_letters` raises `KeyError` for vowels too.
+T3 (browser verification). T2 notes: letter_statuses is one query (Exists annotation); success message uses the existing teacher voice ("Revísala y asígnala a tus alumnos"); missing subject redirects with an error. T1 note: x and w are not in `CONSONANTS`/`GROUPS` (spec non-goal); `known_letters` raises `KeyError` for vowels too.

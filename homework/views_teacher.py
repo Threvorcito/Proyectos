@@ -9,10 +9,14 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from dashboard.views import RESOURCE_PAGE_SIZE, is_admin_user, write_audit
+from learning.models import Subject
 
 from readings.services import MAX_READ_MS, MIN_READ_MS, PRACTICE_READS
 
 from .copy import FEEDBACK, INSTRUCTIONS
+from .fas_content import lesson_for
+from .fas_lessons import build_daily_class, letter_statuses
+from .fas_sequence import GROUPS, VOWELS
 from .forms import STEP_FORMS, AssignStudentsForm, SnepaOverrideForm, TaskForm
 from .models import SnepaLevel, Task, TaskAssignment, TaskStep
 from .permissions import can_manage_tasks, can_view_difficulty_data, can_view_task, difficulty_viewer
@@ -85,6 +89,45 @@ def task_create(request):
         return redirect('homework:task_detail', pk=task.pk)
     return render(request, 'homework/teacher/task_form.html', {'form': form, 'is_edit': False})
 
+
+FAS_SUBJECT = 'Lengua y Literatura'
+
+
+@login_required
+def fas_sequence(request):
+    if not can_manage_tasks(request.user):
+        return _deny(request)
+    statuses = letter_statuses(request.user.teacher_profile)
+    groups = [
+        (label, [
+            {
+                'letter': letter,
+                'is_vowel': letter in VOWELS,
+                'has_lesson': lesson_for(letter) is not None,
+                'status': statuses.get(letter, ''),
+            }
+            for letter in letters
+        ])
+        for label, letters in GROUPS
+    ]
+    return render(request, 'homework/teacher/fas_sequence.html', {'groups': groups})
+
+
+@login_required
+@require_POST
+def fas_class_create(request, letter):
+    if not can_manage_tasks(request.user):
+        return _deny(request)
+    if lesson_for(letter) is None:
+        raise Http404
+    subject = Subject.objects.filter(name=FAS_SUBJECT).first()
+    if subject is None:
+        messages.error(request, f'No existe la materia «{FAS_SUBJECT}». Pide al administrador que la cree para usar la secuencia FAS.')
+        return redirect('homework:fas_sequence')
+    task = build_daily_class(request.user.teacher_profile, letter, subject)
+    write_audit(request, 'create_fas_class', task, metadata={'letter': letter})
+    messages.success(request, f'Clase de la «{letter}» creada. Revísala y asígnala a tus alumnos.')
+    return redirect('homework:task_detail', pk=task.pk)
 
 @login_required
 def task_update(request, pk):

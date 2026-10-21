@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Secuencia FAS{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/homework.css' %}?v=20261021-fas-sequence-1">{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <section class="lesson-report dt">
+    <div class="lesson-report__hero">
+      <div>
+        <span class="eyebrow">Tareas guiadas · Primer grado</span>
+        <h1>Secuencia FAS</h1>
+        <p>Las letras en el orden oficial del tomo. Elige la letra de hoy y crea su clase; luego puedes revisarla y asignarla.</p>
+      </div>
+      <div class="lesson-report__actions">
+        <a class="btn btn-outline-primary lesson-report__back" href="{% url 'homework:task_list' %}">Volver a tareas</a>
+      </div>
+    </div>
+
+    {% for label, letters in groups %}
+      <div class="lesson-report__table-card dt-card mb-4">
+        <h2 class="fas-sequence__group">{{ label }}</h2>
+        <ul class="fas-sequence__letters">
+          {% for item in letters %}
+            <li class="fas-sequence__letter" data-letter="{{ item.letter }}">
+              <span class="fas-sequence__glyph" lang="es">{{ item.letter }}</span>
+              {% if item.is_vowel %}
+                <span class="fas-sequence__status">Aprestamiento</span>
+              {% elif item.status == 'assigned' %}
+                <span class="fas-sequence__status fas-sequence__status--assigned">Asignada</span>
+              {% elif item.status == 'created' %}
+                <span class="fas-sequence__status fas-sequence__status--created">Clase creada</span>
+              {% else %}
+                <span class="fas-sequence__status">Sin clase</span>
+              {% endif %}
+              {% if item.has_lesson %}
+                <form method="post" action="{% url 'homework:fas_class_create' item.letter %}">
+                  {% csrf_token %}
+                  <button class="btn btn-sm btn-primary" type="submit" aria-label="Crear clase de la «{{ item.letter }}»">Crear clase</button>
+                </form>
+              {% elif not item.is_vowel %}
+                <small class="fas-sequence__pending">Contenido en preparación</small>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

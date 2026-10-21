@@ -392,3 +392,44 @@
   .dictation-instrument__table tr { break-inside: avoid; }
   .dictation-instrument__box { border: 1px solid #000; }
 }
+
+/* Teacher: Secuencia FAS page. */
+.fas-sequence__group {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 .75rem;
+}
+.fas-sequence__letters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: .75rem;
+}
+.fas-sequence__letter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
+  padding: .75rem;
+  border: 1px solid #dfe3ec;
+  border-radius: 12px;
+  background: #fff;
+  text-align: center;
+}
+.fas-sequence__glyph {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.fas-sequence__status {
+  font-size: .8rem;
+  padding: .15rem .6rem;
+  border-radius: 999px;
+  background: #eef0f5;
+  color: #4a5162;
+}
+.fas-sequence__status--created { background: #fff3d6; color: #7a5300; }
+.fas-sequence__status--assigned { background: #dcf3e3; color: #1e6b3a; }
+.fas-sequence__pending { color: #6b7280; }
