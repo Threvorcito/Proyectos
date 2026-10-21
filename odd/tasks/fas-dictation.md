@@ -143,17 +143,19 @@ Route: delegated writer.
 
 Route: inline (parent).
 
-- [ ] Seed or create a dictado task as a teacher, do it as a student in mobile viewport, open the report and the instrument; screenshot each.
+- [x] Seed or create a dictado task as a teacher, do it as a student in mobile viewport, open the report and the instrument; screenshot each.
 
 ## Progress
 
 | Task | Status | Commit | Checks | Review tier |
 |---|---|---|---|---|
 | T1 | done | 8f9bb9c | tests_dictation 13 OK (RED: ModuleNotFoundError homework.dictation); homework 258 OK; makemigrations --check clean | medium — under_budget (pending in slice) |
-| T2 | done | a06b261 | tests_dictation_views 10 OK (RED: 5 fail + 5 error, step_create 404 / no dictado context); full suite 527 OK after parent updated tests_steps.py:151 STEP_FORMS set; node --check OK | pending assess |
-| T3 | done | (this commit) | tests_dictation_report 12 OK (RED: ImportError break_point_groups from homework.reports); homework+dashboard 420 OK; full suite 539 OK. Break point and instrument pre-marks gated by difficulty_viewer (Ley 787) | pending assess |
-| T4 | pending | | | |
+| T2 | done | a06b261 | tests_dictation_views 10 OK (RED: 5 fail + 5 error, step_create 404 / no dictado context); full suite 527 OK after parent updated tests_steps.py:151 STEP_FORMS set; node --check OK | medium — slice_budget_reached at 651 lines (T1+T2); native review blocked: provider collect for base_ref has no submission (see Next step) |
+| T3 | done | edfa111 | tests_dictation_report 12 OK (RED: ImportError break_point_groups from homework.reports); homework+dashboard 420 OK; full suite 539 OK. Break point and instrument pre-marks gated by difficulty_viewer (Ley 787) | pending assess |
+| T4 | done | (docs only) | Preview DB seeded; teacher report groups Pedro under Sonido-letra and Sofía under Incompleto; instrument pre-marks ✗✗✓✓✓✓✓ and criteria ✗✗✓; student (375px) hears item, target text not shown, tiles include m/n confusable, "mesa" → ¡Muy bien! (POST 200), Siguiente opens item 2, reload resumes at item 2. Screenshots unavailable (app window hidden); verified via page text, DOM and network | n/a |
 
 ## Next step
 
-T1.
+- Native review of the slice 566b6af..edfa111 is due (medium, budget reached) but blocked: after the intended-untracked selection, `review status` dropped the `--base-ref`/`--committed-only` selectors and then asked for `base_ref` with no submission binding. Awaiting the user's decision on reporting the Gentle AI defect.
+- Then: PR decision (stacked on the unmerged fix/security-and-data-hardening chain).
+- Later pieces: digital componedor + esquema gráfico, "Clase FAS del día" (needs MINED phoneme calendar), FasStep rework to official stages, tutor view with Ley 787-safe copy, confirm thresholds with the teacher.
