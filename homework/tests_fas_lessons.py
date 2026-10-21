@@ -69,6 +69,8 @@ class FasSequencePageTests(TeacherTaskTestCase):
         self.assertEqual(task.subject, self.subject)
         self.assertEqual(task.steps.count(), 6)
         self.assertIn('Clase de la «m» creada', [str(m) for m in get_messages(response.wsgi_request)][0])
+        # The palabras step summary lists its words on the task detail page.
+        self.assertContains(self.client.get(response.url), 'mamá, mimo, ama, Memo, mío, mima')
 
     def test_status_after_create_and_assign(self):
         self.assertContains(self.client.get(SEQUENCE_URL), 'Sin clase')

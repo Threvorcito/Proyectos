@@ -103,9 +103,11 @@ Route: inline (parent). Teacher opens Secuencia FAS, creates the m class, review
 | Task | Status | Commit | Checks | Review tier |
 |---|---|---|---|---|
 | T1 | done | ed9b303 (+ label fix 36a8e0e) | RED: ModuleNotFoundError homework.fas_content; GREEN: tests_fas_content 7 OK; homework 300 OK | |
-| T2 | done | (this commit) | RED: ModuleNotFoundError homework.fas_lessons; GREEN: tests_fas_lessons 15 OK; full suite 574 OK | |
-| T3 | pending | | | |
+| T2 | done | 566781f | RED: ModuleNotFoundError homework.fas_lessons; GREEN: tests_fas_lessons 15 OK; full suite 574 OK | |
+| T3 | done | (this commit) | Browser: Secuencia FAS shows tome groups, vowels as Aprestamiento, r onward "Contenido en preparación"; "Crear clase" for p → task with 6 FAS steps and success message; assigned to 2 students → p "Asignada" (m "Asignada" from the earlier dictado task). Found and fixed: palabras step had no summary on task detail (pre-existing); full suite 574 OK | n/a |
 
 ## Next step
 
-T3 (browser verification). T2 notes: letter_statuses is one query (Exists annotation); success message uses the existing teacher voice ("Revísala y asígnala a tus alumnos"); missing subject redirects with an error. T1 note: x and w are not in `CONSONANTS`/`GROUPS` (spec non-goal); `known_letters` raises `KeyError` for vowels too.
+- Teacher review of the content bank (weak words: pomo, mimo, boa; "Papá bebe café").
+- Content for r onward; vowel (aprestamiento) activities.
+- Calendar by dates when the teacher's calendar arrives.
