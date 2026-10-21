@@ -145,6 +145,43 @@ Route: inline (parent).
 
 - [x] Seed or create a dictado task as a teacher, do it as a student in mobile viewport, open the report and the instrument; screenshot each.
 
+### Task 5: Dictation error types (MINED Tomo I, Educación Especial)
+
+Route: delegated writer. Source: MINED/UNICEF "Tomo I - Introductorio" (book page = PDF page − 2): error types p102–109 and p130, "evitar etiquetar como disléxicos" p121.
+
+**Why:** the break point says *where* a child fails; the teacher also needs *what kind* of error (e.g. "omite la r", "confunde m–n") to pick the reinforcement.
+
+**Files:**
+- Modify: `homework/dictation.py`, `homework/reports.py`, `templates/homework/teacher/task_report.html`, `templates/homework/teacher/dictation_instrument.html`
+- Test: `homework/tests_dictation_errors.py`
+
+**Interfaces:**
+- Produces in `homework.dictation`:
+  - `class ErrorType(TextChoices)`: `OMISSION='omission','Omisión'`, `CONFUSION='confusion','Confusión'`, `INVERSION='inversion','Inversión'`, `SUBSTITUTION='substitution','Sustitución'`, `ADDITION='addition','Agrega'`
+  - `CONFUSABLE_PAIRS: frozenset[frozenset[str]]` = b–d, p–q, m–n, m–w, p–b, u–n, l–t (tome p102, p106, p107; m–n and u–n from `writing.CONFUSABLE`)
+  - `@dataclass DictationError: kind: ErrorType; detail: str` — detail is the unit(s), e.g. `'r'` for an omission, `'m–n'` for a confusion (pair in alphabetical order), `''` otherwise.
+  - `classify(target: str, answer: str, unit: str) -> list[DictationError]` — `unit` is `'letter'` (words) or `'word'` (sentences).
+  - `error_summary(payload: dict, results: Mapping[int, StepResult]) -> list[tuple[str, int]]` — human labels with counts over the completed items' `first_answer`, most frequent first, e.g. `[('Confusión m–n', 2), ('Omisión «r»', 2), ('Inversión', 1)]`.
+
+**Algorithm (classify):** split both with `split_units`, compare casefolded with accents removed (`writing._PLAIN`); identical → `[]`; empty/unsplittable answer → `[DictationError(OMISSION, '')]`. If the sorted unit lists are equal but the order differs → one `INVERSION`. Otherwise walk `SequenceMatcher(autojunk=False)` opcodes target→answer: `delete` → one `OMISSION` per missing unit (detail = unit); `insert` → one `ADDITION`; `replace` with equal lengths → per pair `CONFUSION` (detail `'a–b'`) if the pair is in `CONFUSABLE_PAIRS`, else `SUBSTITUTION`; unequal `replace` → one `SUBSTITUTION`.
+
+- [ ] **Step 1: failing tests** in `homework/tests_dictation_errors.py`:
+  - `classify('contento','conto','letter')` → exactly 3 errors, all `OMISSION` (tome example p103; do not pin which letters the aligner picks).
+  - `classify('mesa','nesa','letter')` → `[DictationError(CONFUSION,'m–n')]`; `classify('dedo','bedo','letter')` → `CONFUSION 'b–d'`.
+  - `classify('sol','slo','letter')` → `[DictationError(INVERSION,'')]`.
+  - `classify('mesa','mosa','letter')` → `[DictationError(SUBSTITUTION,'')]`.
+  - `classify('Mamá','mama','letter')` → `[]` (accents/case ignored).
+  - `classify('Mi mamá me ama.','Mi me ama','word')` → one `OMISSION` detail `mamá`; `classify('Amo a mi mamá.','a Amo mi mamá','word')` → `INVERSION`.
+  - `classify('mesa','','letter')` → one `OMISSION`.
+  - `error_summary` over results where "r" is omitted in 2 words and m–n confused once → `[('Omisión «r»', 2), ('Confusión m–n', 1)]`; correct first answers contribute nothing; incomplete items are skipped.
+  - Report: `task_report` shows a column "Errores frecuentes" with `Confusión m–n` for the scored child; hidden (blank) for a child the viewer may not see (same `difficulty_viewer` gating as the break point).
+  - Instrument: shows the same summary per child; blank for gated children.
+  - No page in the report or instrument contains the word `dislexia` (tome p121).
+- [ ] **Step 2: run** `DB_ENGINE=sqlite python manage.py test homework.tests_dictation_errors` → FAIL.
+- [ ] **Step 3: implement** per Interfaces/Algorithm; add `'errors'` to `task_rows` rows and `dictation_sheet` rows (same single query; gated rows get `[]`).
+- [ ] **Step 4: run** `DB_ENGINE=sqlite python manage.py test` → all PASS.
+- [ ] **Step 5: commit** `feat(homework): classify dictation errors by MINED error types`
+
 ## Progress
 
 | Task | Status | Commit | Checks | Review tier |
@@ -153,6 +190,7 @@ Route: inline (parent).
 | T2 | done | a06b261 | tests_dictation_views 10 OK (RED: 5 fail + 5 error, step_create 404 / no dictado context); full suite 527 OK after parent updated tests_steps.py:151 STEP_FORMS set; node --check OK | medium — slice_budget_reached at 651 lines (T1+T2); native review blocked: provider collect for base_ref has no submission (see Next step) |
 | T3 | done | edfa111 | tests_dictation_report 12 OK (RED: ImportError break_point_groups from homework.reports); homework+dashboard 420 OK; full suite 539 OK. Break point and instrument pre-marks gated by difficulty_viewer (Ley 787) | pending assess |
 | T4 | done | (docs only) | Preview DB seeded; teacher report groups Pedro under Sonido-letra and Sofía under Incompleto; instrument pre-marks ✗✗✓✓✓✓✓ and criteria ✗✗✓; student (375px) hears item, target text not shown, tiles include m/n confusable, "mesa" → ¡Muy bien! (POST 200), Siguiente opens item 2, reload resumes at item 2. Screenshots unavailable (app window hidden); verified via page text, DOM and network | n/a |
+| T5 | pending | | | |
 
 ## Next step
 
