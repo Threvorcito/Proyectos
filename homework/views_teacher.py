@@ -317,8 +317,9 @@ def task_report(request, pk):
         row['can_detail'] = can_view(row['student'])
         row['level'] = SnepaLevel(row['assignment'].snepa_level).label if row['can_detail'] and row['assignment'].snepa_level else ''
         if not row['can_detail']:
-            # Ley 787: the break point is difficulty data, like the level.
+            # Ley 787: the break point and the errors are difficulty data, like the level.
             row['break_point'] = row['criteria'] = None
+            row['errors'] = []
     return render(request, 'homework/teacher/task_report.html', {
         'task': task,
         'rows': rows,

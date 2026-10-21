@@ -1,4 +1,5 @@
 """FAS dictation: the 7 items of a dictado step and its break point (pure logic, computed on read)."""
+from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
 from difflib import SequenceMatcher
@@ -7,7 +8,7 @@ from typing import TYPE_CHECKING
 from django.db import models
 
 from .payloads import DICTADO_SENTENCES, DICTADO_WORDS, BuildTarget
-from .writing import split_units
+from .writing import _PLAIN, split_units
 
 if TYPE_CHECKING:
     from .models import StepResult
@@ -82,3 +83,78 @@ def score(payload: dict, results: 'Mapping[int, StepResult]') -> tuple[BreakPoin
     if not criteria.sentences:
         return BreakPoint.SENTENCES, criteria
     return BreakPoint.NONE, criteria
+
+
+class ErrorType(models.TextChoices):
+    """Error types of the MINED Tomo I (Educación Especial), p102-109 and p130."""
+    OMISSION = 'omission', 'Omisión'
+    CONFUSION = 'confusion', 'Confusión'
+    INVERSION = 'inversion', 'Inversión'
+    SUBSTITUTION = 'substitution', 'Sustitución'
+    ADDITION = 'addition', 'Agrega'
+
+
+# Tome p102, p106, p107; m-n and u-n as in writing.CONFUSABLE.
+CONFUSABLE_PAIRS = frozenset(frozenset(pair) for pair in ('bd', 'pq', 'mn', 'mw', 'pb', 'un', 'lt'))
+
+
+@dataclass
+class DictationError:
+    kind: ErrorType
+    detail: str  # the missing unit for an omission, the pair "a–b" for a confusion, '' otherwise
+
+
+def _plain(unit: str) -> str:
+    return unit.casefold().translate(_PLAIN)
+
+
+def classify(target: str, answer: str, unit: str) -> list[DictationError]:
+    """The errors of ``answer`` against ``target``, ignoring case and accents; ``unit`` is 'letter' or 'word'."""
+    target_units = split_units(target, unit)
+    try:
+        answer_units = split_units(answer, unit)
+    except ValueError:
+        answer_units = []
+    expected = [_plain(item) for item in target_units]
+    built = [_plain(item) for item in answer_units]
+    if expected == built:
+        return []
+    if not built:
+        return [DictationError(ErrorType.OMISSION, '')]
+    if sorted(expected) == sorted(built):
+        return [DictationError(ErrorType.INVERSION, '')]
+    errors = []
+    for tag, i1, i2, j1, j2 in SequenceMatcher(None, expected, built, autojunk=False).get_opcodes():
+        if tag == 'delete':
+            errors += [DictationError(ErrorType.OMISSION, item.casefold()) for item in target_units[i1:i2]]
+        elif tag == 'insert':
+            errors.append(DictationError(ErrorType.ADDITION, ''))
+        elif tag == 'replace' and i2 - i1 == j2 - j1:
+            for want, got in zip(expected[i1:i2], built[j1:j2]):
+                if frozenset((want, got)) in CONFUSABLE_PAIRS:
+                    errors.append(DictationError(ErrorType.CONFUSION, '–'.join(sorted((want, got)))))
+                else:
+                    errors.append(DictationError(ErrorType.SUBSTITUTION, ''))
+        elif tag == 'replace':
+            errors.append(DictationError(ErrorType.SUBSTITUTION, ''))
+    return errors
+
+
+def _error_label(error: DictationError) -> str:
+    if error.kind == ErrorType.OMISSION and error.detail:
+        return f'{error.kind.label} «{error.detail}»'
+    if error.kind == ErrorType.CONFUSION:
+        return f'{error.kind.label} {error.detail}'
+    return error.kind.label
+
+
+def error_summary(payload: dict, results: 'Mapping[int, StepResult]') -> list[tuple[str, int]]:
+    """Error labels with counts over the completed items' first answers, most frequent first."""
+    counts = Counter()
+    for index in range(ITEMS):
+        result = results.get(index)
+        if result is None or result.completed_at is None:
+            continue
+        target = item_target(payload, index)
+        counts.update(_error_label(error) for error in classify(target.text, result.first_answer, target.unit))
+    return counts.most_common()

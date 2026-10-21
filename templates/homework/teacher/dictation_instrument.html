@@ -52,6 +52,7 @@
                   <th colspan="2">Oraciones</th>
                   <th colspan="3">Criterios logrados</th>
                   <th rowspan="2">Punto de quiebre</th>
+                  <th rowspan="2">Errores frecuentes</th>
                 </tr>
                 <tr>
                   {% for word in words %}<th>{{ forloop.counter }}</th>{% endfor %}
@@ -72,9 +73,10 @@
                     <td class="dictation-instrument__box">{% if row.criteria %}{{ row.criteria.words|yesno:'✓,✗' }}{% endif %}</td>
                     <td class="dictation-instrument__box">{% if row.criteria %}{{ row.criteria.sentences|yesno:'✓,✗' }}{% endif %}</td>
                     <td>{{ row.break_point.label|default:'' }}</td>
+                    <td>{% for label, count in row.errors|slice:':3' %}{{ label }}{% if count > 1 %} ({{ count }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
                   </tr>
                 {% empty %}
-                  <tr><td colspan="12"><div class="dt-empty"><strong>Todavía no has asignado esta tarea.</strong></div></td></tr>
+                  <tr><td colspan="13"><div class="dt-empty"><strong>Todavía no has asignado esta tarea.</strong></div></td></tr>
                 {% endfor %}
               </tbody>
             </table>

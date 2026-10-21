@@ -51,7 +51,7 @@
                   <th>Alumno</th>
                   <th>Estado</th>
                   <th>Pasos</th>
-                  {% if show_break_point %}<th>Punto de quiebre</th>{% endif %}
+                  {% if show_break_point %}<th>Punto de quiebre</th><th>Errores frecuentes</th>{% endif %}
                   {% if show_detail %}<th>Nivel</th><th class="text-end dt-actions">Detalle</th>{% endif %}
                 </tr>
               </thead>
@@ -61,7 +61,10 @@
                     <td data-label="Alumno">{{ row.student.name }}</td>
                     <td data-label="Estado">{{ row.status }}</td>
                     <td data-label="Pasos">{{ row.steps_done }}/{{ row.steps_total }}</td>
-                    {% if show_break_point %}<td data-label="Punto de quiebre">{{ row.break_point.label|default:'' }}</td>{% endif %}
+                    {% if show_break_point %}
+                      <td data-label="Punto de quiebre">{{ row.break_point.label|default:'' }}</td>
+                      <td data-label="Errores frecuentes">{% for label, count in row.errors|slice:':3' %}{{ label }}{% if count > 1 %} ({{ count }}){% endif %}{% if not forloop.last %}, {% endif %}{% endfor %}</td>
+                    {% endif %}
                     {% if show_detail %}
                       <td data-label="Nivel">{% if row.can_detail %}{{ row.level|default:'Sin datos suficientes' }}{% endif %}</td>
                       <td data-label="Detalle" class="text-end dt-actions">

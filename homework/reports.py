@@ -16,7 +16,7 @@ def _dictado_step(steps):
 def task_rows(task, assignments) -> list[dict]:
     """Rows for the given assignments (one page); a fixed number of queries however many there are.
 
-    ``break_point`` and ``criteria`` come from the task's first dictado step (None when it has none).
+    ``break_point``, ``criteria`` and ``errors`` come from the task's first dictado step (None/[] when it has none).
     """
     assignments = list(assignments)
     steps = list(task.steps.all())
@@ -30,9 +30,8 @@ def task_rows(task, assignments) -> list[dict]:
             dictado_results.setdefault(result.assignment_id, {})[result.item_index] = result
     rows = []
     for assignment in assignments:
-        break_point, criteria = (
-            dictation.score(dictado.payload, dictado_results.get(assignment.pk, {})) if dictado else (None, None)
-        )
+        items = dictado_results.get(assignment.pk, {})
+        break_point, criteria = dictation.score(dictado.payload, items) if dictado else (None, None)
         rows.append({
             'assignment': assignment,
             'student': assignment.student,
@@ -41,6 +40,7 @@ def task_rows(task, assignments) -> list[dict]:
             'steps_total': len(steps),
             'break_point': break_point,
             'criteria': criteria,
+            'errors': dictation.error_summary(dictado.payload, items) if dictado else [],
         })
     return rows
 
@@ -52,7 +52,7 @@ def break_point_groups(rows) -> list[tuple[str, list]]:
 
 
 def dictation_sheet(step, assignments, can_view) -> list[dict]:
-    """One instrument row per assignment: the 7 items pre-marked from the app, the criteria and the break point.
+    """One instrument row per assignment: the 7 items pre-marked from the app, the criteria, break point and errors.
 
     Students whose difficulty data the viewer may not see (Ley 787) get a blank row for paper use.
     """
@@ -62,7 +62,8 @@ def dictation_sheet(step, assignments, can_view) -> list[dict]:
         results.setdefault(result.assignment_id, {})[result.item_index] = result
     sheet = []
     for assignment in assignments:
-        row = {'student': assignment.student, 'marks': [None] * dictation.ITEMS, 'criteria': None, 'break_point': None}
+        row = {'student': assignment.student, 'marks': [None] * dictation.ITEMS, 'criteria': None, 'break_point': None,
+               'errors': []}
         if can_view(assignment.student):
             items = results.get(assignment.pk, {})
             row['marks'] = [
@@ -70,6 +71,7 @@ def dictation_sheet(step, assignments, can_view) -> list[dict]:
                 for index in range(dictation.ITEMS)
             ]
             row['break_point'], row['criteria'] = dictation.score(step.payload, items)
+            row['errors'] = dictation.error_summary(step.payload, items)
         sheet.append(row)
     return sheet
 
