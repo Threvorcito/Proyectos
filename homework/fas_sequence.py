@@ -8,15 +8,15 @@ tome presents apart, are not part of this sequence.
 VOWELS = ('a', 'e', 'i', 'o', 'u')
 
 GROUPS = (
-    ('Aprestamiento: vocales i, u', ('i', 'u')),
-    ('Aprestamiento: vocales a, e, o', ('a', 'e', 'o')),
+    ('Aprestamiento: vocales cerradas y diptongos', ('i', 'u')),
+    ('Aprestamiento: vocales abiertas', ('a', 'e', 'o')),
     ('Consonantes bilabiales', ('m', 'p', 'b', 'v')),
-    ('Consonantes fricativas', ('s', 'c', 'z')),
-    ('Consonantes líquidas y nasales', ('l', 'n')),
-    ('Consonantes labiodental y dentales', ('f', 't', 'd')),
-    ('Consonantes vibrantes', ('r', 'rr')),
-    ('Consonantes palatales', ('ñ', 'll', 'y', 'h', 'ch')),
-    ('Consonantes velares', ('k', 'q', 'g', 'j')),
+    ('Consonantes linguoalveolares, sílabas inversas y mixtas', ('s', 'c', 'z')),
+    ('Consonantes linguoalveolares, sílabas directas dobles o complejas', ('l', 'n')),
+    ('Consonantes labiodentales y linguodentales', ('f', 't', 'd')),
+    ('Consonantes linguoalveolares (r, rr)', ('r', 'rr')),
+    ('Consonantes linguopalatales', ('ñ', 'll', 'y', 'h', 'ch')),
+    ('Consonantes linguoalveolares (k, q, g, j)', ('k', 'q', 'g', 'j')),
 )
 
 CONSONANTS = tuple(letter for _, letters in GROUPS for letter in letters if letter not in VOWELS)
